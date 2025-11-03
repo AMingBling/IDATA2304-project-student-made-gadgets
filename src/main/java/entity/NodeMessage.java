@@ -1,3 +1,9 @@
+package entity;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import com.google.gson.Gson;
+
 public class NodeMessage {
 
   private String nodeID;
