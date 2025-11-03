@@ -2,6 +2,7 @@ package entity;
 
 import java.time.LocalDateTime;
 import com.google.gson.Gson;
+import util.SensorType;
 
 public class SensorMessage {
 
