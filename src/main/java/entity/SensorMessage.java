@@ -44,22 +44,37 @@ public class SensorMessage {
   }
 
   public void setType(SensorType type) {
+    if (type == null) {
+      throw new IllegalArgumentException("Sensor type cannot be null");
+    }
     this.type = type;
   }
 
   public void setSensorId(String sensorId) {
+    if (sensorId == null || sensorId.isEmpty()) {
+      throw new IllegalArgumentException("Sensor ID cannot be null or empty");
+    }
     this.sensorId = sensorId;
   }
 
   public void setTimestamp(LocalDateTime timestamp) {
+    if (timestamp == null) {
+      throw new IllegalArgumentException("Timestamp cannot be null");
+    }
     this.timestamp = timestamp;
   }
 
   public void setValue(double value) {
+    if (Double.isNaN(value)) {
+      throw new IllegalArgumentException("Sensor value cannot be NaN");
+    }
     this.value = value;
   }
 
   public void setUnit(String unit) {
+    if (unit == null || unit.isEmpty()) {
+      throw new IllegalArgumentException("Unit cannot be null or empty");
+    }
     this.unit = unit;
   }
   //-------------------------------------------------
