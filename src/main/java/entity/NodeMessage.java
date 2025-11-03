@@ -13,10 +13,10 @@ public class NodeMessage {
 
   public NodeMessage(String nodeID, String location, LocalDateTime timestamp,
       List<SensorMessage> sensorReadings) {
-    this.nodeID = nodeID;
-    this.location = location;
-    this.timestamp = timestamp;
-    this.sensorReadings = sensorReadings;
+    setNodeID(nodeID);
+    setLocation(location);
+    setTimestamp(timestamp);
+    setSensorReadings(sensorReadings);
   }
 
   //-------------- Getters and setters ---------------
@@ -37,18 +37,30 @@ public class NodeMessage {
   }
 
   public void setNodeID(String nodeID) {
+    if (nodeID == null || nodeID.isEmpty()) {
+      throw new IllegalArgumentException("Node ID cannot be null or empty");
+    }
     this.nodeID = nodeID;
   }
 
   public void setLocation(String location) {
+    if (location == null || location.isEmpty()) {
+      throw new IllegalArgumentException("Location cannot be null or empty");
+    }
     this.location = location;
   }
 
   public void setTimestamp(LocalDateTime timestamp) {
+    if (timestamp == null) {
+      throw new IllegalArgumentException("Timestamp cannot be null");
+    }
     this.timestamp = timestamp;
   }
 
   public void setSensorReadings(List<SensorMessage> sensorReadings) {
+    if (sensorReadings == null || sensorReadings.isEmpty()) {
+      throw new IllegalArgumentException("Sensor readings cannot be null or empty");
+    }
     this.sensorReadings = sensorReadings;
   }
   //-------------------------------------------------
