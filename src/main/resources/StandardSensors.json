@@ -1,0 +1,32 @@
+{
+  "STANDARD_SENSORS_JSON": [
+    {
+      "sensorType": "temperature",
+      "sensorId": "temp_001",
+      "timestamp": "2025-11-10T14:30:00",
+      "value": 22.5,
+      "unit": "°C"
+    },
+    {
+      "sensorType": "humidity",
+      "sensorId": "hum_001",
+      "timestamp": "2025-11-10T14:30:00",
+      "value": 45.0,
+      "unit": "%"
+    },
+    {
+      "sensorType": "light",
+      "sensorId": "light_001",
+      "timestamp": "2025-11-10T14:30:00",
+      "value": 350,
+      "unit": "lux"
+    },
+    {
+      "sensorType": "co2",
+      "sensorId": "co2_001",
+      "timestamp": "2025-11-10T14:30:00",
+      "value": 400,
+      "unit": "ppm"
+    }
+  ]
+}
