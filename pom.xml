@@ -69,7 +69,7 @@
           </execution>
         </executions>
         <configuration>
-          <mainClass>MAIN</mainClass> //TODO: Replace MAIN with your main class with package name
+          <mainClass>main</mainClass>
         </configuration>
       </plugin>
     </plugins>

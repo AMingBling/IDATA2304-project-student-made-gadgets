@@ -1,22 +1,28 @@
+package entity;
+
+import java.time.LocalDateTime;
+import com.google.gson.Gson;
+
 public class SensorMessage {
 
-  private String type;              // "temperature", "humidity", "light", "co2"
+  private SensorType type;              // "temperature", "humidity", "light", "co2"
   private String sensorId;          // unique identifier for the sensor
   private LocalDateTime timestamp;      // time the reading was taken
   private double value;             // the sensor reading value
   private String unit;              // unit of measurement
 
-  public SensorMessage(String type, String sensorId, LocalDateTime timestamp, double value,
+  public SensorMessage(SensorType type, String sensorId, LocalDateTime timestamp, double value,
       String unit) {
-    this.type = type;
-    this.sensorId = sensorId;
-    this.timestamp = timestamp;
-    this.value = value;
-    this.unit = unit;
+    
+    setType(type);
+    setSensorId(sensorId);
+    setTimestamp(timestamp);
+    setValue(value);
+    setUnit(unit);
   }
 
   //-------------- Getters and setters ---------------
-  public String getType() {
+  public SensorType getType() {
     return type;
   }
 
@@ -36,7 +42,7 @@ public class SensorMessage {
     return unit;
   }
 
-  public void setType(String type) {
+  public void setType(SensorType type) {
     this.type = type;
   }
 
