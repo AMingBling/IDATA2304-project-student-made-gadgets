@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 
 public class NodeMessage {
 
+   private String messageType;
   private String nodeID;
   private String location;
   private LocalDateTime timestamp;
@@ -13,6 +14,7 @@ public class NodeMessage {
 
   public NodeMessage(String nodeID, String location, LocalDateTime timestamp,
       List<SensorMessage> sensorReadings) {
+    this.messageType = "NODE_DATA";
     setNodeID(nodeID);
     setLocation(location);
     setTimestamp(timestamp);
@@ -20,6 +22,15 @@ public class NodeMessage {
   }
 
   //-------------- Getters and setters ---------------
+
+  public String getmessageType() {
+    return messageType;
+  }
+
+  public void setMessageType(String type) {
+        this.messageType = type;
+    }
+    
   public String getNodeID() {
     return nodeID;
   }
