@@ -6,6 +6,7 @@ import util.SensorType;
 
 public class SensorMessage {
 
+  private String messageType;
   private SensorType type;              // "temperature", "humidity", "light", "co2"
   private String sensorId;          // unique identifier for the sensor
   private LocalDateTime timestamp;      // time the reading was taken
@@ -15,6 +16,7 @@ public class SensorMessage {
   public SensorMessage(SensorType type, String sensorId, LocalDateTime timestamp, double value,
       String unit) {
     
+    this.messageType = "SENSOR_DATA";
     setType(type);
     setSensorId(sensorId);
     setTimestamp(timestamp);
@@ -23,6 +25,16 @@ public class SensorMessage {
   }
 
   //-------------- Getters and setters ---------------
+
+  public String getmessageType() {
+    return messageType;
+
+  }
+
+  public void setMessageType(String messageType) {
+        this.messageType = messageType;
+    }
+    
   public SensorType getType() {
     return type;
   }
