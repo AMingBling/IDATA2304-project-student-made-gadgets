@@ -118,8 +118,21 @@ public class SensorNode {
 
             System.out.println("SensorNode " + nodeId + " connected to server.");
 
-            // Let server know who we are
+            // Let server know who we are and wait for ack
             out.println("SENSOR_NODE_CONNECTED " + nodeId);
+            String serverResponse = in.readLine();
+            if (serverResponse == null) {
+                System.out.println("No response from server after registering. Exiting.");
+                return;
+            }
+            if (serverResponse.equals("NODE_ID_REJECTED")) {
+                System.out.println("Node ID '" + nodeId + "' rejected by server (duplicate). Exiting.");
+                return;
+            }
+            if (!serverResponse.equals("NODE_ID_ACCEPTED")) {
+                System.out.println("Unexpected server response: " + serverResponse + ". Exiting.");
+                return;
+            }
 
             SensorNode node = new SensorNode(nodeId, location, out, in, gson);
             node.start();
