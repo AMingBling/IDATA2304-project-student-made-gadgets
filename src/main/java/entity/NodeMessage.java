@@ -1,51 +1,36 @@
 package entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.Gson;
 
 public class NodeMessage {
 
-   private String messageType;
+  //private String messageType;
   private String nodeID;
   private String location;
   private LocalDateTime timestamp;
-  private List<SensorMessage> sensorReadings;
+  private List<Sensor> sensorReadings;
 
-  public NodeMessage(String nodeID, String location, LocalDateTime timestamp,
-      List<SensorMessage> sensorReadings) {
-    this.messageType = "NODE_DATA";
+  public NodeMessage(String nodeID, String location,
+      List<Sensor> sensorReadings) {
+    //this.messageType = "NODE_DATA";
     setNodeID(nodeID);
     setLocation(location);
-    setTimestamp(timestamp);
+    this.timestamp = LocalDateTime.now();
     setSensorReadings(sensorReadings);
   }
 
-  //-------------- Getters and setters ---------------
+  //-------------- Setters and getters ---------------
 
-  public String getmessageType() {
-    return messageType;
-  }
+//  public String getmessageType() {
+//    return messageType;
+//  }
 
-  public void setMessageType(String type) {
-        this.messageType = type;
-    }
-    
-  public String getNodeID() {
-    return nodeID;
-  }
-
-  public String getLocation() {
-    return location;
-  }
-
-  public LocalDateTime getTimestamp() {
-    return timestamp;
-  }
-
-  public List<SensorMessage> getSensorReadings() {
-    return sensorReadings;
-  }
+//  public void setMessageType(String type) {
+//        this.messageType = type;
+//    }
 
   public void setNodeID(String nodeID) {
     if (nodeID == null || nodeID.isEmpty()) {
@@ -61,18 +46,27 @@ public class NodeMessage {
     this.location = location;
   }
 
-  public void setTimestamp(LocalDateTime timestamp) {
-    if (timestamp == null) {
-      throw new IllegalArgumentException("Timestamp cannot be null");
-    }
-    this.timestamp = timestamp;
-  }
-
-  public void setSensorReadings(List<SensorMessage> sensorReadings) {
+  public void setSensorReadings(List<Sensor> sensorReadings) {
     if (sensorReadings == null || sensorReadings.isEmpty()) {
-      throw new IllegalArgumentException("Sensor readings cannot be null or empty");
+      throw new IllegalArgumentException("entity.Sensor readings cannot be null or empty");
     }
     this.sensorReadings = sensorReadings;
+  }
+
+  public String getNodeID() {
+    return nodeID;
+  }
+
+  public String getLocation() {
+    return location;
+  }
+
+  public LocalDateTime getTimestamp() {
+    return timestamp;
+  }
+
+  public List<Sensor> getSensorReadings() {
+    return sensorReadings;
   }
   //-------------------------------------------------
 
@@ -85,4 +79,7 @@ public class NodeMessage {
     Gson gson = new Gson();
     return gson.toJson(this);
   }
+
+  // -----------------------------------------------------
+
 }

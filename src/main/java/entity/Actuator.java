@@ -29,7 +29,7 @@ public class Actuator {
 
   private void setSensorType(SensorType sensorType) {
     if (sensorType == null) {
-      throw new IllegalArgumentException("Sensor type cannot be null");
+      throw new IllegalArgumentException("entity.Sensor type cannot be null");
     }
     this.sensorType = sensorType;
   }

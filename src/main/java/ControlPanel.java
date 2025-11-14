@@ -18,8 +18,6 @@ import com.google.gson.JsonDeserializer;
 import java.time.LocalDateTime;
 import java.lang.reflect.Type;
 
-import entity.SensorMessage;
-
 /**
  * Leser linjer fra socket.
 *Hvis linjen ser ut som JSON (starter med '{') forsøker den å deserialisere til SensorMessage ved hjelp av Gson.
