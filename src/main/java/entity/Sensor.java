@@ -90,7 +90,7 @@ public class Sensor {
    * Convert Sensor object to JSON string
    * @return JSON representation of the Sensor object
    */
-  public String toJson() {
+  public String sensorToJson() {
     Gson gson = new Gson();
     return gson.toJson(this);
   }
@@ -100,7 +100,7 @@ public class Sensor {
    * @param json JSON representation of a Sensor object
    * @return Sensor object
    */
-  public static Sensor fromJson(String json) {
+  public static Sensor sensorFromJson(String json) {
     Gson gson = new Gson();
     return gson.fromJson(json, Sensor.class);
   }
