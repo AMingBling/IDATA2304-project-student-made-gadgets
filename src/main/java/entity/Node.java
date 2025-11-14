@@ -1,56 +1,53 @@
 package entity;
 
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import java.lang.reflect.Type;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.Gson;
 
-public class NodeMessage {
+public class Node {
 
-  //private String messageType;
   private String nodeID;
   private String location;
   private LocalDateTime timestamp;
-  private List<Sensor> sensorReadings;
+  private List<Sensor> sensors;
 
-  public NodeMessage(String nodeID, String location,
-      List<Sensor> sensorReadings) {
-    //this.messageType = "NODE_DATA";
+  public Node(String nodeID, String location,
+      List<Sensor> sensors) {
     setNodeID(nodeID);
     setLocation(location);
     this.timestamp = LocalDateTime.now();
-    setSensorReadings(sensorReadings);
+    setSensors(sensors);
   }
 
   //-------------- Setters and getters ---------------
-
-//  public String getmessageType() {
-//    return messageType;
-//  }
-
-//  public void setMessageType(String type) {
-//        this.messageType = type;
-//    }
-
   public void setNodeID(String nodeID) {
-    if (nodeID == null || nodeID.isEmpty()) {
+    if (nodeID == null || nodeID.isBlank()) {
       throw new IllegalArgumentException("Node ID cannot be null or empty");
     }
     this.nodeID = nodeID;
   }
 
   public void setLocation(String location) {
-    if (location == null || location.isEmpty()) {
+    if (location == null || location.isBlank()) {
       throw new IllegalArgumentException("Location cannot be null or empty");
     }
     this.location = location;
   }
 
-  public void setSensorReadings(List<Sensor> sensorReadings) {
-    if (sensorReadings == null || sensorReadings.isEmpty()) {
+  public void setSensors(List<Sensor> sensors) {
+    if (sensors == null || sensors.isEmpty()) {
       throw new IllegalArgumentException("entity.Sensor readings cannot be null or empty");
     }
-    this.sensorReadings = sensorReadings;
+    this.sensors = sensors;
   }
 
   public String getNodeID() {
@@ -65,19 +62,57 @@ public class NodeMessage {
     return timestamp;
   }
 
-  public List<Sensor> getSensorReadings() {
-    return sensorReadings;
+  public List<Sensor> getSensors() {
+    return sensors;
   }
   //-------------------------------------------------
 
-  public static NodeMessage fromJson(String json) {
-    Gson gson = new Gson();
-    return gson.fromJson(json, NodeMessage.class);
+  /**
+   * Add sensors to the sensor node
+   *
+   * @param sensor Sensor to be added
+   */
+  public void addSensor(Sensor sensor) {
+    this.sensors.add(sensor);
   }
 
-  public String toJson() {
-    Gson gson = new Gson();
+  // JSON helpers that include LocalDateTime adapters
+  public static Node nodeFromJson(String json) {
+    return gsonWithLocalDateTime().fromJson(json, Node.class);
+  }
+
+  public static Node nodeFromJson(String json, Gson gson) {
+    return gson.fromJson(json, Node.class);
+  }
+
+  public String nodeToJson() {
+    return gsonWithLocalDateTime().toJson(this);
+  }
+
+  public String nodeToJson(Gson gson) {
     return gson.toJson(this);
+  }
+
+  private static Gson gsonWithLocalDateTime() {
+    return new GsonBuilder()
+        .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
+        .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
+        .create();
+  }
+
+  private static class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {
+    @Override
+    public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+      return new JsonPrimitive(src.toString());
+    }
+  }
+
+  private static class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
+    @Override
+    public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+        throws JsonParseException {
+      return LocalDateTime.parse(json.getAsString());
+    }
   }
 
   // -----------------------------------------------------
