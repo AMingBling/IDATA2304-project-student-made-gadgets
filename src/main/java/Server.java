@@ -65,11 +65,11 @@ public class Server {
                     } else {
                         sensorNodes.put(nodeId, socket);
                         out.println("NODE_ID_ACCEPTED");
-                        System.out.println("Sensor connected: " + socket.getInetAddress() + " (" + nodeId + ")");
+                        System.out.println("entity.Sensor connected: " + socket.getInetAddress() + " (" + nodeId + ")");
                     }
                 } else {
                     // Fallback: treat as a sensor without explicit id (rare)
-                    System.out.println("Sensor connected (no id): " + socket.getInetAddress());
+                    System.out.println("entity.Sensor connected (no id): " + socket.getInetAddress());
                 }
 
                 String inputLine;
