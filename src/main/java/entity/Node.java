@@ -19,13 +19,15 @@ public class Node {
   private String location;
   private LocalDateTime timestamp;
   private List<Sensor> sensors;
+  private List<Actuator> actuators;
 
   public Node(String nodeID, String location,
-      List<Sensor> sensors) {
+      List<Sensor> sensors, List<Actuator> actuators) {
     setNodeID(nodeID);
     setLocation(location);
     this.timestamp = LocalDateTime.now();
     setSensors(sensors);
+    setActuators(actuators);
   }
 
   //-------------- Setters and getters ---------------
@@ -50,6 +52,13 @@ public class Node {
     this.sensors = sensors;
   }
 
+  public void setActuators(List<Actuator> actuators) {
+    if (actuators == null || actuators.isEmpty()) {
+      throw new IllegalArgumentException("Actuators cannot be null or empty");
+    }
+    this.actuators = actuators;
+  }
+
   public String getNodeID() {
     return nodeID;
   }
@@ -65,15 +74,28 @@ public class Node {
   public List<Sensor> getSensors() {
     return sensors;
   }
+
+  public List<Actuator> getActuators() {
+    return actuators;
+  }
   //-------------------------------------------------
 
   /**
-   * Add sensors to the sensor node
+   * Add sensors to the node
    *
    * @param sensor Sensor to be added
    */
   public void addSensor(Sensor sensor) {
     this.sensors.add(sensor);
+  }
+
+  /**
+   * Add actuator to the node
+   *
+   * @param actuator Actuator to be added
+   */
+  public void addActuator(Actuator actuator) {
+    this.actuators.add(actuator);
   }
 
   // JSON helpers that include LocalDateTime adapters
@@ -101,15 +123,19 @@ public class Node {
   }
 
   private static class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {
+
     @Override
-    public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+    public JsonElement serialize(LocalDateTime src, Type typeOfSrc,
+        JsonSerializationContext context) {
       return new JsonPrimitive(src.toString());
     }
   }
 
   private static class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
+
     @Override
-    public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+    public LocalDateTime deserialize(JsonElement json, Type typeOfT,
+        JsonDeserializationContext context)
         throws JsonParseException {
       return LocalDateTime.parse(json.getAsString());
     }

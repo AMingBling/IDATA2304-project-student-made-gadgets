@@ -1,23 +1,20 @@
 package entity;
 
+import util.ActuatorType;
 import util.SensorType;
 
 public class Actuator {
 
   private String actuatorId;
   private SensorType sensorType;
+  private ActuatorType actuatorType;
   private boolean on = false;
-  private double targetMin;
-  private double targetMax;
 
-  public Actuator(String actuatorId, SensorType sensorType, double targetMin, double targetMax) {
+  public Actuator(String actuatorId, SensorType sensorType) {
     setActuatorId(actuatorId);
     setSensorType(sensorType);
-    setTargetMin(targetMin);
-    setTargetMax(targetMax);
     this.on = false;
   }
-
 
   //-------------- Setters and Getters ---------------
   private void setActuatorId(String actuatorId) {
@@ -34,14 +31,6 @@ public class Actuator {
     this.sensorType = sensorType;
   }
 
-  private void setTargetMin(double targetMin) {
-    this.targetMin = targetMin;
-  }
-
-  private void setTargetMax(double targetMax) {
-    this.targetMax = targetMax;
-  }
-
   public void setOn(boolean on) {
     this.on = on;
   }
@@ -52,14 +41,6 @@ public class Actuator {
 
   public SensorType getSensorType() {
     return sensorType;
-  }
-
-  public double getTargetMin() {
-    return targetMin;
-  }
-
-  public double getTargetMax() {
-    return targetMax;
   }
 
   public boolean isOn() {
