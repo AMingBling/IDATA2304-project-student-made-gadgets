@@ -10,7 +10,6 @@ import entity.Actuator;
 import entity.Node;
 import entity.sensor.Sensor;
 import entity.sensor.TemperatureSensor;
-import util.SensorType;
 
 import java.io.*;
 import java.net.Socket;
