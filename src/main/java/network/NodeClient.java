@@ -8,7 +8,8 @@ import com.google.gson.JsonSerializer;
 
 import entity.Actuator;
 import entity.Node;
-import entity.Sensor;
+import entity.sensor.Sensor;
+import entity.sensor.TemperatureSensor;
 import util.SensorType;
 
 import java.io.*;
@@ -17,8 +18,8 @@ import java.time.LocalDateTime;
 
 
 /**
- * SensorNodes kan bli kjørt i terminalen ved hjelp av kommandoen mvn exec:java
- * "-Dexec.mainClass=entity.SensorNode" "-Dexec.args=<ID> <Lokasjon>" og kobler seg til Serveren
+ * NodeClients kan bli kjørt i terminalen ved hjelp av kommandoen mvn exec:java
+ * "-DesorNodesxec.mainClass=network.NodeClient" "-Dexec.args=<ID> <Lokasjon>" og kobler seg til Serveren
  */
 public class NodeClient {
 
@@ -44,8 +45,23 @@ public class NodeClient {
     listener.setDaemon(true);
     listener.start();
 
-    // Simulate periodic sensor readings
-//    simulateSensorData();
+    startSensorLoop();
+  }
+
+  private void startSensorLoop() {
+    Thread sensorThread = new Thread(() -> {
+      try {
+        while (true) {
+          Thread.sleep(5000); // Update every 5 seconds
+          node.updateAllSensors();
+          sendCurrentNode();
+        }
+      } catch (InterruptedException e) {
+        // Thread interrupted, exit gracefully
+      }
+    });
+    sensorThread.setDaemon(true);
+    sensorThread.start();
   }
 
   public void sendCurrentNode() {
@@ -68,39 +84,6 @@ public class NodeClient {
     System.out.println("Node → Server: " + json);
   }
 
-//  private void simulateSensorData() {
-//    Random random = new Random();
-//
-//    try {
-//      while (true) {
-//        double temp = 20 + random.nextDouble() * 5;
-//
-//        Sensor sm = new Sensor(
-//            "sensor-001",
-//            SensorType.TEMPERATURE,
-//            nodeId + "-temp",
-//            LocalDateTime.now(),
-//            temp,
-//            "°C"
-//        );
-//
-//        Node nm = new Node(
-//            nodeId,
-//            location,
-//            LocalDateTime.now(),
-//            Collections.singletonList(sm)
-//        );
-//        nm.setMessageType("SENSOR_DATA_FROM_NODE");
-//
-//        out.println(gson.toJson(nm));
-//        System.out.println("Node → Server: " + gson.toJson(nm));
-//
-//        Thread.sleep(3000);
-//      }
-//    } catch (InterruptedException e) {
-//      System.out.println("entity.Sensor simulation stopped.");
-//    }
-//  }
 
   private void listenForCommands() {
     try {
@@ -129,58 +112,12 @@ public class NodeClient {
     }
   }
 
-  // ---------- MAIN ----------
 
-//  public static void main(String[] args) {
-//    if (args.length < 2) {
-//      System.out.println("Usage: java SensorNode <nodeId> <location>");
-//      return;
-//    }
-//
-//    String nodeId = args[0];
-//    String location = args[1];
-//
-//    final String SERVER_IP = "127.0.0.1";
-//    final int SERVER_PORT = 5000;
-//
-//    Gson gson = new GsonBuilder()
-//        .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
-//        .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
-//        .create();
-//
-//    try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
-//        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-//        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-//
-//      System.out.println("SensorNode " + nodeId + " connected to server.");
-//
-//      // Let server know who we are and wait for ack
-//      out.println("SENSOR_NODE_CONNECTED " + nodeId);
-//      String serverResponse = in.readLine();
-//      if (serverResponse == null) {
-//        System.out.println("No response from server after registering. Exiting.");
-//        return;
-//      }
-//      if (serverResponse.equals("NODE_ID_REJECTED")) {
-//        System.out.println("Node ID '" + nodeId + "' rejected by server (duplicate). Exiting.");
-//        return;
-//      }
-//      if (!serverResponse.equals("NODE_ID_ACCEPTED")) {
-//        System.out.println("Unexpected server response: " + serverResponse + ". Exiting.");
-//        return;
-//      }
-//
-//      NodeClient node = new NodeClient(nodeId, location, out, in, gson);
-//      node.start();
-//
-//    } catch (Exception e) {
-//      e.printStackTrace();
-//    }
-//  }
 
   public static void main(String[] args) {
     if (args.length < 2) {
-      System.out.println("Usage: java SensorNode <nodeId> <location>");
+      System.out.println("mvn exec:java\r\n" + //
+                " * \"-DesorNodesxec.mainClass=network.NodeClient\" \"-Dexec.args=<ID> <Lokasjon>\"");
       return;
     }
 
@@ -222,12 +159,12 @@ public class NodeClient {
       }
 
       // Create a minimal initial sensor (Node requires at least one sensor)
-      Sensor initSensor = new Sensor(nodeId + "-sensor-0", SensorType.TEMPERATURE, "°C", 0.0,
+      Sensor initSensor = new TemperatureSensor("1", 0.0,
           100.0);
       java.util.List<Sensor> sensors = new java.util.ArrayList<>();
       sensors.add(initSensor);
 
-      Actuator initActuator = new Actuator("1", SensorType.TEMPERATURE);
+      Actuator initActuator = new Actuator("1", "FAN");
       java.util.List<Actuator> actuators = new java.util.ArrayList<>();
       actuators.add(initActuator);
 

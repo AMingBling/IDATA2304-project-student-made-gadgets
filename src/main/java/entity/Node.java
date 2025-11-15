@@ -26,7 +26,7 @@ public class Node {
   private LocalDateTime timestamp;
   private List<Sensor> sensors;
   private List<Actuator> actuators;
-  private static final long serialVersionUID = 1L;
+  
 
   public Node(String nodeID, String location,
       List<Sensor> sensors, List<Actuator> actuators) {
@@ -127,6 +127,13 @@ public class Node {
         .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
         .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
         .create();
+  }
+
+  public void updateAllSensors() {
+    for (Sensor sensor : sensors) {
+      sensor.updateValue();
+    }
+    this.timestamp = LocalDateTime.now();
   }
 
   private static class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {

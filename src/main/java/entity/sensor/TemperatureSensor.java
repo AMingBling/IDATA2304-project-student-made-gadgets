@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 
 public class TemperatureSensor extends Sensor {
 
-    private static final long serialVersionUID = 1L;
-
     /**
      * Constructor for TemperatureSensor.
      * Min and max thresholds are specified in degrees Celsius. 18 and 35 would be natural values.

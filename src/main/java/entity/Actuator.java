@@ -1,18 +1,13 @@
 package entity;
 
-import util.ActuatorType;
-import util.SensorType;
-
 public class Actuator {
 
   private String actuatorId;
-  private SensorType sensorType;
-  private ActuatorType actuatorType;
+  private String actuatorType;
   private boolean on = false;
 
-  public Actuator(String actuatorId, SensorType sensorType, ActuatorType actuatorType) {
+  public Actuator(String actuatorId, String actuatorType) {
     setActuatorId(actuatorId);
-    setSensorType(sensorType);
     setActuatorType(actuatorType);
     this.on = false;
   }
@@ -25,14 +20,7 @@ public class Actuator {
     this.actuatorId = actuatorId;
   }
 
-  private void setSensorType(SensorType sensorType) {
-    if (sensorType == null) {
-      throw new IllegalArgumentException("entity.Sensor type cannot be null");
-    }
-    this.sensorType = sensorType;
-  }
-
-  private void setActuatorType(ActuatorType actuatorType) {
+  private void setActuatorType(String actuatorType) {
     if (actuatorType == null) {
       throw new IllegalArgumentException("Actuator type cannot be null");
     }
@@ -47,11 +35,7 @@ public class Actuator {
     return actuatorId;
   }
 
-  public SensorType getSensorType() {
-    return sensorType;
-  }
-
-  public ActuatorType getActuatorType() {
+  public String getActuatorType() {
     return actuatorType;
   }
 
