@@ -1,38 +1,43 @@
-// package controlpanel;
+package controlpanel;
 
-// import controlpanel.ControlPanelLogic;
+import controlpanel.ControlPanelLogic;
 
-// public class ControlPanelMain {
+public class ControlPanelMain {
 
-//     public static void main(String[] args) {
+  public static void main(String[] args) {
 
-//         if (args.length < 3) {
-//             System.out.println("Usage: java ControlPanelMain <controlPanelId> <serverIp> <serverPort>");
-//             return;
-//         }
+    if (args.length < 3) {
+      System.out.println("Usage: java ControlPanelMain <controlPanelId> <serverIp> <serverPort>");
+      return;
+    }
 
-//         String controlPanelId = args[0];
-//         String serverIp = args[1];
-//         int serverPort = Integer.parseInt(args[2]);
+    String controlPanelId = args[0];
+    String serverIp = args[1];
+    int serverPort = Integer.parseInt(args[2]);
 
-        
-//         try {
-//             ControlPanelLogic logic = new ControlPanelLogic(controlPanelId);
-//             logic.connect(serverIp, serverPort);
-//             System.out.println("Control Panel " + controlPanelId + " connected to server at " + serverIp + ":" + serverPort);
-//         } catch (Exception e) {
-//             System.err.println("Failed to connect to server: " + e.getMessage());
-//             return;
-//         }
+    ControlPanelLogic logic = null;
 
-//         // Keep the main thread alive to maintain the connection
-//         try {
-//             Thread.sleep(Long.MAX_VALUE);
-//         } catch (InterruptedException e) {
-//             System.out.println("Control Panel interrupted, shutting down.");
-//         } finally {
-//             logic.close();
-//         }
-//     }
+    try {
+      logic = new ControlPanelLogic(controlPanelId);
+      logic.connect(serverIp, serverPort);
+      System.out.println(
+          "Control Panel " + controlPanelId + " connected to server at " + serverIp + ":"
+              + serverPort);
+    } catch (Exception e) {
+      System.err.println("Failed to connect to server: " + e.getMessage());
+      return;
+    }
 
-// }
+    // Keep the main thread alive to maintain the connection
+    try {
+      Thread.sleep(Long.MAX_VALUE);
+    } catch (InterruptedException e) {
+      System.out.println("Control Panel interrupted, shutting down.");
+    } finally {
+      if (logic != null) {
+        logic.close();
+      }
+    }
+  }
+
+}
