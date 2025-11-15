@@ -82,9 +82,20 @@ public class Node {
     return sensors;
   }
 
+  public String getSensorsAsJson() {
+    Gson gson = gsonWithLocalDateTime();
+    return gson.toJson(this.sensors);
+  }
+
   public List<Actuator> getActuators() {
     return actuators;
   }
+
+  public String getActuatorsAsJson() {
+    Gson gson = gsonWithLocalDateTime();
+    return gson.toJson(this.actuators);
+  }
+
   //-------------------------------------------------
 
   /**
@@ -104,6 +115,8 @@ public class Node {
   public void addActuator(Actuator actuator) {
     this.actuators.add(actuator);
   }
+
+  //--------------------------------------------------
 
   // JSON helpers that include LocalDateTime adapters
   public static Node nodeFromJson(String json) {
