@@ -13,6 +13,7 @@ public abstract class Sensor {
   protected double minThreshold;
   protected double maxThreshold;
   protected LocalDateTime timestamp;
+  private static final long serialVersionUID = 1L;
 
   public Sensor(String sensorId, String sensorType, String unit,
       double minThreshold, double maxThreshold) {

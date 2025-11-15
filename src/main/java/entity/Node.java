@@ -8,11 +8,17 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+
+import entity.sensor.Sensor;
+
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.google.gson.Gson;
 
+/**
+ * Represents a Node in the IoT network, containing sensors and actuators.
+ */
 public class Node {
 
   private String nodeID;
@@ -20,6 +26,7 @@ public class Node {
   private LocalDateTime timestamp;
   private List<Sensor> sensors;
   private List<Actuator> actuators;
+  private static final long serialVersionUID = 1L;
 
   public Node(String nodeID, String location,
       List<Sensor> sensors, List<Actuator> actuators) {
