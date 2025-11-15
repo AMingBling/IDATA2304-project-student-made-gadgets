@@ -10,9 +10,10 @@ public class Actuator {
   private ActuatorType actuatorType;
   private boolean on = false;
 
-  public Actuator(String actuatorId, SensorType sensorType) {
+  public Actuator(String actuatorId, SensorType sensorType, ActuatorType actuatorType) {
     setActuatorId(actuatorId);
     setSensorType(sensorType);
+    setActuatorType(actuatorType);
     this.on = false;
   }
 
@@ -31,6 +32,13 @@ public class Actuator {
     this.sensorType = sensorType;
   }
 
+  private void setActuatorType(ActuatorType actuatorType) {
+    if (actuatorType == null) {
+      throw new IllegalArgumentException("Actuator type cannot be null");
+    }
+    this.actuatorType = actuatorType;
+  }
+
   public void setOn(boolean on) {
     this.on = on;
   }
@@ -41,6 +49,10 @@ public class Actuator {
 
   public SensorType getSensorType() {
     return sensorType;
+  }
+
+  public ActuatorType getActuatorType() {
+    return actuatorType;
   }
 
   public boolean isOn() {
