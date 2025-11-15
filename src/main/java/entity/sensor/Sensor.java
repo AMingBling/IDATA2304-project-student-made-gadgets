@@ -1,27 +1,33 @@
-package entity;
+package entity.sensor;
 
 import com.google.gson.Gson;
 import java.time.LocalDateTime;
-import util.SensorType;
 
-public class Sensor {
 
-  private String sensorId;
-  private SensorType sensorType;
-  private double value;
-  private String unit;
-  private double minThreshold;
-  private double maxThreshold;
-  private LocalDateTime timestamp;
+public abstract class Sensor {
 
-  public Sensor(String sensorId, SensorType sensorType, String unit,
+  protected String sensorId;
+  protected String sensorType;
+  protected double value;
+  protected String unit;
+  protected double minThreshold;
+  protected double maxThreshold;
+  protected LocalDateTime timestamp;
+
+  public Sensor(String sensorId, String sensorType, String unit,
       double minThreshold, double maxThreshold) {
-    setSensorId(sensorId);
-    setSensorType(sensorType);
-    setUnit(unit);
-    setMinThreshold(minThreshold);
-    setMaxThreshold(maxThreshold);
-    this.value = 0.0;
+
+    if (sensorId == null || sensorId.isBlank()) {
+      throw new IllegalArgumentException("Sensor ID cannot be null or empty");
+    }
+    if (maxThreshold < minThreshold) {
+      throw new IllegalArgumentException("Max threshold cannot be less than min threshold");
+    }
+    this.setSensorId(sensorId);
+    this.setSensorType(sensorType);
+    this.setUnit(unit);
+    this.setMinThreshold(minThreshold);
+    this.setMaxThreshold(maxThreshold);
     this.timestamp = LocalDateTime.now();
   }
 
@@ -34,7 +40,7 @@ public class Sensor {
     this.sensorId = sensorId;
   }
 
-  private void setSensorType(SensorType sensorType) {
+  private void setSensorType(String sensorType) {
     if (sensorType == null) {
       throw new IllegalArgumentException("entity.Sensor type cannot be null");
     }
@@ -61,7 +67,7 @@ public class Sensor {
     return sensorId;
   }
 
-  public SensorType getSensorType() {
+  public String getSensorType() {
     return sensorType;
   }
 
@@ -84,24 +90,26 @@ public class Sensor {
   public LocalDateTime getTimestamp() {
     return timestamp;
   }
+
+  public abstract void updateValue();
   //-------------------------------------------------
 
-  // /**
-  //  * Convert Sensor object to JSON string
-  //  * @return JSON representation of the Sensor object
-  //  */
-  // public String sensorToJson() {
-  //   Gson gson = new Gson();
-  //   return gson.toJson(this);
-  // }
+  /**
+   * Convert Sensor object to JSON string
+   * @return JSON representation of the Sensor object
+   */
+  public String toJson() {
+    Gson gson = new Gson();
+    return gson.toJson(this);
+  }
 
-  // /**
-  //  * Create Sensor object from JSON string
-  //  * @param json JSON representation of a Sensor object
-  //  * @return Sensor object
-  //  */
-  // public static Sensor sensorFromJson(String json) {
-  //   Gson gson = new Gson();
-  //   return gson.fromJson(json, Sensor.class);
-  // }
+  /**
+   * Create Sensor object from JSON string
+   * @param json JSON representation of a Sensor object
+   * @return Sensor object
+   */
+  public static Sensor fromJson(String json) {
+    Gson gson = new Gson();
+    return gson.fromJson(json, Sensor.class);
+  }
 }
