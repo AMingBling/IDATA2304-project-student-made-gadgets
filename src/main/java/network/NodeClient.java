@@ -6,6 +6,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 
+import entity.Actuator;
 import entity.Node;
 import entity.Sensor;
 import util.SensorType;
@@ -226,7 +227,11 @@ public class NodeClient {
       java.util.List<Sensor> sensors = new java.util.ArrayList<>();
       sensors.add(initSensor);
 
-      Node nodeObj = new Node(nodeId, location, sensors);
+      Actuator initActuator = new Actuator("1", SensorType.TEMPERATURE);
+      java.util.List<Actuator> actuators = new java.util.ArrayList<>();
+      actuators.add(initActuator);
+
+      Node nodeObj = new Node(nodeId, location, sensors, actuators);
 
       NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
       nodeClient.start();
