@@ -14,6 +14,7 @@ import entity.sensor.TemperatureSensor;
 import java.io.*;
 import java.net.Socket;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 
 /**
@@ -51,7 +52,7 @@ public class NodeClient {
     Thread sensorThread = new Thread(() -> {
       try {
         while (true) {
-          Thread.sleep(5000); // Update every 5 seconds
+          Thread.sleep(10000); // Update every 10 seconds
           node.updateAllSensors();
           sendCurrentNode();
         }
@@ -80,7 +81,7 @@ public class NodeClient {
     String json = (gson != null) ? n.nodeToJson(gson) : n.nodeToJson();
     out.println(json);
     out.flush();
-    System.out.println("Node → Server: " + json);
+    System.out.println("Node -> Server: " + json);
   }
 
 
@@ -158,13 +159,13 @@ public class NodeClient {
       }
 
       // Create a minimal initial sensor (Node requires at least one sensor)
-      Sensor initSensor = new TemperatureSensor("1", 0.0,
-          100.0);
-      java.util.List<Sensor> sensors = new java.util.ArrayList<>();
+      Sensor initSensor = new TemperatureSensor("1", 20.0,
+          26.0);
+      java.util.List<Sensor> sensors = new ArrayList<>();
       sensors.add(initSensor);
 
       Actuator initActuator = new Actuator("1", "FAN");
-      java.util.List<Actuator> actuators = new java.util.ArrayList<>();
+      java.util.List<Actuator> actuators = new ArrayList<>();
       actuators.add(initActuator);
 
       Node nodeObj = new Node(nodeId, location, sensors, actuators);

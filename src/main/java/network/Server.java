@@ -78,7 +78,7 @@ public class Server {
                     if (isControlPanel) {
                         System.out.println("[ControlPanel] received -> " + inputLine);
                     } else {
-                        System.out.println("Received from sensor: " + inputLine);
+                        System.out.println("Received from node: " + inputLine);
                         broadcastToControlPanels(inputLine);
                     }
                 }
