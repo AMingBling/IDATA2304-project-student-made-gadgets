@@ -14,7 +14,7 @@ import entity.actuator.Heater;
 import entity.sensor.Sensor;
 import entity.sensor.TemperatureSensor;
 import entity.actuator.Humidifier;
-import entity.actuator.DeHumidifier; 
+import entity.actuator.DeHumidifier;
 import entity.actuator.Ventilation;
 import entity.actuator.Heater;
 import entity.actuator.AirCondition;
@@ -25,12 +25,13 @@ import java.net.Socket;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
-
 // mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="<id> <location>"
 // ex: mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="01 greenhouse1"
+//NodeClients kan bli kjørt i terminalen ved hjelp av kommandoen mvn exec:java
+//"-DesorNodesxec.mainClass=network.NodeClient" "-Dexec.args=<ID> <Lokasjon>" og kobler seg til Serveren
+
 /**
- * NodeClients kan bli kjørt i terminalen ved hjelp av kommandoen mvn exec:java
- * "-DesorNodesxec.mainClass=network.NodeClient" "-Dexec.args=<ID> <Lokasjon>" og kobler seg til Serveren
+ * Client class for a Node that connects to the server, sends its state, and listens for commands.
  */
 public class NodeClient {
 
@@ -41,6 +42,14 @@ public class NodeClient {
   private Thread listener;
 
 
+  /**
+   * Constructor for NodeClient
+   *
+   * @param node the Node object representing this client
+   * @param out  the output stream to the server
+   * @param in   the input stream from the server
+   * @param gson the Gson instance for JSON serialization/deserialization
+   */
   public NodeClient(Node node, PrintWriter out, BufferedReader in, Gson gson) {
     this.node = node;
     this.out = out;
@@ -50,6 +59,9 @@ public class NodeClient {
 
   // ---------- METHODS ----------
 
+  /**
+   * Start the NodeClient: begin listening for server commands
+   */
   public void start() {
     // Start thread to listen for messages from server
     listener = new Thread(this::listenForCommands);
@@ -58,6 +70,9 @@ public class NodeClient {
   }
 
 
+  /**
+   * Send the current Node object to the server (serialized to JSON).
+   */
   public void sendCurrentNode() {
     if (node == null) {
       return;
@@ -80,6 +95,9 @@ public class NodeClient {
   }
 
 
+  /**
+   * Listen for commands from the server and process them.
+   */
   private void listenForCommands() {
     try {
       String incoming;
@@ -161,6 +179,9 @@ public class NodeClient {
     }
   }
 
+  /**
+   * Close the NodeClient: close streams and stop listener thread
+   */
   public void close() {
     try {
       if (in != null) {
@@ -176,8 +197,10 @@ public class NodeClient {
     }
   }
 
-
-
+  /**
+   * Main method to start the NodeClient
+   * @param args command line arguments: <ID> <Location>
+   */
   public static void main(String[] args) {
     if (args.length < 2) {
       System.out.println("mvn exec:java\r\n" + //

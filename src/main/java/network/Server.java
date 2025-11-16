@@ -8,6 +8,9 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Server class to handle connections from sensor nodes and control panels.
+ */
 public class Server {
 
     private static final int PORT = 5000;
@@ -20,9 +23,14 @@ public class Server {
     // Map nodeId -> socket for sensor nodes to prevent duplicate node IDs
     private static Map<String, Socket> sensorNodes = new ConcurrentHashMap<>();
 
-    public static void main(String[] args) {
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server started on port " + PORT);
+  /**
+   * Main method to start the server.
+   *
+   * @param args command line arguments
+   */
+  public static void main(String[] args) {
+    try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+      System.out.println("Server started on port " + PORT);
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
@@ -34,22 +42,29 @@ public class Server {
         }
     }
 
-    static class ClientHandler implements Runnable {
-        private Socket socket;
-        private BufferedReader in;
-        private PrintWriter out;
-        private boolean isControlPanel = false;
-            private String nodeId = null;
+  /**
+   * ClientHandler class to manage individual client connections.
+   */
+  static class ClientHandler implements Runnable {
+
+    private Socket socket;
+    private BufferedReader in;
+    private PrintWriter out;
+    private boolean isControlPanel = false;
+    private String nodeId = null;
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
         }
 
-        @Override
-        public void run() {
-            try {
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);
+    /**
+     * Run method to handle client communication.
+     */
+    @Override
+    public void run() {
+      try {
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        out = new PrintWriter(socket.getOutputStream(), true);
 
                 String initialMessage = in.readLine();
                 boolean handledInitial = false;
@@ -233,40 +248,54 @@ public class Server {
             }
         }
 
-        private void broadcastToControlPanels(String message) {
-            broadcastToControlPanels(message, null);
-        }
+    /**
+     * Broadcast a message to all connected control panels.
+     *
+     * @param message the message to broadcast
+     */
+    private void broadcastToControlPanels(String message) {
+      broadcastToControlPanels(message, null);
+    }
 
-        private void broadcastToControlPanels(String message, String nodeId) {
-            synchronized (controlPanels) {
-                for (Socket cpSocket : controlPanels) {
-                    try {
-                        // If a nodeId is provided, only send to control panels subscribed to that node
-                        if (nodeId != null) {
-                            Set<String> subs = controlPanelSubscriptions.get(cpSocket);
-                            if (subs == null || !subs.contains(nodeId)) {
-                                continue;
-                            }
-                        }
-                        PrintWriter cpOut = new PrintWriter(cpSocket.getOutputStream(), true);
-                        cpOut.println(message);
-                    } catch (IOException e) {
-                        System.out.println("Error sending to control panel: " + cpSocket.getInetAddress());
-                    }
-                }
-            }
-        }
-
-        private void cleanup() {
-            try {
-                socket.close();
-             } catch (IOException e) {
-                 System.out.println("Error closing socket with " + socket.getInetAddress());
+    /**
+     * Broadcast a message to all connected control panels, optionally filtering by nodeId subscription.
+     *
+     * @param message the message to broadcast
+     * @param nodeId  the nodeId to filter subscriptions (if null, send to all)
+     */
+    private void broadcastToControlPanels(String message, String nodeId) {
+      synchronized (controlPanels) {
+        for (Socket cpSocket : controlPanels) {
+          try {
+            // If a nodeId is provided, only send to control panels subscribed to that node
+            if (nodeId != null) {
+              Set<String> subs = controlPanelSubscriptions.get(cpSocket);
+              if (subs == null || !subs.contains(nodeId)) {
+                continue;
               }
-            if (isControlPanel) {
-                controlPanels.remove(socket);
-                return;
             }
+            PrintWriter cpOut = new PrintWriter(cpSocket.getOutputStream(), true);
+            cpOut.println(message);
+          } catch (IOException e) {
+            System.out.println("Error sending to control panel: " + cpSocket.getInetAddress());
+          }
+        }
+      }
+    }
+
+    /**
+     * Cleanup resources on client disconnect.
+     */
+    private void cleanup() {
+      try {
+        socket.close();
+      } catch (IOException e) {
+        System.out.println("Error closing socket with " + socket.getInetAddress());
+      }
+      if (isControlPanel) {
+        controlPanels.remove(socket);
+        return;
+      }
 
             // Only remove duplicate nodeId if it was *actually registered*
             if (nodeId != null && sensorNodes.get(nodeId) == socket) {
