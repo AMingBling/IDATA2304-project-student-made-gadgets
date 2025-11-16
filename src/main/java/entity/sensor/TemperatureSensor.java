@@ -1,10 +1,25 @@
 package entity.sensor;
 
-public class TemperatureSensor extends Sensor {
 
     
 
-    public TemperatureSensor(String sensorId, double minThreshold, double maxThreshold) {
+
+
+
+/**
+ * Class representing a Temperature Sensor.
+ */
+public class TemperatureSensor extends Sensor {
+
+    /**
+     * Constructor for TemperatureSensor.
+     * Min and max thresholds are specified in degrees Celsius. 18 and 35 would be natural values.
+     * @param sensorId the id of the sensor
+     * @param minThreshold minimum threshold value
+     * @param maxThreshold maximum threshold value
+     */
+    public TemperatureSensor(String sensorId,
+        double minThreshold, double maxThreshold) {
         super(sensorId, "TEMPERATURE", "°C", minThreshold, maxThreshold);
         updateValue(20.0);
     }

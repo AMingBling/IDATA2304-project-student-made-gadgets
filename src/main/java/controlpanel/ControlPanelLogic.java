@@ -212,6 +212,35 @@ public class ControlPanelLogic {
   }
 
   /**
+   * Request the node to add a sensor at runtime.
+   * Fields: sensorType (TEMPERATURE|LIGHT|HUMIDITY|CO2), sensorId, minThreshold, maxThreshold
+   */
+  public void addSensor(String nodeId, String sensorType, String sensorId, double minThreshold, double maxThreshold) {
+    JsonObject obj = new JsonObject();
+    obj.addProperty("messageType", "ADD_SENSOR");
+    obj.addProperty("controlPanelId", controlPanelId);
+    obj.addProperty("nodeID", nodeId);
+    obj.addProperty("sensorType", sensorType);
+    obj.addProperty("sensorId", sensorId);
+    obj.addProperty("minThreshold", minThreshold);
+    obj.addProperty("maxThreshold", maxThreshold);
+    comm.sendJson(gson.toJson(obj));
+  }
+
+  /**
+   * Request the node to add an actuator at runtime.
+   */
+  public void addActuator(String nodeId, String actuatorId, String actuatorType) {
+    JsonObject obj = new JsonObject();
+    obj.addProperty("messageType", "ADD_ACTUATOR");
+    obj.addProperty("controlPanelId", controlPanelId);
+    obj.addProperty("nodeID", nodeId);
+    obj.addProperty("actuatorId", actuatorId);
+    obj.addProperty("actuatorType", actuatorType);
+    comm.sendJson(gson.toJson(obj));
+  }
+
+  /**
    * holder for state per node
    */
   public static class NodeState {

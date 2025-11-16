@@ -65,17 +65,19 @@ public class Node {
   }
 
   public void setSensors(List<Sensor> sensors) {
-    if (sensors == null || sensors.isEmpty()) {
-      throw new IllegalArgumentException("entity.Sensor readings cannot be null or empty");
+    if (sensors == null) {
+      this.sensors = new java.util.ArrayList<>();
+    } else {
+      this.sensors = sensors;
     }
-    this.sensors = sensors;
   }
 
   public void setActuators(List<Actuator> actuators) {
-    if (actuators == null || actuators.isEmpty()) {
-      throw new IllegalArgumentException("Actuators cannot be null or empty");
+    if (actuators == null) {
+      this.actuators = new java.util.ArrayList<>();
+    } else {
+      this.actuators = actuators;
     }
-    this.actuators = actuators;
   }
 
   public String getNodeID() {
