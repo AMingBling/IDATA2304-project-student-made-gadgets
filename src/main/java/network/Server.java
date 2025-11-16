@@ -167,31 +167,25 @@ public class Server {
                                         System.out.println("No nodeID in subscribe/unsubscribe message: " + inputLine);
                                     }
                                 } else if ("REQUEST_NODE".equals(mt)) {
-                                    if (obj.has("nodeID") && !obj.get("nodeID").isJsonNull()) {
-                                        String targetNode = obj.get("nodeID").getAsString();
-                                        String last = lastKnownNodeJson.get(targetNode);
-                                        if (last != null) {
-                                            // send last-known directly to this control panel
-                                            try { out.println(last); } catch (Exception ignored) {}
-                                            System.out.println("Served last-known state for " + targetNode + " to " + socket.getInetAddress());
-                                        } else {
-                                            // forward REQUEST_STATE to node if connected
-                                            Socket nodeSocket = sensorNodes.get(targetNode);
-                                            if (nodeSocket != null && !nodeSocket.isClosed()) {
-                                                try {
-                                                    JsonObject req = new JsonObject();
-                                                    req.addProperty("messageType", "REQUEST_STATE");
-                                                    req.addProperty("requester", "controlpanel");
-                                                    PrintWriter nodeOut = new PrintWriter(nodeSocket.getOutputStream(), true);
-                                                    nodeOut.println(req.toString());
-                                                    System.out.println("Forwarded REQUEST_STATE to node " + targetNode);
-                                                } catch (IOException e) {
-                                                    System.out.println("Error forwarding REQUEST_STATE to node: " + e.getMessage());
-                                                }
-                                            } else {
-                                                System.out.println("Target node not connected for REQUEST_NODE: " + targetNode);
-                                            }
-                                        }
+                                    String targetNode = obj.get("nodeID").getAsString();
+
+                                    String lastJson = lastKnownNodeJson.get(targetNode);
+                                    if (lastJson != null) {
+                                        out.println(lastJson);
+                                        System.out.println("Served cached state of " + targetNode + " to control panel.");
+                                        return;
+                                    }
+
+                                    Socket nodeSocket = sensorNodes.get(targetNode);
+                                    if (nodeSocket != null && !nodeSocket.isClosed()) {
+                                        PrintWriter nodeOut = new PrintWriter(nodeSocket.getOutputStream(), true);
+
+                                        JsonObject requestObj = new JsonObject();
+                                        requestObj.addProperty("messageType", "REQUEST_STATE");
+                                        nodeOut.println(requestObj.toString());
+                                        System.out.println("Requested state of " + targetNode + " from node.");
+                                    } else {
+                                        System.out.println("Requested node not connected: " + targetNode);
                                     }
                                 } else {
                                     // Unknown control-panel message type; ignore or log
