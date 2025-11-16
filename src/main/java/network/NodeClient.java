@@ -121,6 +121,43 @@ public class NodeClient {
             } else if ("REQUEST_STATE".equals(mt) || "REQUEST_NODE".equals(mt)) {
               // send current node state immediately
               sendCurrentNode();
+            } else if ("ADD_SENSOR".equals(mt)) {
+              // Expect fields: sensorType, sensorId, minThreshold, maxThreshold
+              try {
+                String sensorType = obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
+                String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
+                double min = obj.has("minThreshold") ? obj.get("minThreshold").getAsDouble() : 0.0;
+                double max = obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
+                if (sensorType != null && sensorId != null) {
+                  if ("TEMPERATURE".equals(sensorType)) {
+                    node.addSensor(new TemperatureSensor(sensorId, min, max));
+                  } else if ("LIGHT".equals(sensorType)) {
+                    node.addSensor(new entity.sensor.LightSensor(sensorId, min, max));
+                  } else if ("HUMIDITY".equals(sensorType)) {
+                    node.addSensor(new entity.sensor.HumiditySensor(sensorId, min, max));
+                  } else if ("CO2".equals(sensorType)) {
+                    node.addSensor(new entity.sensor.CO2Sensor(sensorId, min, max));
+                  } else {
+                    System.out.println("Unknown sensor type: " + sensorType);
+                  }
+                  System.out.println("Added sensor " + sensorId + " of type " + sensorType);
+                  sendCurrentNode();
+                }
+              } catch (Exception e) {
+                System.out.println("Failed to add sensor: " + e.getMessage());
+              }
+            } else if ("ADD_ACTUATOR".equals(mt)) {
+              try {
+                String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
+                String actuatorType = obj.has("actuatorType") ? obj.get("actuatorType").getAsString() : null;
+                if (actuatorId != null && actuatorType != null) {
+                  node.addActuator(new Actuator(actuatorId, actuatorType));
+                  System.out.println("Added actuator " + actuatorId + " type " + actuatorType);
+                  sendCurrentNode();
+                }
+              } catch (Exception e) {
+                System.out.println("Failed to add actuator: " + e.getMessage());
+              }
             }
           } catch (Exception e) {
             System.out.println("Failed to parse command JSON: " + e.getMessage());
@@ -193,17 +230,11 @@ public class NodeClient {
         return;
       }
 
-      // Create a minimal initial sensor (Node requires at least one sensor)
-      Sensor initSensor = new TemperatureSensor("1", 20.0,
-          26.0);
-      java.util.List<Sensor> sensors = new ArrayList<>();
-      sensors.add(initSensor);
+        // Start with empty sensors/actuators — user adds them via ControlPanel
+        java.util.List<Sensor> sensors = new ArrayList<>();
+        java.util.List<Actuator> actuators = new ArrayList<>();
 
-      Actuator initActuator = new Actuator("1", "FAN");
-      java.util.List<Actuator> actuators = new ArrayList<>();
-      actuators.add(initActuator);
-
-      Node nodeObj = new Node(nodeId, location, sensors, actuators);
+        Node nodeObj = new Node(nodeId, location, sensors, actuators);
 
       NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
       nodeClient.start();

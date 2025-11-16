@@ -55,6 +55,8 @@ public class ControlPanelUI {
     System.out.println(" Unsubscribe <nodeId>");
     System.out.println(" Request <nodeId>");
     System.out.println(" Set <nodeId> <actuatorId> <on|off>");
+    System.out.println(" AddSensor <nodeId> <sensorType> <sensorId> <min> <max>");
+    System.out.println(" AddActuator <nodeId> <actuatorId> <actuatorType>");
     System.out.println(" Refresh");
     System.out.println(" Exit");
   }
@@ -73,6 +75,28 @@ public class ControlPanelUI {
         }
         case "request" -> {
           if (parts.length >= 2) logic.requestNode(parts[1]); else System.out.println("Usage: request <nodeId>");
+        }
+        case "addsensor" -> {
+          if (parts.length >= 6) {
+            String nodeId = parts[1];
+            String sensorType = parts[2].toUpperCase();
+            String sensorId = parts[3];
+            double min = Double.parseDouble(parts[4]);
+            double max = Double.parseDouble(parts[5]);
+            logic.addSensor(nodeId, sensorType, sensorId, min, max);
+          } else {
+            System.out.println("Usage: addsensor <nodeId> <sensorType> <sensorId> <min> <max>");
+          }
+        }
+        case "addactuator" -> {
+          if (parts.length >= 4) {
+            String nodeId = parts[1];
+            String actuatorId = parts[2];
+            String actuatorType = parts[3];
+            logic.addActuator(nodeId, actuatorId, actuatorType);
+          } else {
+            System.out.println("Usage: addactuator <nodeId> <actuatorId> <actuatorType>");
+          }
         }
         case "set" -> {
           if (parts.length >= 4) {
