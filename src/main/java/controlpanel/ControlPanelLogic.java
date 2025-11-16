@@ -67,14 +67,15 @@ public class ControlPanelLogic {
       System.out.println("[CP-Logic] malformed JSON: " + json);
       return;
     }
-    JsonElement mt = obj.get("messageType");
-    if (mt == null || mt.isJsonNull()) {
-      System.out.println("[CP-Logic] Missing messageType: " + json);
+    
+    if (!obj.has("messageType")) {
+      System.out.println("[CP-Logic] Missing messageType in JSON: " + json);
       return;
     }
-    String type = mt.getAsString();
+    
+    String type = obj.get("messageType").getAsString();
     switch (type) {
-      case "SENSOR_DATA_FROM_NODE" -> processNodeUpdate(json);
+      case "SENSOR_DATA_FROM_NODE" -> updateNodeState(json);
       case "ACTUATOR_STATUS" -> processActuatorStatus(json);
       default -> System.out.println("[CP-Logic] Unknown type: " + type);
     }
@@ -83,8 +84,7 @@ public class ControlPanelLogic {
   /**
    * parsing nodemessage with sesnoreadings and updates intern state
    */
-  private void processNodeUpdate(String json) {
-    System.out.println("[CP-Logic] Raw node JSON: " + json);
+  private void updateNodeState(String json) {
     try {
       Node node = Node.nodeFromJson(json);
       if (node == null) return;
@@ -98,29 +98,11 @@ public class ControlPanelLogic {
       for (Actuator actuator : node.getActuators()) {
         state.actuators.put(actuator.getActuatorId(), actuator);
       }
-      // Console-friendly summary for interactive testing
-      try {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[CP-Logic] Node update -> id=").append(node.getNodeID())
-          .append(" location=").append(node.getLocation())
-          .append(" sensors=").append(state.sensors.size())
-          .append(" actuators=").append(state.actuators.size())
-          .append("\n");
-        for (Sensor s : state.sensors.values()) {
-          sb.append("  - sensor ").append(s.getSensorId()).append(" (type=")
-            .append(s.getSensorType()).append(") value=").append(s.getValue()).append('\n');
-        }
-        for (Actuator a : state.actuators.values()) {
-          sb.append("  - actuator ").append(a.getActuatorId()).append(" type=")
-            .append(a.getActuatorType()).append(" on=").append(a.isOn()).append('\n');
-        }
-        System.out.print(sb.toString());
-      } catch (Exception e) {
-        // Non-fatal logging error
-        System.out.println("[CP-Logic] Updated node " + node.getNodeID());
-      }
+
+      printNodeState(state);
+
     } catch (Exception e) {
-      System.out.println("[CP-Logic] Error processing Node update: " + e.getMessage());
+      System.out.println("[CP-Logic] Error updating Node state: " + e.getMessage());
     }
   }
 
@@ -147,6 +129,22 @@ public class ControlPanelLogic {
     } catch (Exception e) {
       System.out.println("[CP-Logic] Error processing Actuator status: " + e.getMessage());
     }
+  }
+
+  private void printNodeState(NodeState state) {
+    System.out.println("---- NODE UPDATE ----");
+    System.out.println("Node ID: " + state.nodeId);
+    System.out.println(" Sensors:");
+    for (Sensor sensor : state.sensors.values()) {
+      System.out.printf("  - ID: %s, Type: %s, Value: %.2f %s%n",
+          sensor.getSensorId(), sensor.getSensorType(), sensor.getValue(), sensor.getUnit());
+    }
+    System.out.println(" Actuators:");
+    for (Actuator actuator : state.actuators.values()) {
+      System.out.printf("  - ID: %s, Type: %s, State: %s%n",
+          actuator.getActuatorId(), actuator.getActuatorType(), actuator.isOn() ? "ON" : "OFF");
+    }
+    System.out.println("---------------------\n");
   }
 
   // UI API

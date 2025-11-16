@@ -55,26 +55,8 @@ public class NodeClient {
     listener = new Thread(this::listenForCommands);
     listener.setDaemon(true);
     listener.start();
-
-    startSensorLoop();
   }
 
-  private void startSensorLoop() {
-    Thread sensorThread = new Thread(() -> {
-      try {
-        while (true) {
-          Thread.sleep(10000); // Update every 10 seconds
-          node.applyActuatorEffects(); // actuator changes first
-          node.updateAllSensors();     // then natural sensor noise
-          sendCurrentNode();
-        }
-      } catch (InterruptedException e) {
-        // Thread interrupted, exit gracefully
-      }
-    });
-    sensorThread.setDaemon(true);
-    sensorThread.start();
-  }
 
   public void sendCurrentNode() {
     if (node == null) {
@@ -88,12 +70,13 @@ public class NodeClient {
    */
   public void sendNode(Node n) {
     if (n == null) {
-      return;
+      throw new IllegalArgumentException("Node cannot be null");
     }
-    String json = (gson != null) ? n.nodeToJson(gson) : n.nodeToJson();
-    out.println(json);
+    JsonObject obj = JsonParser.parseString(gson.toJson(n)).getAsJsonObject();
+    obj.addProperty("messageType", "SENSOR_DATA_FROM_NODE");
+    out.println(obj.toString());
     out.flush();
-    System.out.println("Node -> Server: " + json);
+    System.out.println("Node -> Server: " + obj.toString());
   }
 
 
@@ -128,6 +111,7 @@ public class NodeClient {
               }
             } else if ("REQUEST_STATE".equals(mt) || "REQUEST_NODE".equals(mt)) {
               // send current node state immediately
+              node.updateAllSensors();
               sendCurrentNode();
             } else if ("ADD_SENSOR".equals(mt)) {
               // Expect fields: sensorType, sensorId, minThreshold, maxThreshold
@@ -250,6 +234,9 @@ public class NodeClient {
       actuators.add(initActuator);
 
 
+        TemperatureSensor tempSensor = new TemperatureSensor("temp1", 15.0, 30.0);
+        sensors.add(tempSensor);
+
         Node nodeObj = new Node(nodeId, location, sensors, actuators);
 
       NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
@@ -257,13 +244,6 @@ public class NodeClient {
 
       // Send initial node state to server
       nodeClient.sendCurrentNode();
-
-      System.out.println("Press ENTER to exit.");
-      try (java.util.Scanner sc = new java.util.Scanner(System.in)) {
-        sc.nextLine();
-      }
-
-      nodeClient.close();
 
     } catch (Exception e) {
       e.printStackTrace();
