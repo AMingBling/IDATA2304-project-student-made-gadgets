@@ -4,7 +4,9 @@ package entity.actuator;
 import java.util.List;
 import entity.sensor.Sensor;
 
-/** Humidifier: øker fuktighet når den er på. */
+/**
+ * Class of a Humidifier actuator that increases humidity when turned on.
+ */
 public class Humidifier extends Actuator {
 
     private final double humidDelta;

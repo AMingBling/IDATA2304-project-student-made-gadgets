@@ -4,7 +4,7 @@ import java.util.List;
 import entity.sensor.Sensor;
 
 /**
- * Heater: øker temperatur når den er på.
+ * Class of a Heater actuator that increases temperature when turned on.
  */
 public class Heater extends Actuator {
 

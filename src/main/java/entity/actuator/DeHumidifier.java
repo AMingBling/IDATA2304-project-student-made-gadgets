@@ -4,7 +4,9 @@ package entity.actuator;
 import java.util.List;
 import entity.sensor.Sensor;
 
-/** DeHumidifier: reduserer fuktighet når den er på. */
+/**
+ * Class of a DeHumidifier actuator that decreases humidity when turned on.
+ */
 public class DeHumidifier extends Actuator {
 
     private final double dryDelta;

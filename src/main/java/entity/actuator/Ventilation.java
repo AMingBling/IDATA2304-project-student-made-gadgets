@@ -4,7 +4,7 @@ import java.util.List;
 import entity.sensor.Sensor;
 
 /**
- * Fan: reduserer CO2 når den er på.
+ * Class of a Ventilation actuator that decreases CO2 levels when turned on.
  */
 public class Ventilation extends Actuator {
 
