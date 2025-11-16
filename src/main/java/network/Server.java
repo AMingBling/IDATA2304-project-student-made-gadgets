@@ -1,4 +1,8 @@
 package network;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -44,13 +48,18 @@ public class Server {
                 out = new PrintWriter(socket.getOutputStream(), true);
 
                 String initialMessage = in.readLine();
-                if (initialMessage != null && initialMessage.equals("CONTROL_PANEL_CONNECTED")) {
-                    isControlPanel = true;
-                    controlPanels.add(socket);
-                    System.out.println("Control panel connected: " + socket.getInetAddress());
-                } else if (initialMessage != null && initialMessage.startsWith("SENSOR_NODE_CONNECTED")) {
+                boolean handledInitial = false;
+                if (initialMessage != null) {
+                    String trimmed = initialMessage.trim();
+                    // Old plain-text protocol
+                    if (trimmed.equals("CONTROL_PANEL_CONNECTED")) {
+                        isControlPanel = true;
+                        controlPanels.add(socket);
+                        System.out.println("Control panel connected: " + socket.getInetAddress());
+                        handledInitial = true;
+                    } else if (trimmed.startsWith("SENSOR_NODE_CONNECTED")) {
                     // Expect format: SENSOR_NODE_CONNECTED <nodeId>
-                    String[] parts = initialMessage.split(" ", 2);
+                        String[] parts = trimmed.split(" ", 2);
                     if (parts.length < 2) {
                         out.println("NODE_ID_REJECTED");
                         socket.close();
@@ -68,9 +77,27 @@ public class Server {
                         out.println("NODE_ID_ACCEPTED");
                         System.out.println("entity.Sensor connected: " + socket.getInetAddress() + " (" + nodeId + ")");
                     }
-                } else {
-                    // Fallback: treat as a sensor without explicit id (rare)
-                    System.out.println("entity.Sensor connected (no id): " + socket.getInetAddress());
+                    } else if (trimmed.startsWith("{")) {
+                        // Fallback: try JSON registration for control panel (newer protocol)
+                        try {
+                            Gson gson = new Gson();
+                            JsonObject obj = gson.fromJson(trimmed, JsonObject.class);
+                            if (obj != null && obj.has("messageType") && "REGISTER_CONTROL_PANEL".equals(obj.get("messageType").getAsString())) {
+                                isControlPanel = true;
+                                controlPanels.add(socket);
+                                String cpId = obj.has("controlPanelId") ? obj.get("controlPanelId").getAsString() : "<unknown>";
+                                System.out.println("Control panel registered: " + socket.getInetAddress() + " (id=" + cpId + ")");
+                                handledInitial = true;
+                            }
+                        } catch (JsonSyntaxException ignored) {
+                            // Not JSON or malformed - fall through to generic fallback
+                        }
+                    }
+
+                    if (!handledInitial) {
+                        // Fallback: treat as a sensor without explicit id (rare)
+                        System.out.println("entity.Sensor connected (no id): " + socket.getInetAddress());
+                    }
                 }
 
                 String inputLine;
