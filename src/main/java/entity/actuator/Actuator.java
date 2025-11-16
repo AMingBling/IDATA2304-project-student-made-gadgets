@@ -4,12 +4,20 @@ import java.util.List;
 
 import entity.sensor.Sensor;
 
+/**
+ * Abstract class representing an Actuator.
+ */
 public abstract class Actuator {
 
   private String actuatorId;
   private String actuatorType;
   private boolean on = false;
 
+  /**
+   * Constructor for Actuator.
+   * @param actuatorId the id of the actuator
+   * @param actuatorType the type of the actuator (ex. ventilation, heater)
+   */
   public Actuator(String actuatorId, String actuatorType) {
     setActuatorId(actuatorId);
     setActuatorType(actuatorType);
@@ -17,6 +25,11 @@ public abstract class Actuator {
   }
 
   //-------------- Setters and Getters ---------------
+
+  /**
+   * Set actuator ID
+   * @param actuatorId the id of the actuator
+   */
   private void setActuatorId(String actuatorId) {
     if (actuatorId == null || actuatorId.isEmpty()) {
       throw new IllegalArgumentException("Actuator ID cannot be null or empty");
@@ -24,6 +37,10 @@ public abstract class Actuator {
     this.actuatorId = actuatorId;
   }
 
+  /**
+   * Set actuator type
+   * @param actuatorType the type of the actuator
+   */
   private void setActuatorType(String actuatorType) {
     if (actuatorType == null) {
       throw new IllegalArgumentException("Actuator type cannot be null");
@@ -31,6 +48,10 @@ public abstract class Actuator {
     this.actuatorType = actuatorType;
   }
 
+  /**
+   * Set actuator state
+   * @param on true if the actuator is on, false otherwise
+   */
   public void setOn(boolean on) {
     this.on = on;
   }
