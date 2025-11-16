@@ -2,13 +2,16 @@ package entity.sensor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Class representing a Light Sensor.
+ */
 public class LightSensor extends Sensor {
     /**
      * Constructor for LightSensor.
      * Min and max thresholds are specified in lux. 200 and 20 000 would be natural values.
-     * @param sensorId
-     * @param minThreshold
-     * @param maxThreshold
+     * @param sensorId the id of the sensor
+     * @param minThreshold minimum threshold value
+     * @param maxThreshold maximum threshold value
      */
     public LightSensor(String sensorId,
         double minThreshold, double maxThreshold) {

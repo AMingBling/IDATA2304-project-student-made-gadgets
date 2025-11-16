@@ -2,13 +2,16 @@ package entity.sensor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Class representing a Humidity Sensor.
+ */
 public class HumiditySensor extends Sensor {
     /**
      * Constructor for HumiditySensor.
      * Min and max thresholds are specified in percentage. 30 and 85 would be natural values.
-     * @param sensorId
-     * @param minThreshold
-     * @param maxThreshold
+     * @param sensorId the id of the sensor
+     * @param minThreshold minimum threshold value
+     * @param maxThreshold maximum threshold value
      */
     public HumiditySensor(String sensorId,
         double minThreshold, double maxThreshold) {

@@ -1,5 +1,4 @@
 package network;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
@@ -8,10 +7,18 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import entity.Actuator;
 import entity.Node;
+import entity.actuator.Actuator;
+
+import entity.actuator.Heater;
 import entity.sensor.Sensor;
 import entity.sensor.TemperatureSensor;
+import entity.actuator.Humidifier;
+import entity.actuator.DeHumidifier; 
+import entity.actuator.Ventilation;
+import entity.actuator.Heater;
+import entity.actuator.AirCondition;
+
 
 import java.io.*;
 import java.net.Socket;
@@ -49,7 +56,6 @@ public class NodeClient {
     listener.setDaemon(true);
     listener.start();
   }
-
 
 
   public void sendCurrentNode() {
@@ -216,9 +222,17 @@ public class NodeClient {
         return;
       }
 
-        // Start with empty sensors/actuators — user adds them via ControlPanel
-        java.util.List<Sensor> sensors = new ArrayList<>();
-        java.util.List<Actuator> actuators = new ArrayList<>();
+
+      // Create a minimal initial sensor (Node requires at least one sensor)
+      Sensor initSensor = new TemperatureSensor("1", 20.0,
+          26.0);
+      java.util.List<Sensor> sensors = new ArrayList<>();
+      sensors.add(initSensor);
+
+      Actuator initActuator = new Heater("1");
+      java.util.List<Actuator> actuators = new ArrayList<>();
+      actuators.add(initActuator);
+
 
         TemperatureSensor tempSensor = new TemperatureSensor("temp1", 15.0, 30.0);
         sensors.add(tempSensor);

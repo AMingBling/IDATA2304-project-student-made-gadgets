@@ -13,6 +13,7 @@ import entity.sensor.Sensor;
 import entity.sensor.TemperatureSensor;
 import entity.sensor.LightSensor;
 import entity.sensor.HumiditySensor;
+import entity.actuator.Actuator;
 import entity.sensor.CO2Sensor;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
@@ -24,6 +25,8 @@ import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.google.gson.Gson;
+
+import entity.sensor.Sensor;
 
 /**
  * Represents a Node in the IoT network, containing sensors and actuators.
@@ -207,5 +210,16 @@ public class Node {
   }
 
   // -----------------------------------------------------
+
+
+ public void applyActuatorEffects() {
+        if (this.actuators == null || this.sensors == null) return;
+        for (entity.actuator.Actuator a : this.actuators) {
+            a.applyEffect(this.sensors); // hver actuator håndterer sine egne effekter
+        }
+
+
+
+}
 
 }
