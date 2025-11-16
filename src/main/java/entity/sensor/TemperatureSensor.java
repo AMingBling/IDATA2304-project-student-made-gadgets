@@ -2,14 +2,17 @@ package entity.sensor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Class representing a Temperature Sensor.
+ */
 public class TemperatureSensor extends Sensor {
 
     /**
      * Constructor for TemperatureSensor.
      * Min and max thresholds are specified in degrees Celsius. 18 and 35 would be natural values.
-     * @param sensorId
-     * @param minThreshold
-     * @param maxThreshold
+     * @param sensorId the id of the sensor
+     * @param minThreshold minimum threshold value
+     * @param maxThreshold maximum threshold value
      */
     public TemperatureSensor(String sensorId,
         double minThreshold, double maxThreshold) {
