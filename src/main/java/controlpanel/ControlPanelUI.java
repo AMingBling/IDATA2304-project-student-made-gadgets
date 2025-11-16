@@ -115,7 +115,6 @@ public class ControlPanelUI {
           System.out.println("Exiting...");
           running = false;
           logic.close();
-          scanner.close();
         }
         default -> System.out.println("Unknown command: " + cmd);
       }

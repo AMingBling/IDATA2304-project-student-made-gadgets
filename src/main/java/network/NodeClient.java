@@ -1,5 +1,4 @@
 package network;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
@@ -8,10 +7,18 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import entity.Actuator;
 import entity.Node;
+import entity.actuator.Actuator;
+
+import entity.actuator.Heater;
 import entity.sensor.Sensor;
 import entity.sensor.TemperatureSensor;
+import entity.actuator.Humidifier;
+import entity.actuator.DeHumidifier;
+import entity.actuator.Ventilation;
+import entity.actuator.Heater;
+import entity.actuator.AirCondition;
+
 
 import java.io.*;
 import java.net.Socket;
@@ -60,25 +67,8 @@ public class NodeClient {
     listener = new Thread(this::listenForCommands);
     listener.setDaemon(true);
     listener.start();
-
-    startSensorLoop();
   }
 
-  private void startSensorLoop() {
-    Thread sensorThread = new Thread(() -> {
-      try {
-        while (true) {
-          Thread.sleep(10000); // Update every 10 seconds
-          node.updateAllSensors();
-          sendCurrentNode();
-        }
-      } catch (InterruptedException e) {
-        // Thread interrupted, exit gracefully
-      }
-    });
-    sensorThread.setDaemon(true);
-    sensorThread.start();
-  }
 
   /**
    * Send the current Node object to the server (serialized to JSON).
@@ -95,12 +85,13 @@ public class NodeClient {
    */
   public void sendNode(Node n) {
     if (n == null) {
-      return;
+      throw new IllegalArgumentException("Node cannot be null");
     }
-    String json = (gson != null) ? n.nodeToJson(gson) : n.nodeToJson();
-    out.println(json);
+    JsonObject obj = JsonParser.parseString(gson.toJson(n)).getAsJsonObject();
+    obj.addProperty("messageType", "SENSOR_DATA_FROM_NODE");
+    out.println(obj.toString());
     out.flush();
-    System.out.println("Node -> Server: " + json);
+    System.out.println("Node -> Server: " + obj.toString());
   }
 
 
@@ -122,8 +113,7 @@ public class NodeClient {
 
             if ("ACTUATOR_COMMAND".equals(mt)) {
               // apply actuator change locally and send updated node state
-              String actuatorId =
-                  obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
+              String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
               String command = obj.has("command") ? obj.get("command").getAsString() : null;
               if (actuatorId != null && command != null) {
                 boolean on = "TURN_ON".equals(command);
@@ -139,16 +129,15 @@ public class NodeClient {
               }
             } else if ("REQUEST_STATE".equals(mt) || "REQUEST_NODE".equals(mt)) {
               // send current node state immediately
+              node.updateAllSensors();
               sendCurrentNode();
             } else if ("ADD_SENSOR".equals(mt)) {
               // Expect fields: sensorType, sensorId, minThreshold, maxThreshold
               try {
-                String sensorType =
-                    obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
+                String sensorType = obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
                 String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
                 double min = obj.has("minThreshold") ? obj.get("minThreshold").getAsDouble() : 0.0;
-                double max =
-                    obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
+                double max = obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
                 if (sensorType != null && sensorId != null) {
                   if ("TEMPERATURE".equals(sensorType)) {
                     node.addSensor(new TemperatureSensor(sensorId, min, max));
@@ -169,10 +158,8 @@ public class NodeClient {
               }
             } else if ("ADD_ACTUATOR".equals(mt)) {
               try {
-                String actuatorId =
-                    obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
-                String actuatorType =
-                    obj.has("actuatorType") ? obj.get("actuatorType").getAsString() : null;
+                String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
+                String actuatorType = obj.has("actuatorType") ? obj.get("actuatorType").getAsString() : null;
                 if (actuatorId != null && actuatorType != null) {
                   node.addActuator(new Actuator(actuatorId, actuatorType));
                   System.out.println("Added actuator " + actuatorId + " type " + actuatorType);
@@ -217,7 +204,7 @@ public class NodeClient {
   public static void main(String[] args) {
     if (args.length < 2) {
       System.out.println("mvn exec:java\r\n" + //
-          " * \"-DesorNodesxec.mainClass=network.NodeClient\" \"-Dexec.args=<ID> <Lokasjon>\"");
+                " * \"-DesorNodesxec.mainClass=network.NodeClient\" \"-Dexec.args=<ID> <Lokasjon>\"");
       return;
     }
 
@@ -258,24 +245,28 @@ public class NodeClient {
         return;
       }
 
-      // Start with empty sensors/actuators — user adds them via ControlPanel
-      java.util.List<Sensor> sensors = new ArrayList<>();
-      java.util.List<Actuator> actuators = new ArrayList<>();
 
-      Node nodeObj = new Node(nodeId, location, sensors, actuators);
+      // Create a minimal initial sensor (Node requires at least one sensor)
+      Sensor initSensor = new TemperatureSensor("1", 20.0,
+          26.0);
+      java.util.List<Sensor> sensors = new ArrayList<>();
+      sensors.add(initSensor);
+
+      Actuator initActuator = new Heater("1");
+      java.util.List<Actuator> actuators = new ArrayList<>();
+      actuators.add(initActuator);
+
+
+        TemperatureSensor tempSensor = new TemperatureSensor("temp1", 15.0, 30.0);
+        sensors.add(tempSensor);
+
+        Node nodeObj = new Node(nodeId, location, sensors, actuators);
 
       NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
       nodeClient.start();
 
       // Send initial node state to server
       nodeClient.sendCurrentNode();
-
-      System.out.println("Press ENTER to exit.");
-      try (java.util.Scanner sc = new java.util.Scanner(System.in)) {
-        sc.nextLine();
-      }
-
-      nodeClient.close();
 
     } catch (Exception e) {
       e.printStackTrace();
