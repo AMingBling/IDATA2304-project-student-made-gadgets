@@ -17,6 +17,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 
+// mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="<id> <location>"
+// ex: mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="01 greenhouse1"
 /**
  * NodeClients kan bli kjørt i terminalen ved hjelp av kommandoen mvn exec:java
  * "-DesorNodesxec.mainClass=network.NodeClient" "-Dexec.args=<ID> <Lokasjon>" og kobler seg til Serveren

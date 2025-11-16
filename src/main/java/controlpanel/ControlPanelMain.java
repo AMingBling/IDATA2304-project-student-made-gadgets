@@ -2,6 +2,9 @@ package controlpanel;
 
 import controlpanel.ControlPanelLogic;
 
+
+// mvn --% exec:java -Dexec.mainClass=controlpanel.ControlPanelMain -Dexec.args="<id> <ip> <port>" 
+// ex: mvn --% exec:java -Dexec.mainClass=controlpanel.ControlPanelMain -Dexec.args="cp1 127.0.0.1 5000"
 public class ControlPanelMain {
 
   public static void main(String[] args) {
