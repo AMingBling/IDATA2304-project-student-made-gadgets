@@ -84,6 +84,7 @@ public class ControlPanelLogic {
    * parsing nodemessage with sesnoreadings and updates intern state
    */
   private void processNodeUpdate(String json) {
+    System.out.println("[CP-Logic] Raw node JSON: " + json);
     try {
       Node node = Node.nodeFromJson(json);
       if (node == null) return;
@@ -96,6 +97,27 @@ public class ControlPanelLogic {
 
       for (Actuator actuator : node.getActuators()) {
         state.actuators.put(actuator.getActuatorId(), actuator);
+      }
+      // Console-friendly summary for interactive testing
+      try {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[CP-Logic] Node update -> id=").append(node.getNodeID())
+          .append(" location=").append(node.getLocation())
+          .append(" sensors=").append(state.sensors.size())
+          .append(" actuators=").append(state.actuators.size())
+          .append("\n");
+        for (Sensor s : state.sensors.values()) {
+          sb.append("  - sensor ").append(s.getSensorId()).append(" (type=")
+            .append(s.getSensorType()).append(") value=").append(s.getValue()).append('\n');
+        }
+        for (Actuator a : state.actuators.values()) {
+          sb.append("  - actuator ").append(a.getActuatorId()).append(" type=")
+            .append(a.getActuatorType()).append(" on=").append(a.isOn()).append('\n');
+        }
+        System.out.print(sb.toString());
+      } catch (Exception e) {
+        // Non-fatal logging error
+        System.out.println("[CP-Logic] Updated node " + node.getNodeID());
       }
     } catch (Exception e) {
       System.out.println("[CP-Logic] Error processing Node update: " + e.getMessage());
@@ -161,6 +183,31 @@ public class ControlPanelLogic {
     obj.addProperty("sensorType", sensorType);
     obj.addProperty("targetMin", min);
     obj.addProperty("targetMax", max);
+    comm.sendJson(gson.toJson(obj));
+  }
+
+  // ---------- ControlPanel actions ----------
+  public void subscribe(String nodeId) {
+    JsonObject obj = new JsonObject();
+    obj.addProperty("messageType", "SUBSCRIBE_NODE");
+    obj.addProperty("controlPanelId", controlPanelId);
+    obj.addProperty("nodeID", nodeId);
+    comm.sendJson(gson.toJson(obj));
+  }
+
+  public void unsubscribe(String nodeId) {
+    JsonObject obj = new JsonObject();
+    obj.addProperty("messageType", "UNSUBSCRIBE_NODE");
+    obj.addProperty("controlPanelId", controlPanelId);
+    obj.addProperty("nodeID", nodeId);
+    comm.sendJson(gson.toJson(obj));
+  }
+
+  public void requestNode(String nodeId) {
+    JsonObject obj = new JsonObject();
+    obj.addProperty("messageType", "REQUEST_NODE");
+    obj.addProperty("controlPanelId", controlPanelId);
+    obj.addProperty("nodeID", nodeId);
     comm.sendJson(gson.toJson(obj));
   }
 
