@@ -10,6 +10,15 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import entity.sensor.Sensor;
+import entity.sensor.TemperatureSensor;
+import entity.sensor.LightSensor;
+import entity.sensor.HumiditySensor;
+import entity.sensor.CO2Sensor;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.lang.reflect.Type;
 
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
@@ -139,6 +148,33 @@ public class Node {
     return new GsonBuilder()
         .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
         .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeDeserializer())
+        // Custom deserializer for Sensor to handle polymorphic concrete types
+        .registerTypeAdapter(Sensor.class, new JsonDeserializer<Sensor>() {
+          @Override
+          public Sensor deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
+            try {
+              JsonObject obj = json.getAsJsonObject();
+              if (obj.has("sensorType") && !obj.get("sensorType").isJsonNull()) {
+                String st = obj.get("sensorType").getAsString();
+                switch (st) {
+                  case "TEMPERATURE":
+                    return context.deserialize(json, TemperatureSensor.class);
+                  case "LIGHT":
+                    return context.deserialize(json, LightSensor.class);
+                  case "HUMIDITY":
+                    return context.deserialize(json, HumiditySensor.class);
+                  case "CO2":
+                    return context.deserialize(json, CO2Sensor.class);
+                  default:
+                    // Fallback: try TemperatureSensor
+                    return context.deserialize(json, TemperatureSensor.class);
+                }
+              }
+            } catch (Exception ignored) {
+            }
+            return null;
+          }
+        })
         .create();
   }
 

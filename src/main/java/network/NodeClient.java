@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import entity.Actuator;
 import entity.Node;
@@ -92,7 +94,38 @@ public class NodeClient {
       String incoming;
       while ((incoming = in.readLine()) != null) {
         System.out.println("Command received: " + incoming);
-        // Could be parsed further later
+        String trimmed = incoming.trim();
+        if (trimmed.startsWith("{")) {
+          try {
+            JsonObject obj = JsonParser.parseString(trimmed).getAsJsonObject();
+            String mt = obj.has("messageType") && !obj.get("messageType").isJsonNull()
+                ? obj.get("messageType").getAsString()
+                : null;
+
+            if ("ACTUATOR_COMMAND".equals(mt)) {
+              // apply actuator change locally and send updated node state
+              String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
+              String command = obj.has("command") ? obj.get("command").getAsString() : null;
+              if (actuatorId != null && command != null) {
+                boolean on = "TURN_ON".equals(command);
+                node.getActuators().stream()
+                    .filter(a -> a.getActuatorId().equals(actuatorId))
+                    .findFirst()
+                    .ifPresent(a -> {
+                      a.setOn(on);
+                      System.out.println("Actuator " + actuatorId + " set to " + on);
+                    });
+                // send updated node state to server so control panels get the update
+                sendCurrentNode();
+              }
+            } else if ("REQUEST_STATE".equals(mt) || "REQUEST_NODE".equals(mt)) {
+              // send current node state immediately
+              sendCurrentNode();
+            }
+          } catch (Exception e) {
+            System.out.println("Failed to parse command JSON: " + e.getMessage());
+          }
+        }
       }
     } catch (IOException e) {
       System.out.println("Lost connection to server.");
@@ -179,7 +212,9 @@ public class NodeClient {
       nodeClient.sendCurrentNode();
 
       System.out.println("Press ENTER to exit.");
-      new java.util.Scanner(System.in).nextLine();
+      try (java.util.Scanner sc = new java.util.Scanner(System.in)) {
+        sc.nextLine();
+      }
 
       nodeClient.close();
 
