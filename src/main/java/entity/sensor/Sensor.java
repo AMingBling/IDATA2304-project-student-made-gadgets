@@ -72,13 +72,42 @@ public abstract class Sensor {
     return sensorType;
   }
 
-  public double getValue() {
+  //-------------------------------------------------
+  public synchronized double getValue() {
     return value;
   }
 
+  public synchronized void updateValue(double newValue) {
+    this.value = newValue;
+    this.timestamp = LocalDateTime.now();
+  }
+
+  public synchronized void adjustValue(double delta) {
+    this.value += delta;
+    this.timestamp = LocalDateTime.now();
+  }
+
+  public boolean isOutOfRange() {
+    return this.value < this.minThreshold || this.value > this.maxThreshold;
+  }
+
+  public com.google.gson.JsonObject toReadingJson() {
+    com.google.gson.JsonObject jo = new com.google.gson.JsonObject();
+    jo.addProperty("sensorId", this.sensorId);
+    jo.addProperty("type", this.sensorType);
+    jo.addProperty("value", this.value);
+    jo.addProperty("unit", this.unit);
+    jo.addProperty("timestamp", this.timestamp != null ? this.timestamp.toString() : "");
+    return jo;
+  }
+
+
+
+//-------------------------------------------------------
   public String getUnit() {
     return unit;
   }
+
 
   public double getMinThreshold() {
     return minThreshold;
@@ -113,4 +142,9 @@ public abstract class Sensor {
     Gson gson = new Gson();
     return gson.fromJson(json, Sensor.class);
   }
+
+  //-----------------------------------------------
+    
+    
+    
 }
