@@ -14,19 +14,15 @@ import entity.sensor.TemperatureSensor;
 import entity.sensor.LightSensor;
 import entity.sensor.HumiditySensor;
 import entity.sensor.CO2Sensor;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.lang.reflect.Type;
 
-import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.google.gson.Gson;
 
 /**
- * Represents a Node in the IoT network, containing sensors and actuators.
+ * Represents a Node in the network, containing sensors and actuators.
  */
 public class Node {
 
@@ -35,8 +31,16 @@ public class Node {
   private LocalDateTime timestamp;
   private List<Sensor> sensors;
   private List<Actuator> actuators;
-  
 
+
+  /**
+   * Constructor for Node
+   *
+   * @param nodeID   Unique identifier for the node
+   * @param location Physical location of the node
+   * @param sensors  List of sensors associated with the node
+   * @param actuators List of actuators associated with the node
+   */
   public Node(String nodeID, String location,
       List<Sensor> sensors, List<Actuator> actuators) {
     setNodeID(nodeID);
@@ -47,6 +51,11 @@ public class Node {
   }
 
   //-------------- Setters and getters ---------------
+
+  /**
+   * Set node ID
+   * @param nodeID Unique identifier for the node
+   */
   public void setNodeID(String nodeID) {
     if (nodeID == null || nodeID.isBlank()) {
       throw new IllegalArgumentException("Node ID cannot be null or empty");
@@ -54,6 +63,10 @@ public class Node {
     this.nodeID = nodeID;
   }
 
+  /**
+   * Set node location
+   * @param location Physical location of the node
+   */
   public void setLocation(String location) {
     if (location == null || location.isBlank()) {
       throw new IllegalArgumentException("Location cannot be null or empty");
@@ -61,6 +74,10 @@ public class Node {
     this.location = location;
   }
 
+  /**
+   * Set sensors
+   * @param sensors List of sensors associated with the node
+   */
   public void setSensors(List<Sensor> sensors) {
     if (sensors == null) {
       this.sensors = new java.util.ArrayList<>();
@@ -69,6 +86,10 @@ public class Node {
     }
   }
 
+  /**
+   * Set actuators
+   * @param actuators List of actuators associated with the node
+   */
   public void setActuators(List<Actuator> actuators) {
     if (actuators == null) {
       this.actuators = new java.util.ArrayList<>();
@@ -153,7 +174,8 @@ public class Node {
         // Custom deserializer for Sensor to handle polymorphic concrete types
         .registerTypeAdapter(Sensor.class, new JsonDeserializer<Sensor>() {
           @Override
-          public Sensor deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
+          public Sensor deserialize(JsonElement json, Type typeOfT,
+              JsonDeserializationContext context) {
             try {
               JsonObject obj = json.getAsJsonObject();
               if (obj.has("sensorType") && !obj.get("sensorType").isJsonNull()) {

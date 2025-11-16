@@ -18,12 +18,13 @@ import java.net.Socket;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
-
 // mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="<id> <location>"
 // ex: mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="01 greenhouse1"
+//NodeClients kan bli kjørt i terminalen ved hjelp av kommandoen mvn exec:java
+//"-DesorNodesxec.mainClass=network.NodeClient" "-Dexec.args=<ID> <Lokasjon>" og kobler seg til Serveren
+
 /**
- * NodeClients kan bli kjørt i terminalen ved hjelp av kommandoen mvn exec:java
- * "-DesorNodesxec.mainClass=network.NodeClient" "-Dexec.args=<ID> <Lokasjon>" og kobler seg til Serveren
+ * Client class for a Node that connects to the server, sends its state, and listens for commands.
  */
 public class NodeClient {
 
@@ -34,6 +35,14 @@ public class NodeClient {
   private Thread listener;
 
 
+  /**
+   * Constructor for NodeClient
+   *
+   * @param node the Node object representing this client
+   * @param out  the output stream to the server
+   * @param in   the input stream from the server
+   * @param gson the Gson instance for JSON serialization/deserialization
+   */
   public NodeClient(Node node, PrintWriter out, BufferedReader in, Gson gson) {
     this.node = node;
     this.out = out;
@@ -43,6 +52,9 @@ public class NodeClient {
 
   // ---------- METHODS ----------
 
+  /**
+   * Start the NodeClient: begin listening for server commands
+   */
   public void start() {
     // Start thread to listen for messages from server
     listener = new Thread(this::listenForCommands);
@@ -68,6 +80,9 @@ public class NodeClient {
     sensorThread.start();
   }
 
+  /**
+   * Send the current Node object to the server (serialized to JSON).
+   */
   public void sendCurrentNode() {
     if (node == null) {
       return;
@@ -89,6 +104,9 @@ public class NodeClient {
   }
 
 
+  /**
+   * Listen for commands from the server and process them.
+   */
   private void listenForCommands() {
     try {
       String incoming;
@@ -104,7 +122,8 @@ public class NodeClient {
 
             if ("ACTUATOR_COMMAND".equals(mt)) {
               // apply actuator change locally and send updated node state
-              String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
+              String actuatorId =
+                  obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
               String command = obj.has("command") ? obj.get("command").getAsString() : null;
               if (actuatorId != null && command != null) {
                 boolean on = "TURN_ON".equals(command);
@@ -124,10 +143,12 @@ public class NodeClient {
             } else if ("ADD_SENSOR".equals(mt)) {
               // Expect fields: sensorType, sensorId, minThreshold, maxThreshold
               try {
-                String sensorType = obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
+                String sensorType =
+                    obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
                 String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
                 double min = obj.has("minThreshold") ? obj.get("minThreshold").getAsDouble() : 0.0;
-                double max = obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
+                double max =
+                    obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
                 if (sensorType != null && sensorId != null) {
                   if ("TEMPERATURE".equals(sensorType)) {
                     node.addSensor(new TemperatureSensor(sensorId, min, max));
@@ -148,8 +169,10 @@ public class NodeClient {
               }
             } else if ("ADD_ACTUATOR".equals(mt)) {
               try {
-                String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
-                String actuatorType = obj.has("actuatorType") ? obj.get("actuatorType").getAsString() : null;
+                String actuatorId =
+                    obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
+                String actuatorType =
+                    obj.has("actuatorType") ? obj.get("actuatorType").getAsString() : null;
                 if (actuatorId != null && actuatorType != null) {
                   node.addActuator(new Actuator(actuatorId, actuatorType));
                   System.out.println("Added actuator " + actuatorId + " type " + actuatorType);
@@ -169,6 +192,9 @@ public class NodeClient {
     }
   }
 
+  /**
+   * Close the NodeClient: close streams and stop listener thread
+   */
   public void close() {
     try {
       if (in != null) {
@@ -184,12 +210,14 @@ public class NodeClient {
     }
   }
 
-
-
+  /**
+   * Main method to start the NodeClient
+   * @param args command line arguments: <ID> <Location>
+   */
   public static void main(String[] args) {
     if (args.length < 2) {
       System.out.println("mvn exec:java\r\n" + //
-                " * \"-DesorNodesxec.mainClass=network.NodeClient\" \"-Dexec.args=<ID> <Lokasjon>\"");
+          " * \"-DesorNodesxec.mainClass=network.NodeClient\" \"-Dexec.args=<ID> <Lokasjon>\"");
       return;
     }
 
@@ -230,11 +258,11 @@ public class NodeClient {
         return;
       }
 
-        // Start with empty sensors/actuators — user adds them via ControlPanel
-        java.util.List<Sensor> sensors = new ArrayList<>();
-        java.util.List<Actuator> actuators = new ArrayList<>();
+      // Start with empty sensors/actuators — user adds them via ControlPanel
+      java.util.List<Sensor> sensors = new ArrayList<>();
+      java.util.List<Actuator> actuators = new ArrayList<>();
 
-        Node nodeObj = new Node(nodeId, location, sensors, actuators);
+      Node nodeObj = new Node(nodeId, location, sensors, actuators);
 
       NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
       nodeClient.start();
