@@ -15,8 +15,11 @@ public class ControlPanelUI {
   public void run() {
     while (running) {
       showDashboard();
-      showMenu();
-      handleInput(scanner.nextLine().trim());
+      showHelp();
+      System.out.print("> ");
+      String line = scanner.nextLine();
+      if (line == null) break;
+      handleCommand(line.trim());
     }
   }
 
@@ -25,7 +28,7 @@ public class ControlPanelUI {
     System.out.println(" SMART GREENHOUSE CONTROL PANEL - SMG SYSTEM ");
     System.out.println("==============================================");
     System.out.println("     Welcome to the Smart Greenhouse System");
-    System.out.println("Connected to server. Active nodes:");
+    System.out.println("       Connected to server. Active nodes:");
     
     try {
       Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
@@ -46,25 +49,54 @@ public class ControlPanelUI {
 
   }
 
-  private void showMenu() {
-    System.out.println("\n1) Toggle actuator");
-    System.out.println("2) Broadcast command");
-    System.out.println("3) Refresh data");
-    System.out.println("0) Exit");
-    System.out.print("Choice: ");
+  private void showHelp() {
+    System.out.println("\nCommands: ");
+    System.out.println(" Subscribe <nodeId>");
+    System.out.println(" Unsubscribe <nodeId>");
+    System.out.println(" Request <nodeId>");
+    System.out.println(" Set <nodeId> <actuatorId> <on|off>");
+    System.out.println(" Refresh");
+    System.out.println(" Exit");
   }
 
-  private void handleInput(String choice) {
-    switch (choice) {
-      case "1" -> System.out.println("(placeholder) Toggle actuator");
-      case "2" -> System.out.println("(placeholder) Broadcast command");
-      case "3" -> System.out.println("(placeholder) Refresh data");
-      case "0" -> {
-        System.out.println("Exiting...");
-        running = false;
-        logic.close();
+  private void handleCommand(String line) {
+    if (line.isEmpty()) return;
+    String[] parts = line.split("\\s+");
+    String cmd = parts[0].toLowerCase();
+    try {
+      switch (cmd) {
+        case "subscribe" -> {
+          if (parts.length >= 2) logic.subscribe(parts[1]); else System.out.println("Usage: subscribe <nodeId>");
+        }
+        case "unsubscribe" -> {
+          if (parts.length >= 2) logic.unsubscribe(parts[1]); else System.out.println("Usage: unsubscribe <nodeId>");
+        }
+        case "request" -> {
+          if (parts.length >= 2) logic.requestNode(parts[1]); else System.out.println("Usage: request <nodeId>");
+        }
+        case "set" -> {
+          if (parts.length >= 4) {
+            String nodeId = parts[1];
+            String actuatorId = parts[2];
+            boolean on = parts[3].equalsIgnoreCase("on") || parts[3].equalsIgnoreCase("true");
+            logic.setActuatorState(nodeId, actuatorId, on);
+          } else {
+            System.out.println("Usage: set <nodeId> <actuatorId> <on|off>");
+          }
+        }
+        case "refresh" -> {
+          // Refreshes dashboard
+        }
+        case "exit" -> {
+          System.out.println("Exiting...");
+          running = false;
+          logic.close();
+          scanner.close();
+        }
+        default -> System.out.println("Unknown command: " + cmd);
       }
-      default -> System.out.println("Unknown option.");
-    }
+      } catch (Exception e) {
+      System.out.println("Error handling command: " + e.getMessage());
   }
+}
 }
