@@ -202,6 +202,42 @@ public class Node {
             return null;
           }
         })
+          // Custom deserializer for Actuator to instantiate concrete actuator subclasses
+          .registerTypeAdapter(Actuator.class, new JsonDeserializer<Actuator>() {
+            @Override
+            public Actuator deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
+              try {
+                JsonObject obj = json.getAsJsonObject();
+                if (obj.has("actuatorType") && !obj.get("actuatorType").isJsonNull()) {
+                  String at = obj.get("actuatorType").getAsString();
+                  switch (at.toUpperCase()) {
+                    case "HEATER":
+                      return context.deserialize(json, entity.actuator.Heater.class);
+                    case "FAN":
+                    case "VENTILATION":
+                      return context.deserialize(json, entity.actuator.Ventilation.class);
+                    case "HUMIDIFIER":
+                      return context.deserialize(json, entity.actuator.Humidifier.class);
+                    case "DEHUMIDIFIER":
+                      return context.deserialize(json, entity.actuator.DeHumidifier.class);
+                    case "AIRCON":
+                    case "AIRCONDITION":
+                      return context.deserialize(json, entity.actuator.AirCondition.class);
+                    default:
+                      // fallback: try to create a simple Ventilation with given id
+                      try {
+                        String id = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : "unknown";
+                        return new entity.actuator.Ventilation(id);
+                      } catch (Exception e) {
+                        return null;
+                      }
+                  }
+                }
+              } catch (Exception ignored) {
+              }
+              return null;
+            }
+          })
         .create();
   }
 
