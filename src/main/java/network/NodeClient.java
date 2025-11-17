@@ -142,8 +142,8 @@ public class NodeClient {
 
   public static void main(String[] args) {
     if (args.length < 2) {
-      System.out.println("Usage: NodeClient <ID> <Location>");
-      return;
+        System.out.println("Usage: NodeClient <ID> <Location>");
+        return;
     }
 
     String nodeId = args[0];
@@ -161,35 +161,36 @@ public class NodeClient {
                 LocalDateTime.parse(json.getAsString()))
         .create();
 
-    try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+    try {
+        Socket socket = new Socket(SERVER_IP, SERVER_PORT);
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-      System.out.println("SensorNode " + nodeId + " connected to server.");
+        System.out.println("SensorNode " + nodeId + " connected to server.");
 
-      out.println("SENSOR_NODE_CONNECTED " + nodeId);
-      String serverResponse = in.readLine();
-      if (serverResponse == null || !serverResponse.equals("NODE_ID_ACCEPTED")) {
-        System.out.println("Node ID rejected or unexpected response. Exiting.");
-        return;
-      }
+        out.println("SENSOR_NODE_CONNECTED " + nodeId);
+        String serverResponse = in.readLine();
+        if (serverResponse == null || !serverResponse.equals("NODE_ID_ACCEPTED")) {
+            System.out.println("Node ID rejected or unexpected response. Exiting.");
+            return;
+        }
 
-      List<Sensor> sensors = new ArrayList<>();
-      sensors.add(new TemperatureSensor("1", 20.0, 26.0));
+        List<Sensor> sensors = new ArrayList<>();
+        List<Actuator> actuators = new ArrayList<>();
+        Node nodeObj = new Node(nodeId, location, sensors, actuators);
 
-      List<Actuator> actuators = new ArrayList<>();
-      actuators.add(new Heater("1"));
+        NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
+        nodeClient.start();
+        nodeClient.sendCurrentNode();
 
-      Node nodeObj = new Node(nodeId, location, sensors, actuators);
-
-      NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
-      nodeClient.start();
-      nodeClient.sendCurrentNode();
+        // 💡 Keep node alive forever
+        while (true) Thread.sleep(1000);
 
     } catch (Exception e) {
-      e.printStackTrace();
+        e.printStackTrace();
     }
-  }
+}
+
 
 
 }
