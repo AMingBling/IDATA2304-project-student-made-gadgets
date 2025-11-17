@@ -51,7 +51,7 @@ public class ControlPanelUI {
 
   private void showHelp() {
     System.out.println("\nCommands: ");
-    System.out.println(" AddSensor <nodeId> <sensorType> <sensorId> <min> <max>");
+    System.out.println(" AddSensor <nodeId>");
     System.out.println(" Request <nodeId>");
     System.out.println(" Set <nodeId> <actuatorId> <on|off>");
     System.out.println(" Exit");
@@ -67,15 +67,63 @@ public class ControlPanelUI {
           if (parts.length >= 2) logic.requestNode(parts[1]); else System.out.println("Usage: request <nodeId>");
         }
         case "addsensor" -> {
-          if (parts.length >= 6) {
+          if (parts.length >= 2) {
             String nodeId = parts[1];
-            String sensorType = parts[2].toUpperCase();
-            String sensorId = parts[3];
-            double min = Double.parseDouble(parts[4]);
-            double max = Double.parseDouble(parts[5]);
+            // Determine available sensor types and filter out those already present
+            java.util.List<String> allTypes = java.util.Arrays.asList("TEMPERATURE", "LIGHT", "HUMIDITY", "CO2");
+            java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
+            java.util.Set<String> existing = new java.util.HashSet<>();
+            if (nodes != null && nodes.containsKey(nodeId)) {
+              ControlPanelLogic.NodeState ns = nodes.get(nodeId);
+              if (ns != null && ns.sensors != null) {
+                for (entity.sensor.Sensor s : ns.sensors.values()) {
+                  existing.add(s.getSensorType().toUpperCase());
+                }
+              }
+            }
+
+            java.util.List<String> available = new java.util.ArrayList<>();
+            for (String t : allTypes) if (!existing.contains(t)) available.add(t);
+
+            if (available.isEmpty()) {
+              System.out.println("Node " + nodeId + " already has all supported sensor types.");
+              break;
+            }
+
+            System.out.println("Available sensor types:");
+            for (int i = 0; i < available.size(); i++) {
+              System.out.printf("  %d) %s%n", i + 1, available.get(i));
+            }
+            System.out.print("Choose type (number): ");
+            String choiceLine = scanner.nextLine();
+            int choice = 0;
+            try { choice = Integer.parseInt(choiceLine.trim()); } catch (Exception e) { choice = 0; }
+            if (choice < 1 || choice > available.size()) {
+              System.out.println("Invalid selection.");
+              break;
+            }
+            String sensorType = available.get(choice - 1);
+
+            System.out.print("Sensor ID (e.g. s1): ");
+            String sensorId = scanner.nextLine().trim();
+            if (sensorId.isEmpty()) { System.out.println("Sensor ID cannot be empty."); break; }
+
+            System.out.print("Min threshold (number): ");
+            String minLine = scanner.nextLine().trim();
+            System.out.print("Max threshold (number): ");
+            String maxLine = scanner.nextLine().trim();
+            double min, max;
+            try {
+              min = Double.parseDouble(minLine);
+              max = Double.parseDouble(maxLine);
+            } catch (NumberFormatException nfe) {
+              System.out.println("Invalid threshold numbers.");
+              break;
+            }
+
             logic.addSensor(nodeId, sensorType, sensorId, min, max);
           } else {
-            System.out.println("Usage: addsensor <nodeId> <sensorType> <sensorId> <min> <max>");
+            System.out.println("Usage: addsensor <nodeId>");
           }
         }
         case "set" -> {
