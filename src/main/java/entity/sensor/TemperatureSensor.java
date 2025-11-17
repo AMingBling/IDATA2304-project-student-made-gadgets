@@ -7,7 +7,7 @@ public class TemperatureSensor extends Sensor {
 
     /**
      * Constructor for TemperatureSensor.
-     * Min and max thresholds are specified in degrees Celsius. 18 and 35 would be natural values.
+     * Min and max thresholds are specified in degrees Celsius. 15 and 30 would be natural values.
      * @param sensorId the id of the sensor
      * @param minThreshold minimum threshold value
      * @param maxThreshold maximum threshold value
