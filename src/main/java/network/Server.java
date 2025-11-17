@@ -202,7 +202,19 @@ public class Server {
                                     } else {
                                         System.out.println("Requested node not connected: " + targetNode);
                                     }
-                                } else {
+                                } else if ("ADD_SENSOR".equals(mt)) {
+                                    String targetNode = obj.get("nodeID").getAsString();
+
+                                    Socket nodeSocket = sensorNodes.get(targetNode);
+                                    if (nodeSocket != null && !nodeSocket.isClosed()) {
+                                        PrintWriter nodeOut = new PrintWriter(nodeSocket.getOutputStream(), true);
+                                        nodeOut.println(inputLine);
+                                        System.out.println("Forwarded ADD_SENSOR to node " + targetNode);
+                                    } else {
+                                        System.out.println("Target node not connected: " + targetNode);
+                                    }
+                                }
+                                else {
                                     // Unknown control-panel message type; ignore or log
                                     System.out.println("[ControlPanel] Unknown messageType: " + mt);
                                 }
