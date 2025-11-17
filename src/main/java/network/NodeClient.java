@@ -116,6 +116,16 @@ public class NodeClient {
           node.addActuator(new Humidifier(sensorId + "_humidifier"));
           node.addActuator(new DeHumidifier(sensorId + "_dehumidifier"));
         }
+        else if ("CO2".equals(sensorType)) {
+          node.addSensor(new CO2Sensor(sensorId, min, max));
+          node.addActuator(new Ventilation(sensorId + "_ventilation"));
+          node.addActuator(new CO2Supply(sensorId + "_co2_supply"));
+        }
+        else if ("LIGHT".equals(sensorType)) {
+          node.addSensor(new LightSensor(sensorId, min, max));
+          node.addActuator(new LampDimming(sensorId + "_lamp_dimming"));
+          node.addActuator(new LampBrightning(sensorId + "_lamp_brightning"));
+        }  
         System.out.println(
             "Added sensor " + sensorId + " of type " + sensorType + " with actuators.");
         sendCurrentNode();

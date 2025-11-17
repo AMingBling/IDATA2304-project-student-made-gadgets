@@ -210,7 +210,7 @@ public class Node {
                 JsonObject obj = json.getAsJsonObject();
                 if (obj.has("actuatorType") && !obj.get("actuatorType").isJsonNull()) {
                   String at = obj.get("actuatorType").getAsString();
-                  switch (at.toUpperCase()) {
+                    switch (at.toUpperCase()) {
                     case "HEATER":
                       return context.deserialize(json, entity.actuator.Heater.class);
                     case "FAN":
@@ -223,8 +223,19 @@ public class Node {
                     case "AIRCON":
                     case "AIRCONDITION":
                       return context.deserialize(json, entity.actuator.AirCondition.class);
+                    case "LAMP_DIMMING":
+                    case "LAMP_DIM":
+                      return context.deserialize(json, entity.actuator.LampDimming.class);
+                    case "LAMP_BRIGHTNING":
+                    case "LAMP_BRIGHTENING":
+                    case "LAMP_BRIGHT":
+                      return context.deserialize(json, entity.actuator.LampBrightning.class);
+                    case "CO2_SUPPLY":
+                    case "CO2SUPPLY":
+                    case "CO2":
+                      return context.deserialize(json, entity.actuator.CO2Supply.class);
                     default:
-                      // fallback: try to create a simple Ventilation with given id
+                      // fallback: try to create a simple Ventilation with given id (safe default)
                       try {
                         String id = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : "unknown";
                         return new entity.actuator.Ventilation(id);
