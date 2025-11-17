@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public class CO2Sensor extends Sensor {
     /**
      * Constructor for CO2Sensor.
-     * Min and max thresholds are specified in ppm. 300 and 2000 would be natural values.
+     * Min and max thresholds are specified in ppm. 800 and 1500 would be natural values.
      * @param sensorId the id of the sensor
      * @param minThreshold minimum threshold value
      * @param maxThreshold maximum threshold value

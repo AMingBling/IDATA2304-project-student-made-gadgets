@@ -11,12 +11,12 @@ public class Ventilation extends Actuator {
   private final double co2Delta;
 
   public Ventilation(String id) {
-    super(id, "FAN");
+    super(id, "VENTILATION");
     this.co2Delta = 8.0; // standard reduksjon per tick (tune etter behov)
   }
 
   public Ventilation(String id, double co2Delta) {
-    super(id, "FAN");
+    super(id, "VENTILATION");
     this.co2Delta = co2Delta;
   }
 
@@ -28,7 +28,7 @@ public class Ventilation extends Actuator {
         s.adjustValue(-co2Delta);
       }
     }
-    System.out.println("[Fan] applied CO2 effect: -" + co2Delta);
+    System.out.println("[VENTILATION] applied CO2 effect: -" + co2Delta);
   }
 }
 

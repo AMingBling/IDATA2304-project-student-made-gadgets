@@ -1,11 +1,5 @@
 package entity.sensor;
 
-
-    
-
-
-
-
 /**
  * Class representing a Temperature Sensor.
  */
