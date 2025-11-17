@@ -108,10 +108,29 @@ public class ControlPanelUI {
             String sensorId = scanner.nextLine().trim();
             if (sensorId.isEmpty()) { System.out.println("Sensor ID cannot be empty."); break; }
 
-            System.out.print("Min threshold (number): ");
+            // Get recommended ranges for the chosen sensor type
+            double[] recommended = getRecommendedRange(sensorType);
+            String unit = getUnitForType(sensorType);
+            String recMinStr = recommended != null ? String.valueOf((int)recommended[0]) : "";
+            String recMaxStr = recommended != null ? String.valueOf((int)recommended[1]) : "";
+
+            // Prompt with recommended values and allow empty input to accept recommendation
+            if (recommended != null) {
+              System.out.print("Min threshold (number) (" + recMinStr + " " + unit + " recommended): ");
+            } else {
+              System.out.print("Min threshold (number): ");
+            }
             String minLine = scanner.nextLine().trim();
-            System.out.print("Max threshold (number): ");
+            if (minLine.isEmpty() && recommended != null) minLine = recMinStr;
+
+            if (recommended != null) {
+              System.out.print("Max threshold (number) (" + recMaxStr + " " + unit + " recommended): ");
+            } else {
+              System.out.print("Max threshold (number): ");
+            }
             String maxLine = scanner.nextLine().trim();
+            if (maxLine.isEmpty() && recommended != null) maxLine = recMaxStr;
+
             double min, max;
             try {
               min = Double.parseDouble(minLine);
@@ -147,4 +166,34 @@ public class ControlPanelUI {
       System.out.println("Error handling command: " + e.getMessage());
   }
 }
+
+  /**
+   * Return recommended [min,max] for a sensor type, or null if none.
+   */
+  private double[] getRecommendedRange(String sensorType) {
+    if (sensorType == null) return null;
+    switch (sensorType.toUpperCase()) {
+      case "TEMPERATURE":
+        return new double[]{18, 35};
+      case "LIGHT":
+        return new double[]{200, 20000};
+      case "HUMIDITY":
+        return new double[]{30, 85};
+      case "CO2":
+        return new double[]{800, 1500};
+      default:
+        return null;
+    }
+  }
+
+  private String getUnitForType(String sensorType) {
+    if (sensorType == null) return "";
+    switch (sensorType.toUpperCase()) {
+      case "TEMPERATURE": return "°C";
+      case "LIGHT": return "lux";
+      case "HUMIDITY": return "%";
+      case "CO2": return "ppm";
+      default: return "";
+    }
+  }
 }
