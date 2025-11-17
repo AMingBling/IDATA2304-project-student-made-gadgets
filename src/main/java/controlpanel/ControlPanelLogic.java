@@ -185,21 +185,7 @@ public class ControlPanelLogic {
   }
 
   // ---------- ControlPanel actions ----------
-  public void subscribe(String nodeId) {
-    JsonObject obj = new JsonObject();
-    obj.addProperty("messageType", "SUBSCRIBE_NODE");
-    obj.addProperty("controlPanelId", controlPanelId);
-    obj.addProperty("nodeID", nodeId);
-    comm.sendJson(gson.toJson(obj));
-  }
-
-  public void unsubscribe(String nodeId) {
-    JsonObject obj = new JsonObject();
-    obj.addProperty("messageType", "UNSUBSCRIBE_NODE");
-    obj.addProperty("controlPanelId", controlPanelId);
-    obj.addProperty("nodeID", nodeId);
-    comm.sendJson(gson.toJson(obj));
-  }
+  // Subscriptions removed: control panels no longer subscribe/unsubscribe to nodes.
 
   public void requestNode(String nodeId) {
     JsonObject obj = new JsonObject();
@@ -228,15 +214,7 @@ public class ControlPanelLogic {
   /**
    * Request the node to add an actuator at runtime.
    */
-  public void addActuator(String nodeId, String actuatorId, String actuatorType) {
-    JsonObject obj = new JsonObject();
-    obj.addProperty("messageType", "ADD_ACTUATOR");
-    obj.addProperty("controlPanelId", controlPanelId);
-    obj.addProperty("nodeID", nodeId);
-    obj.addProperty("actuatorId", actuatorId);
-    obj.addProperty("actuatorType", actuatorType);
-    comm.sendJson(gson.toJson(obj));
-  }
+  // addActuator removed: actuators are created automatically on the node when a sensor is added
 
   /**
    * holder for state per node

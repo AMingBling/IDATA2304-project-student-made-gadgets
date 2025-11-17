@@ -51,13 +51,9 @@ public class ControlPanelUI {
 
   private void showHelp() {
     System.out.println("\nCommands: ");
-    System.out.println(" Subscribe <nodeId>");
-    System.out.println(" Unsubscribe <nodeId>");
+    System.out.println(" AddSensor <nodeId> <sensorType> <sensorId> <min> <max>");
     System.out.println(" Request <nodeId>");
     System.out.println(" Set <nodeId> <actuatorId> <on|off>");
-    System.out.println(" AddSensor <nodeId> <sensorType> <sensorId> <min> <max>");
-    System.out.println(" AddActuator <nodeId> <actuatorId> <actuatorType>");
-    System.out.println(" Refresh");
     System.out.println(" Exit");
   }
 
@@ -67,12 +63,6 @@ public class ControlPanelUI {
     String cmd = parts[0].toLowerCase();
     try {
       switch (cmd) {
-        case "subscribe" -> {
-          if (parts.length >= 2) logic.subscribe(parts[1]); else System.out.println("Usage: subscribe <nodeId>");
-        }
-        case "unsubscribe" -> {
-          if (parts.length >= 2) logic.unsubscribe(parts[1]); else System.out.println("Usage: unsubscribe <nodeId>");
-        }
         case "request" -> {
           if (parts.length >= 2) logic.requestNode(parts[1]); else System.out.println("Usage: request <nodeId>");
         }
@@ -88,16 +78,6 @@ public class ControlPanelUI {
             System.out.println("Usage: addsensor <nodeId> <sensorType> <sensorId> <min> <max>");
           }
         }
-        case "addactuator" -> {
-          if (parts.length >= 4) {
-            String nodeId = parts[1];
-            String actuatorId = parts[2];
-            String actuatorType = parts[3];
-            logic.addActuator(nodeId, actuatorId, actuatorType);
-          } else {
-            System.out.println("Usage: addactuator <nodeId> <actuatorId> <actuatorType>");
-          }
-        }
         case "set" -> {
           if (parts.length >= 4) {
             String nodeId = parts[1];
@@ -107,9 +87,6 @@ public class ControlPanelUI {
           } else {
             System.out.println("Usage: set <nodeId> <actuatorId> <on|off>");
           }
-        }
-        case "refresh" -> {
-          // Refreshes dashboard
         }
         case "exit" -> {
           System.out.println("Exiting...");
