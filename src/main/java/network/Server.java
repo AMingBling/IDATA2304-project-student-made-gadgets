@@ -214,6 +214,17 @@ public class Server {
                                     } else {
                                         System.out.println("Target node not connected: " + targetNode);
                                     }
+                                } else if ("REMOVE_SENSOR".equals(mt)) {
+                                    String targetNode = obj.get("nodeID").getAsString();
+
+                                    Socket nodeSocket = sensorNodes.get(targetNode);
+                                    if (nodeSocket != null && !nodeSocket.isClosed()) {
+                                        PrintWriter nodeOut = new PrintWriter(nodeSocket.getOutputStream(), true);
+                                        nodeOut.println(inputLine);
+                                        System.out.println("Forwarded REMOVE_SENSOR to node " + targetNode);
+                                    } else {
+                                        System.out.println("Target node not connected: " + targetNode);
+                                    }
                                 }
                                 else {
                                     // Unknown control-panel message type; ignore or log
@@ -280,13 +291,7 @@ public class Server {
       synchronized (controlPanels) {
         for (Socket cpSocket : controlPanels) {
           try {
-            // If a nodeId is provided, only send to control panels subscribed to that node
-            if (nodeId != null) {
-              Set<String> subs = controlPanelSubscriptions.get(cpSocket);
-              if (subs == null || !subs.contains(nodeId)) {
-                continue;
-              }
-            }
+                        // Broadcast node updates to all control panels (no subscription model in UI)
             PrintWriter cpOut = new PrintWriter(cpSocket.getOutputStream(), true);
             cpOut.println(message);
           } catch (IOException e) {

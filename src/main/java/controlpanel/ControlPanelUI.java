@@ -52,6 +52,7 @@ public class ControlPanelUI {
   private void showHelp() {
     System.out.println("\nCommands: ");
     System.out.println(" AddSensor <nodeId>");
+    System.out.println(" RemoveSensor <nodeId> <sensorId>");
     System.out.println(" Request <nodeId>");
     System.out.println(" Set <nodeId> <actuatorId> <on|off>");
     System.out.println(" Exit");
@@ -107,6 +108,14 @@ public class ControlPanelUI {
             System.out.print("Sensor ID (e.g. s1): ");
             String sensorId = scanner.nextLine().trim();
             if (sensorId.isEmpty()) { System.out.println("Sensor ID cannot be empty."); break; }
+            // Check duplicate sensorId on node (use cached state)
+            if (nodes != null && nodes.containsKey(nodeId)) {
+              ControlPanelLogic.NodeState nsCheck = nodes.get(nodeId);
+              if (nsCheck != null && nsCheck.sensors != null && nsCheck.sensors.containsKey(sensorId)) {
+                System.out.println("Sensor ID '" + sensorId + "' already exists on node " + nodeId + ". Aborting.");
+                break;
+              }
+            }
 
             System.out.print("Min threshold (number): ");
             String minLine = scanner.nextLine().trim();
@@ -134,6 +143,15 @@ public class ControlPanelUI {
             logic.setActuatorState(nodeId, actuatorId, on);
           } else {
             System.out.println("Usage: set <nodeId> <actuatorId> <on|off>");
+          }
+        }
+        case "removesensor" -> {
+          if (parts.length >= 3) {
+            String nodeId = parts[1];
+            String sensorId = parts[2];
+            logic.removeSensor(nodeId, sensorId);
+          } else {
+            System.out.println("Usage: removesensor <nodeId> <sensorId>");
           }
         }
         case "exit" -> {

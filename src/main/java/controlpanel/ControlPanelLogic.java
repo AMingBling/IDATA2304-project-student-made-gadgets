@@ -91,12 +91,18 @@ public class ControlPanelLogic {
 
       NodeState state = nodes.computeIfAbsent(node.getNodeID(), NodeState::new);
 
-      for (Sensor sensor : node.getSensors()) {
-        state.sensors.put(sensor.getSensorId(), sensor);
+      // Replace existing state for this node with the incoming snapshot.
+      state.sensors.clear();
+      state.actuators.clear();
+      if (node.getSensors() != null) {
+        for (Sensor sensor : node.getSensors()) {
+          state.sensors.put(sensor.getSensorId(), sensor);
+        }
       }
-
-      for (Actuator actuator : node.getActuators()) {
-        state.actuators.put(actuator.getActuatorId(), actuator);
+      if (node.getActuators() != null) {
+        for (Actuator actuator : node.getActuators()) {
+          state.actuators.put(actuator.getActuatorId(), actuator);
+        }
       }
 
       printNodeState(state);
@@ -211,6 +217,12 @@ public class ControlPanelLogic {
         }
       }
 
+      // Prevent duplicate sensor IDs on the same node
+      if (ns != null && ns.sensors != null && ns.sensors.containsKey(sensorId)) {
+        System.out.println("Sensor ID '" + sensorId + "' already exists on node " + nodeId + ". Skipping add.");
+        return;
+      }
+
       JsonObject obj = new JsonObject();
       obj.addProperty("messageType", "ADD_SENSOR");
       obj.addProperty("controlPanelId", controlPanelId);
@@ -220,6 +232,18 @@ public class ControlPanelLogic {
       obj.addProperty("minThreshold", minThreshold);
       obj.addProperty("maxThreshold", maxThreshold);
       comm.sendJson(gson.toJson(obj));
+  }
+
+  /**
+   * Request the node to remove a sensor (and associated actuators) at runtime.
+   */
+  public void removeSensor(String nodeId, String sensorId) {
+    JsonObject obj = new JsonObject();
+    obj.addProperty("messageType", "REMOVE_SENSOR");
+    obj.addProperty("controlPanelId", controlPanelId);
+    obj.addProperty("nodeID", nodeId);
+    obj.addProperty("sensorId", sensorId);
+    comm.sendJson(gson.toJson(obj));
   }
 
   /**
