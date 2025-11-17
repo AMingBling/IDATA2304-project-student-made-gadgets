@@ -200,6 +200,17 @@ public class ControlPanelLogic {
    * Fields: sensorType (TEMPERATURE|LIGHT|HUMIDITY|CO2), sensorId, minThreshold, maxThreshold
    */
   public void addSensor(String nodeId, String sensorType, String sensorId, double minThreshold, double maxThreshold) {
+      // Prevent adding duplicate sensor types for the same node
+      NodeState ns = nodes.get(nodeId);
+      if (ns != null && ns.sensors != null) {
+        for (entity.sensor.Sensor s : ns.sensors.values()) {
+          if (s.getSensorType() != null && s.getSensorType().equalsIgnoreCase(sensorType)) {
+            System.out.println("Node " + nodeId + " already has a sensor of type " + sensorType + ". Skipping add.");
+            return;
+          }
+        }
+      }
+
       JsonObject obj = new JsonObject();
       obj.addProperty("messageType", "ADD_SENSOR");
       obj.addProperty("controlPanelId", controlPanelId);
