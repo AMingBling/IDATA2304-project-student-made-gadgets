@@ -73,6 +73,8 @@ public class NodeClient {
               sendCurrentNode();
             } else if ("ADD_SENSOR".equals(mt)) {
               handleAddSensor(obj);
+            } else if ("REMOVE_SENSOR".equals(mt)) {
+              handleRemoveSensor(obj);
             }
           } catch (Exception e) {
             System.out.println("Error processing command: " + e.getMessage());
@@ -132,6 +134,22 @@ public class NodeClient {
       }
     } catch (Exception e) {
       System.out.println("Failed to add sensor: " + e.getMessage());
+    }
+  }
+
+  private void handleRemoveSensor(JsonObject obj) {
+    try {
+      String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
+      if (sensorId == null) return;
+      // Remove sensors with matching id
+      node.getSensors().removeIf(s -> sensorId.equals(s.getSensorId()));
+      // Remove actuators that were created for the sensor (use prefix matching)
+      String prefix = sensorId + "_";
+      node.getActuators().removeIf(a -> a.getActuatorId() != null && a.getActuatorId().startsWith(prefix));
+      System.out.println("Removed sensor " + sensorId + " and associated actuators");
+      sendCurrentNode();
+    } catch (Exception e) {
+      System.out.println("Failed to remove sensor: " + e.getMessage());
     }
   }
 
