@@ -214,15 +214,15 @@ public class ControlPanelLogic {
    * Fields: sensorType (TEMPERATURE|LIGHT|HUMIDITY|CO2), sensorId, minThreshold, maxThreshold
    */
   public void addSensor(String nodeId, String sensorType, String sensorId, double minThreshold, double maxThreshold) {
-    JsonObject obj = new JsonObject();
-    obj.addProperty("messageType", "ADD_SENSOR");
-    obj.addProperty("controlPanelId", controlPanelId);
-    obj.addProperty("nodeID", nodeId);
-    obj.addProperty("sensorType", sensorType);
-    obj.addProperty("sensorId", sensorId);
-    obj.addProperty("minThreshold", minThreshold);
-    obj.addProperty("maxThreshold", maxThreshold);
-    comm.sendJson(gson.toJson(obj));
+      JsonObject obj = new JsonObject();
+      obj.addProperty("messageType", "ADD_SENSOR");
+      obj.addProperty("controlPanelId", controlPanelId);
+      obj.addProperty("nodeID", nodeId);
+      obj.addProperty("sensorType", sensorType);
+      obj.addProperty("sensorId", sensorId);
+      obj.addProperty("minThreshold", minThreshold);
+      obj.addProperty("maxThreshold", maxThreshold);
+      comm.sendJson(gson.toJson(obj));
   }
 
   /**

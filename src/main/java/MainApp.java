@@ -4,7 +4,7 @@
  * Main launcher that starts Server, a NodeClient and a ControlPanel in one JVM.
  * Use for local testing only.
  */
-public class MainApp {
+public class  MainApp {
 
 	public static void main(String[] args) throws Exception {
 		// Start server in background thread using existing main
