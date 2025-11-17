@@ -55,6 +55,7 @@ public class ControlPanelUI {
     System.out.println(" RemoveSensor <nodeId> <sensorId>");
     System.out.println(" Request <nodeId>");
     System.out.println(" Set <nodeId> <actuatorId> <on|off>");
+    System.out.println(" SpawnNode <nodeId> <location>");
     System.out.println(" Exit");
   }
 
@@ -73,6 +74,12 @@ public class ControlPanelUI {
             // Determine available sensor types and filter out those already present
             java.util.List<String> allTypes = java.util.Arrays.asList("TEMPERATURE", "LIGHT", "HUMIDITY", "CO2");
             java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
+
+            // Immediately inform user if the nodeId is not connected/known
+            if (nodes == null || !nodes.containsKey(nodeId)) {
+              System.out.println("Node '" + nodeId + "' is not connected to the server. Use Request <nodeId> or check the node connection.");
+              break;
+            }
             java.util.Set<String> existing = new java.util.HashSet<>();
             if (nodes != null && nodes.containsKey(nodeId)) {
               ControlPanelLogic.NodeState ns = nodes.get(nodeId);
@@ -153,6 +160,23 @@ public class ControlPanelUI {
           } else {
             System.out.println("Usage: addsensor <nodeId>");
           }
+        }
+        case "spawnnode" -> {
+          String nodeId;
+          String location;
+          if (parts.length >= 3) {
+            nodeId = parts[1];
+            location = parts[2];
+          } else {
+            System.out.print("Node ID: ");
+            nodeId = scanner.nextLine().trim();
+            if (nodeId.isEmpty()) { System.out.println("Node ID cannot be empty."); break; }
+            System.out.print("Location: ");
+            location = scanner.nextLine().trim();
+            if (location.isEmpty()) { System.out.println("Location cannot be empty."); break; }
+          }
+          boolean ok = logic.spawnNode(nodeId, location);
+          if (!ok) System.out.println("Failed to spawn node. See log for details.");
         }
         case "set" -> {
           if (parts.length >= 4) {
