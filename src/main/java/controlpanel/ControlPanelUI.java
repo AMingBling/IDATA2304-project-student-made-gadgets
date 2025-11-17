@@ -192,11 +192,11 @@ public class ControlPanelUI {
     if (sensorType == null) return null;
     switch (sensorType.toUpperCase()) {
       case "TEMPERATURE":
-        return new double[]{18, 35};
+        return new double[]{15, 30};
       case "LIGHT":
-        return new double[]{200, 20000};
+        return new double[]{1000, 20000};
       case "HUMIDITY":
-        return new double[]{30, 85};
+        return new double[]{50, 85};
       case "CO2":
         return new double[]{800, 1500};
       default:
