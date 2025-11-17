@@ -188,7 +188,8 @@ public class Server {
                                     if (lastJson != null) {
                                         out.println(lastJson);
                                         System.out.println("Served cached state of " + targetNode + " to control panel.");
-                                        return;
+                                        // keep the control panel connection open so it can send further commands
+                                        continue;
                                     }
 
                                     Socket nodeSocket = sensorNodes.get(targetNode);
