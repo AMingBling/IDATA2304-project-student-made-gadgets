@@ -1,34 +1,15 @@
 package network;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
+import com.google.gson.*;
 import entity.Node;
-import entity.actuator.Actuator;
-
-import entity.actuator.Heater;
-import entity.sensor.Sensor;
-import entity.sensor.TemperatureSensor;
-import entity.actuator.Humidifier;
-import entity.actuator.DeHumidifier;
-import entity.actuator.Ventilation;
-import entity.actuator.Heater;
-import entity.actuator.AirCondition;
-
+import entity.actuator.*;
+import entity.sensor.*;
 
 import java.io.*;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-
-// mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="<id> <location>"
-// ex: mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="01 greenhouse1"
-//NodeClients kan bli kjørt i terminalen ved hjelp av kommandoen mvn exec:java
-//"-DesorNodesxec.mainClass=network.NodeClient" "-Dexec.args=<ID> <Lokasjon>" og kobler seg til Serveren
+import java.util.List;
 
 /**
  * Client class for a Node that connects to the server, sends its state, and listens for commands.
@@ -41,15 +22,6 @@ public class NodeClient {
   private final Gson gson;
   private Thread listener;
 
-
-  /**
-   * Constructor for NodeClient
-   *
-   * @param node the Node object representing this client
-   * @param out  the output stream to the server
-   * @param in   the input stream from the server
-   * @param gson the Gson instance for JSON serialization/deserialization
-   */
   public NodeClient(Node node, PrintWriter out, BufferedReader in, Gson gson) {
     this.node = node;
     this.out = out;
@@ -57,22 +29,12 @@ public class NodeClient {
     this.gson = gson;
   }
 
-  // ---------- METHODS ----------
-
-  /**
-   * Start the NodeClient: begin listening for server commands
-   */
   public void start() {
-    // Start thread to listen for messages from server
     listener = new Thread(this::listenForCommands);
     listener.setDaemon(true);
     listener.start();
   }
 
-
-  /**
-   * Send the current Node object to the server (serialized to JSON).
-   */
   public void sendCurrentNode() {
     if (node == null) {
       return;
@@ -80,9 +42,6 @@ public class NodeClient {
     sendNode(node);
   }
 
-  /**
-   * Send any Node object to the server (serialized to JSON).
-   */
   public void sendNode(Node n) {
     if (n == null) {
       throw new IllegalArgumentException("Node cannot be null");
@@ -94,10 +53,6 @@ public class NodeClient {
     System.out.println("Node -> Server: " + obj.toString());
   }
 
-
-  /**
-   * Listen for commands from the server and process them.
-   */
   private void listenForCommands() {
     try {
       String incoming;
@@ -112,76 +67,64 @@ public class NodeClient {
                 : null;
 
             if ("ACTUATOR_COMMAND".equals(mt)) {
-              // apply actuator change locally and send updated node state
-              String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
-              String command = obj.has("command") ? obj.get("command").getAsString() : null;
-              if (actuatorId != null && command != null) {
-                boolean on = "TURN_ON".equals(command);
-                node.getActuators().stream()
-                    .filter(a -> a.getActuatorId().equals(actuatorId))
-                    .findFirst()
-                    .ifPresent(a -> {
-                      a.setOn(on);
-                      System.out.println("Actuator " + actuatorId + " set to " + on);
-                    });
-                // send updated node state to server so control panels get the update
-                sendCurrentNode();
-              }
+              handleActuatorCommand(obj);
             } else if ("REQUEST_STATE".equals(mt) || "REQUEST_NODE".equals(mt)) {
-              // send current node state immediately
               node.updateAllSensors();
               sendCurrentNode();
             } else if ("ADD_SENSOR".equals(mt)) {
-              // Expect fields: sensorType, sensorId, minThreshold, maxThreshold
-              try {
-                String sensorType = obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
-                String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
-                double min = obj.has("minThreshold") ? obj.get("minThreshold").getAsDouble() : 0.0;
-                double max = obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
-                if (sensorType != null && sensorId != null) {
-                  if ("TEMPERATURE".equals(sensorType)) {
-                    node.addSensor(new TemperatureSensor(sensorId, min, max));
-                  } else if ("LIGHT".equals(sensorType)) {
-                    node.addSensor(new entity.sensor.LightSensor(sensorId, min, max));
-                  } else if ("HUMIDITY".equals(sensorType)) {
-                    node.addSensor(new entity.sensor.HumiditySensor(sensorId, min, max));
-                  } else if ("CO2".equals(sensorType)) {
-                    node.addSensor(new entity.sensor.CO2Sensor(sensorId, min, max));
-                  } else {
-                    System.out.println("Unknown sensor type: " + sensorType);
-                  }
-                  System.out.println("Added sensor " + sensorId + " of type " + sensorType);
-                  sendCurrentNode();
-                }
-              } catch (Exception e) {
-                System.out.println("Failed to add sensor: " + e.getMessage());
-              }
-            } else if ("ADD_ACTUATOR".equals(mt)) {
-              try {
-                String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
-                String actuatorType = obj.has("actuatorType") ? obj.get("actuatorType").getAsString() : null;
-                if (actuatorId != null && actuatorType != null) {
-                  node.addActuator(new Actuator(actuatorId, actuatorType));
-                  System.out.println("Added actuator " + actuatorId + " type " + actuatorType);
-                  sendCurrentNode();
-                }
-              } catch (Exception e) {
-                System.out.println("Failed to add actuator: " + e.getMessage());
-              }
+              handleAddSensor(obj);
             }
           } catch (Exception e) {
-            System.out.println("Failed to parse command JSON: " + e.getMessage());
+            System.out.println("Error processing command: " + e.getMessage());
           }
         }
       }
     } catch (IOException e) {
-      System.out.println("Lost connection to server.");
+      System.out.println("Error reading from server: " + e.getMessage());
     }
   }
 
-  /**
-   * Close the NodeClient: close streams and stop listener thread
-   */
+  private void handleActuatorCommand(JsonObject obj) {
+    String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
+    String command = obj.has("command") ? obj.get("command").getAsString() : null;
+    if (actuatorId != null && command != null) {
+      boolean on = "TURN_ON".equals(command);
+      node.getActuators().stream()
+          .filter(a -> a.getActuatorId().equals(actuatorId))
+          .findFirst()
+          .ifPresent(a -> {
+            a.setOn(on);
+            System.out.println("Actuator " + actuatorId + " set to " + on);
+          });
+      sendCurrentNode();
+    }
+  }
+
+  private void handleAddSensor(JsonObject obj) {
+    try {
+      String sensorType = obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
+      String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
+      double min = obj.has("minThreshold") ? obj.get("minThreshold").getAsDouble() : 0.0;
+      double max = obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
+      if (sensorType != null && sensorId != null) {
+        if ("TEMPERATURE".equals(sensorType)) {
+          node.addSensor(new TemperatureSensor(sensorId, min, max));
+          node.addActuator(new Heater(sensorId + "_heater"));
+          node.addActuator(new AirCondition(sensorId + "_ac"));
+        } else if ("HUMIDITY".equals(sensorType)) {
+          node.addSensor(new HumiditySensor(sensorId, min, max));
+          node.addActuator(new Humidifier(sensorId + "_humidifier"));
+          node.addActuator(new DeHumidifier(sensorId + "_dehumidifier"));
+        }
+        System.out.println(
+            "Added sensor " + sensorId + " of type " + sensorType + " with actuators.");
+        sendCurrentNode();
+      }
+    } catch (Exception e) {
+      System.out.println("Failed to add sensor: " + e.getMessage());
+    }
+  }
+
   public void close() {
     try {
       if (in != null) {
@@ -197,14 +140,9 @@ public class NodeClient {
     }
   }
 
-  /**
-   * Main method to start the NodeClient
-   * @param args command line arguments: <ID> <Location>
-   */
   public static void main(String[] args) {
     if (args.length < 2) {
-      System.out.println("mvn exec:java\r\n" + //
-                " * \"-DesorNodesxec.mainClass=network.NodeClient\" \"-Dexec.args=<ID> <Lokasjon>\"");
+      System.out.println("Usage: NodeClient <ID> <Location>");
       return;
     }
 
@@ -229,48 +167,29 @@ public class NodeClient {
 
       System.out.println("SensorNode " + nodeId + " connected to server.");
 
-      // Register node id with server
       out.println("SENSOR_NODE_CONNECTED " + nodeId);
       String serverResponse = in.readLine();
-      if (serverResponse == null) {
-        System.out.println("No response from server after registering. Exiting.");
-        return;
-      }
-      if (serverResponse.equals("NODE_ID_REJECTED")) {
-        System.out.println("Node ID '" + nodeId + "' rejected by server (duplicate). Exiting.");
-        return;
-      }
-      if (!serverResponse.equals("NODE_ID_ACCEPTED")) {
-        System.out.println("Unexpected server response: " + serverResponse + ". Exiting.");
+      if (serverResponse == null || !serverResponse.equals("NODE_ID_ACCEPTED")) {
+        System.out.println("Node ID rejected or unexpected response. Exiting.");
         return;
       }
 
+      List<Sensor> sensors = new ArrayList<>();
+      sensors.add(new TemperatureSensor("1", 20.0, 26.0));
 
-      // Create a minimal initial sensor (Node requires at least one sensor)
-      Sensor initSensor = new TemperatureSensor("1", 20.0,
-          26.0);
-      java.util.List<Sensor> sensors = new ArrayList<>();
-      sensors.add(initSensor);
+      List<Actuator> actuators = new ArrayList<>();
+      actuators.add(new Heater("1"));
 
-      Actuator initActuator = new Heater("1");
-      java.util.List<Actuator> actuators = new ArrayList<>();
-      actuators.add(initActuator);
-
-
-        TemperatureSensor tempSensor = new TemperatureSensor("temp1", 15.0, 30.0);
-        sensors.add(tempSensor);
-
-        Node nodeObj = new Node(nodeId, location, sensors, actuators);
+      Node nodeObj = new Node(nodeId, location, sensors, actuators);
 
       NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
       nodeClient.start();
-
-      // Send initial node state to server
       nodeClient.sendCurrentNode();
 
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
+
 
 }
