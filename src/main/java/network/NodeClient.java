@@ -50,7 +50,7 @@ public class NodeClient {
     obj.addProperty("messageType", "SENSOR_DATA_FROM_NODE");
     out.println(obj.toString());
     out.flush();
-    System.out.println("Node -> Server: " + obj.toString());
+    System.out.println("\n Node -> Server: " + obj.toString());
   }
 
   private void listenForCommands() {
