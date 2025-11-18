@@ -33,13 +33,21 @@ public class ControlPanelUI {
    * from standard input.</p>
    */
   public void run() {
+    boolean first = true;
     while (running) {
-      showDashboard();
-      showHelp();
+      if (first) {
+        showDashboard();
+        showHelp();
+        first = false;
+      }
       System.out.print("> ");
       String line = scanner.nextLine();
       if (line == null) break;
       handleCommand(line.trim());
+      // Show dashboard/help after handling the command so any immediate responses
+      // (for example the response to CheckNode) are printed before the menu.
+      showDashboard();
+      showHelp();
     }
   }
 
@@ -63,7 +71,7 @@ public class ControlPanelUI {
     System.out.println(" - AddSensor <nodeId>");
     System.out.println(" - RemoveSensor <nodeId> <sensorId>");
     System.out.println(" - CheckNode <nodeId>");
-    System.out.println(" - Set <nodeId> <actuatorId> <on|off>");
+    System.out.println(" - ToggleActuator <nodeId> <actuatorId> <on|off>");
     System.out.println(" - SpawnNode <nodeId> <location>");
     System.out.println(" - Exit\n");
   }
@@ -84,7 +92,7 @@ public class ControlPanelUI {
       ControlPanelLogic.NodeState ns = nodes.get(id);
       int sensorCount = (ns == null || ns.sensors == null) ? 0 : ns.sensors.size();
       int actuatorCount = (ns == null || ns.actuators == null) ? 0 : ns.actuators.size();
-      System.out.printf("- Node %s: sensors=%d actuators=%d%n", id, sensorCount, actuatorCount);
+      System.out.printf("- Node %s: sensors = %d actuators = %d%n", id, sensorCount, actuatorCount);
     }
   }
 
@@ -221,21 +229,49 @@ public class ControlPanelUI {
           boolean ok = logic.spawnNode(nodeId, location);
           if (!ok) System.out.println("Failed to spawn node. See log for details.");
         }
-        case "set" -> {
+        case "toggleactuator" -> {
           if (parts.length >= 4) {
             String nodeId = parts[1];
             String actuatorId = parts[2];
             boolean on = parts[3].equalsIgnoreCase("on") || parts[3].equalsIgnoreCase("true");
+            java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
+            if (nodes == null || !nodes.containsKey(nodeId)) {
+              System.out.println("Node '" + nodeId + "' is not known. Use CheckGreenhouse to list nodes.");
+              break;
+            }
+            ControlPanelLogic.NodeState ns = nodes.get(nodeId);
+            if (ns == null || ns.actuators == null || !ns.actuators.containsKey(actuatorId)) {
+              System.out.println("Warning: actuator '" + actuatorId + "' not found on node " + nodeId + ". Sending command anyway.");
+            }
             logic.setActuatorState(nodeId, actuatorId, on);
+            if (on) {
+              System.out.println("\nSuccessfully turned on actuator ID:" + actuatorId + " to Node " + nodeId);
+            } else {
+              System.out.println("\nSuccessfully turned off actuator ID:" + actuatorId + " from Node " + nodeId);
+            }
           } else {
-            System.out.println("Usage: set <nodeId> <actuatorId> <on|off>");
+            System.out.println("Usage: toggleactuator <nodeId> <actuatorId> <on|off>");
           }
         }
         case "removesensor" -> {
           if (parts.length >= 3) {
             String nodeId = parts[1];
             String sensorId = parts[2];
-            logic.removeSensor(nodeId, sensorId);
+            java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
+            if (nodes == null || !nodes.containsKey(nodeId)) {
+              System.out.println("Node '" + nodeId + "' is not known. Use CheckGreenhouse to list nodes.");
+              break;
+            }
+            ControlPanelLogic.NodeState ns = nodes.get(nodeId);
+            if (ns == null || ns.sensors == null || !ns.sensors.containsKey(sensorId)) {
+              System.out.println("Sensor '" + sensorId + "' not found on node " + nodeId + ".");
+              break;
+            }
+            String sensorType = ns.sensors.get(sensorId).getSensorType();
+            boolean removed = logic.removeSensor(nodeId, sensorId);
+            if (removed) {
+              System.out.println("\nSuccessfully removed sensor ID:" + sensorId + " type:" + sensorType + " from Node " + nodeId);
+            }
           } else {
             System.out.println("Usage: removesensor <nodeId> <sensorId>");
           }

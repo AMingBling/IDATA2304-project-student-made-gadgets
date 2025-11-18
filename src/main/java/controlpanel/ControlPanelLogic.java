@@ -2,7 +2,6 @@ package controlpanel;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 
 import entity.sensor.Sensor;
@@ -14,6 +13,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import network.NodeClient;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
@@ -61,6 +62,10 @@ public class ControlPanelLogic {
   private volatile boolean showNodeUpdates = false;
   // Track alerts already shown in this ControlPanel so each sensor alert is printed only once.
   private final Set<String> shownAlerts = ConcurrentHashMap.newKeySet();
+
+  // Track nodes recently requested so we only print the first response during the request window
+  private final Map<String, CountDownLatch> requestLatches = new ConcurrentHashMap<>();
+  private final Set<String> requestPrinted = ConcurrentHashMap.newKeySet();
 
 
   /**
@@ -252,7 +257,7 @@ public class ControlPanelLogic {
       if (shownAlerts.contains(key)) return;
 
       // First time: print alert and remember it
-      System.out.println("*** ALERT from node " + (nodeId.isEmpty() ? "?" : nodeId) + ": " + alert);
+      System.out.println("! ALERT from node " + (nodeId.isEmpty() ? "?" : nodeId) + ": " + alert + " !\n");
       shownAlerts.add(key);
     } catch (Exception e) {
       System.out.println("[CP-Logic] Failed to process ALERT: " + e.getMessage());
@@ -317,6 +322,13 @@ public class ControlPanelLogic {
 
   private void printNodeState(NodeState state) {
     if (!showNodeUpdates) return;
+    // If this node was recently requested, only allow printing the first update
+    if (state != null && state.nodeId != null && requestLatches.containsKey(state.nodeId)) {
+      if (requestPrinted.contains(state.nodeId)) return; // already printed one response for this request
+      // mark as printed
+      requestPrinted.add(state.nodeId);
+      // after printing we'll count down the latch to notify any waiting thread
+    }
     System.out.println("\n ---- NODE UPDATE ----");
     System.out.println("Node ID: " + state.nodeId);
     System.out.println(" Sensors:");
@@ -325,7 +337,11 @@ public class ControlPanelLogic {
           sensor.getSensorId(), sensor.getSensorType(), sensor.getValue(), sensor.getUnit());
     }
     System.out.println(" Actuators:");
-    for (Actuator actuator : state.actuators.values()) {
+    // Print actuators sorted by actuatorId so those tied to the same sensor
+    // (e.g. actuator ids starting with "s1_") appear grouped together.
+    java.util.List<Actuator> actuators = new java.util.ArrayList<>(state.actuators.values());
+    actuators.sort((a, b) -> a.getActuatorId().compareToIgnoreCase(b.getActuatorId()));
+    for (Actuator actuator : actuators) {
       System.out.printf("  - ID: %s, Type: %s, State: %s%n",
           actuator.getActuatorId(), actuator.getActuatorType(), actuator.isOn() ? "ON" : "OFF");
     }
@@ -410,16 +426,21 @@ public class ControlPanelLogic {
     // Temporarily enable node update printing so the single Request response is shown
     boolean previous = this.showNodeUpdates;
     setShowNodeUpdates(true);
+    // Track this node so we only print the first response during the request window
+    CountDownLatch latch = new CountDownLatch(1);
+    requestPrinted.remove(nodeId);
+    requestLatches.put(nodeId, latch);
     comm.sendJson(gson.toJson(obj));
-    // Restore previous verbosity after a short delay (3 seconds)
-    new Thread(() -> {
-      try {
-        Thread.sleep(3000);
-      } catch (InterruptedException ignored) {
-        Thread.currentThread().interrupt();
-      }
+    try {
+      // Wait for the first response (up to 3s) so it prints before the menu is shown again
+      latch.await(1200, TimeUnit.MILLISECONDS);
+    } catch (InterruptedException ignored) {
+      Thread.currentThread().interrupt();
+    } finally {
+      requestLatches.remove(nodeId);
+      requestPrinted.remove(nodeId);
       setShowNodeUpdates(previous);
-    }, "cp-request-verbosity-restorer").start();
+    }
   }
 
   /**
@@ -466,13 +487,26 @@ public class ControlPanelLogic {
   /**
    * Request the node to remove a sensor (and associated actuators) at runtime.
    */
-  public void removeSensor(String nodeId, String sensorId) {
+  /**
+   * Request the node to remove a sensor (and associated actuators) at runtime.
+   * Returns true if a REMOVE_SENSOR message was actually sent to the server.
+   */
+  public boolean removeSensor(String nodeId, String sensorId) {
+    // Basic validation against cached state: if we don't know the node or sensor,
+    // report and skip sending the request.
+    NodeState ns = nodes.get(nodeId);
+    if (ns == null || ns.sensors == null || !ns.sensors.containsKey(sensorId)) {
+      System.out.println("Sensor '" + sensorId + "' not found on node " + nodeId + ". Skipping remove.");
+      return false;
+    }
+
     JsonObject obj = new JsonObject();
     obj.addProperty("messageType", "REMOVE_SENSOR");
     obj.addProperty("controlPanelId", controlPanelId);
     obj.addProperty("nodeID", nodeId);
     obj.addProperty("sensorId", sensorId);
     comm.sendJson(gson.toJson(obj));
+    return true;
   }
 
   /**
