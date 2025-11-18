@@ -19,16 +19,24 @@ public class TemperatureSensor extends Sensor {
     }
 
     @Override
-    public void updateValue() {
+    public void updateValue(double newValue) {
         // Temperature should only change when actuators modify it
-        updateValue(clamp(getValue()));
+        this.value = newValue;
+        this.timestamp = java.time.LocalDateTime.now();
     }
 
     @Override
     public void adjustValue(double delta) {
-        double newVal = clamp(getValue() + delta);
-        updateValue(newVal);
+        updateValue(getValue() + delta);
     }
+
+    // Implement parameterless updateValue required by base Sensor
+   @Override
+   public void updateValue() {
+       // Optional: add tiny noise so sensor updates even without actuator input
+       double noise = (Math.random() - 0.5) * 0.02;
+       updateValue(getValue() + noise);
+   }
 
     private double clamp(double v) {
         double min = this.minThreshold;
@@ -37,4 +45,17 @@ public class TemperatureSensor extends Sensor {
         if (v > max) return max;
         return v;
     }
+
+    /**
+     * Obove or under tresholds, neds to know what value is when the tick is right under treshold, this is where the message wil come
+     * @return
+     */
+public boolean isAboveMax() {
+    return getValue() > getMaxThreshold();
+}
+
+public boolean isBelowMin() {
+    return getValue() < getMinThreshold();
+}
+
 }

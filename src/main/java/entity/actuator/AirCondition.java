@@ -23,5 +23,10 @@ public class AirCondition extends Actuator {
         s.adjustValue(-1.0);
       }
     }
+    System.out.println("[AirCondition] applied temp effect: -1.0");
   }
+  
+
+
+  
 }

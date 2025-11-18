@@ -15,9 +15,15 @@ public class Heater extends Actuator {
     this.heatDelta = 1.0; // standard økning per tick (tune etter behov)
   }
 
-  @Override
+  public Heater(String id, double heatDelta) {
+    super(id, "HEATER");
+    this.heatDelta = heatDelta;
+  }
+
+   @Override
   public void applyEffect(List<Sensor> sensors) {
-    if (!isOn() || sensors == null) return;
+    if (!isOn()) return;
+    double heatDelta = 1.0; // eller bruk eksisterende felt
     for (Sensor s : sensors) {
       if ("TEMPERATURE".equalsIgnoreCase(s.getSensorType())) {
         s.adjustValue(heatDelta);
