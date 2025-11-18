@@ -16,8 +16,6 @@ public class Server {
     private static final int PORT = 5000;
 
     private static List<Socket> controlPanels = Collections.synchronizedList(new ArrayList<>());
-    // Subscriptions: controlPanel socket -> set of nodeIDs it wants updates for
-    private static Map<Socket, Set<String>> controlPanelSubscriptions = new ConcurrentHashMap<>();
     // Store last-known node JSON per nodeID so REQUEST_NODE can be answered immediately
     private static Map<String, String> lastKnownNodeJson = new ConcurrentHashMap<>();
     // Map nodeId -> socket for sensor nodes to prevent duplicate node IDs
@@ -34,7 +32,7 @@ public class Server {
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("New client connected: " + clientSocket.getInetAddress());
+                System.out.println("\nNew client connected: " + clientSocket.getInetAddress());
                 new Thread(new ClientHandler(clientSocket)).start();
             }
         } catch (IOException e) {
@@ -104,8 +102,6 @@ public class Server {
                             if (obj != null && obj.has("messageType") && "REGISTER_CONTROL_PANEL".equals(obj.get("messageType").getAsString())) {
                                 isControlPanel = true;
                                 controlPanels.add(socket);
-                                // initialize empty subscription set (user must subscribe explicitly)
-                                controlPanelSubscriptions.put(socket, ConcurrentHashMap.newKeySet());
                                 String cpId = obj.has("controlPanelId") ? obj.get("controlPanelId").getAsString() : "<unknown>";
                                 System.out.println("Control panel registered: " + socket.getInetAddress() + " (id=" + cpId + ")");
                                 handledInitial = true;
@@ -124,7 +120,7 @@ public class Server {
                 String inputLine;
                 while ((inputLine = in.readLine()) != null) {
                     if (isControlPanel) {
-                        System.out.println("[ControlPanel] received -> " + inputLine);
+                        System.out.println("\n[ControlPanel] received -> " + inputLine);
                         // Expect control panel to send JSON commands (ACTUATOR_COMMAND, TARGET_UPDATE)
                         if (inputLine.trim().startsWith("{")) {
                             try {
@@ -151,36 +147,7 @@ public class Server {
                                     } else {
                                         System.out.println("No nodeID in control panel message: " + inputLine);
                                     }
-                                } else if ("SUBSCRIBE_NODE".equals(mt) || "UNSUBSCRIBE_NODE".equals(mt)) {
-                                    if (obj.has("nodeID") && !obj.get("nodeID").isJsonNull()) {
-                                        String targetNode = obj.get("nodeID").getAsString();
-                                        Set<String> subs = controlPanelSubscriptions.get(socket);
-                                        if (subs == null) {
-                                            subs = ConcurrentHashMap.newKeySet();
-                                            controlPanelSubscriptions.put(socket, subs);
-                                        }
-                                        if ("SUBSCRIBE_NODE".equals(mt)) {
-                                            subs.add(targetNode);
-                                            System.out.println("Control panel " + socket.getInetAddress() + " subscribed to " + targetNode);
-                                            // acknowledge subscription
-                                            JsonObject ack = new JsonObject();
-                                            ack.addProperty("messageType", "SUBSCRIBE_ACK");
-                                            ack.addProperty("nodeID", targetNode);
-                                            ack.addProperty("status", "OK");
-                                            try { out.println(ack.toString()); } catch (Exception ignored) {}
-                                        } else {
-                                            subs.remove(targetNode);
-                                            System.out.println("Control panel " + socket.getInetAddress() + " unsubscribed from " + targetNode);
-                                            // acknowledge unsubscription
-                                            JsonObject ack = new JsonObject();
-                                            ack.addProperty("messageType", "UNSUBSCRIBE_ACK");
-                                            ack.addProperty("nodeID", targetNode);
-                                            ack.addProperty("status", "OK");
-                                            try { out.println(ack.toString()); } catch (Exception ignored) {}
-                                        }
-                                    } else {
-                                        System.out.println("No nodeID in subscribe/unsubscribe message: " + inputLine);
-                                    }
+                                
                                 } else if ("REQUEST_NODE".equals(mt)) {
                                     String targetNode = obj.get("nodeID").getAsString();
 
