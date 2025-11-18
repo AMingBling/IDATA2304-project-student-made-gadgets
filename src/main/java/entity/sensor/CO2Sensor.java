@@ -16,13 +16,31 @@ public class CO2Sensor extends Sensor {
     public CO2Sensor(String sensorId,
         double minThreshold, double maxThreshold) {
         super(sensorId, "CO2", "ppm", minThreshold, maxThreshold);
+        updateValue(1000);
     }
 
     @Override
-    public void updateValue() {
-        // Simulate CO2 reading between 250 and 2150 ppm
-        this.value = 250 + Math.random() * 1900;
+    public void updateValue(double newValue) {
+        this.value = newValue;
         this.timestamp = LocalDateTime.now();
+    }
+
+    @Override
+    public synchronized void adjustValue(double delta) {
+        updateValue(getValue() + delta);
+    }
+
+    @Override
+    public synchronized void updateValue() {
+        // Do nothing by default — humidity only changes when actuators run.
+    }
+
+    public boolean isAboveMax() {
+        return getValue() > getMaxThreshold();
+    }
+
+    public boolean isBelowMin() {
+        return getValue() < getMinThreshold();
     }
 
 }
