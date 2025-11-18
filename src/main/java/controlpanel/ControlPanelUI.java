@@ -94,7 +94,7 @@ public class ControlPanelUI {
     if (locations.size() == 1) {
       // Single greenhouse connected: show explicit message
       String loc = locations.iterator().next();
-      System.out.println("+nYour Control Panel is connected to " + loc);
+      System.out.println("\nYour Control Panel is connected to " + loc);
     } else {
       System.out.println("\nConnected nodes (" + nodes.size() + "): ");
     }

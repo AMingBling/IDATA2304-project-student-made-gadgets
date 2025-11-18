@@ -247,10 +247,14 @@ public class ControlPanelLogic {
       String alert = obj.has("alert") && !obj.get("alert").isJsonNull() ? obj.get("alert").getAsString() : null;
       if (alert == null) return;
 
-      // Try to extract sensor id from the alert string: look for 'sensor=<id>'
+      // Try to extract sensor id from the alert string. Accept both
+      // 'sensor=<id>' and 'sensor = <id>' (and variations like 'sensor: <id>').
       String sensorId = null;
-      java.util.regex.Matcher m = java.util.regex.Pattern.compile("sensor=([^\\s,]+)").matcher(alert);
-      if (m.find()) sensorId = m.group(1);
+      java.util.regex.Pattern p = java.util.regex.Pattern.compile("sensor\\s*(?:=|:)\\s*([^\\s,]+)", java.util.regex.Pattern.CASE_INSENSITIVE);
+      java.util.regex.Matcher m = p.matcher(alert);
+      if (m.find()) {
+        sensorId = m.group(1);
+      }
 
       String key = nodeId + ":" + (sensorId == null ? alert : sensorId);
       // If we've already shown this alert for this sensor, ignore
