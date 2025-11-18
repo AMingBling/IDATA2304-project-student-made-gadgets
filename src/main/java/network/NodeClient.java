@@ -209,45 +209,26 @@ public class NodeClient {
           || (typeB.equals("HUMIDIFIER") && typeA.equals("DEHUMIDIFIER"))) {
         return true;
       }
+      // add lamp conflict: Brightening vs Dimming
+    if ((typeA.equals("BRIGHT") && typeB.equals("DIM")) || (typeB.equals("BRIGHT") && typeA.equals("DIM"))) {
+        return true;
+    }
+
+    // add humidity conflicts if not present...
+    if ((typeA.equals("HUMIDIFIER") && typeB.equals("DEHUMIDIFIER")) || (typeB.equals("HUMIDIFIER") && typeA.equals("DEHUMIDIFIER"))) {
+        return true;
+    }
+    if ((typeA.contains("BRIGHT") && typeB.contains("DIM")) || (typeB.contains("BRIGHT") && typeA.contains("DIM"))) {
+        return true;
+    }
+
+
   
-      // Flere regler kan legges til her
+      
       return false;
     }
 
-  private void handleAddSensor(JsonObject obj) {
-    try {
-      String sensorType = obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
-      String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
-      double min = obj.has("minThreshold") ? obj.get("minThreshold").getAsDouble() : 0.0;
-      double max = obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
-      if (sensorType != null && sensorId != null) {
-        if ("TEMPERATURE".equals(sensorType)) {
-          node.addSensor(new TemperatureSensor(sensorId, min, max));
-          node.addActuator(new Heater(sensorId + "_heater"));
-          node.addActuator(new AirCondition(sensorId + "_ac"));
-        } else if ("HUMIDITY".equals(sensorType)) {
-          node.addSensor(new HumiditySensor(sensorId, min, max));
-          node.addActuator(new Humidifier(sensorId + "_humidifier"));
-          node.addActuator(new DeHumidifier(sensorId + "_dehumidifier"));
-        }
-        else if ("CO2".equals(sensorType)) {
-          node.addSensor(new CO2Sensor(sensorId, min, max));
-          node.addActuator(new Ventilation(sensorId + "_ventilation"));
-          node.addActuator(new CO2Supply(sensorId + "_co2_supply"));
-        }
-        else if ("LIGHT".equals(sensorType)) {
-          node.addSensor(new LightSensor(sensorId, min, max));
-          node.addActuator(new LampDimming(sensorId + "_lamp_dimming"));
-          node.addActuator(new LampBrightning(sensorId + "_lamp_brightning"));
-        }  
-        System.out.println(
-            "Added sensor " + sensorId + " of type " + sensorType + " with actuators.");
-        sendCurrentNode();
-      }
-    } catch (Exception e) {
-      System.out.println("Failed to add sensor: " + e.getMessage());
-    }
-  }
+  
 
   private void handleRemoveSensor(JsonObject obj) {
     try {
@@ -264,7 +245,47 @@ public class NodeClient {
       System.out.println("Failed to remove sensor: " + e.getMessage());
     }
   }
+private void handleAddSensor(JsonObject obj) {
+    try {
+      String sensorType = obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
+      String sensorId   = obj.has("sensorId")   ? obj.get("sensorId").getAsString()   : null;
+      double min        = obj.has("minThreshold") ? obj.get("minThreshold").getAsDouble() : 0.0;
+      double max        = obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
 
+      if (sensorType == null || sensorId == null) return;
+
+      if ("TEMPERATURE".equalsIgnoreCase(sensorType)) {
+        node.addSensor(new TemperatureSensor(sensorId, min, max));
+        node.addActuator(new Heater(sensorId + "_heater"));
+        node.addActuator(new AirCondition(sensorId + "_ac"));
+
+      } else if ("HUMIDITY".equalsIgnoreCase(sensorType)) {
+        node.addSensor(new HumiditySensor(sensorId, min, max));
+        node.addActuator(new Humidifier(sensorId + "_humidifier"));
+        node.addActuator(new DeHumidifier(sensorId + "_dehumidifier"));
+
+      } else if ("CO2".equalsIgnoreCase(sensorType)) {
+        node.addSensor(new CO2Sensor(sensorId, min, max));
+        node.addActuator(new Ventilation(sensorId + "_ventilation"));
+        node.addActuator(new CO2Supply(sensorId + "_co2_supply"));
+
+      } else if ("LIGHT".equalsIgnoreCase(sensorType) || "LUMINANCE".equalsIgnoreCase(sensorType)) {
+        node.addSensor(new LightSensor(sensorId, min, max));
+        node.addActuator(new LampDimming(sensorId + "_lamp_dimming"));
+        node.addActuator(new LampBrightning(sensorId + "_lamp_brightning"));
+
+      } else {
+        System.out.println("Unsupported sensor type: " + sensorType);
+        return;
+      }
+
+      System.out.println("Added sensor " + sensorId + " of type " + sensorType + " with actuators.");
+      sendCurrentNode();
+
+    } catch (Exception e) {
+      System.out.println("Failed to add sensor: " + e.getMessage());
+    }
+  }
   /**
    * Close the client's IO resources and stop the listener thread.
    */

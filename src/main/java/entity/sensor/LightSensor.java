@@ -16,13 +16,31 @@ public class LightSensor extends Sensor {
     public LightSensor(String sensorId,
         double minThreshold, double maxThreshold) {
         super(sensorId, "LIGHT", "lux", minThreshold, maxThreshold);
+        updateValue(15000);
     }
     
     @Override
-    public void updateValue() {
-        // Simulate light reading between 100 and 21 000 lux
-        this.value = 100 + Math.random() * 21000;
+    public void updateValue(double newValue) {
+        this.value = newValue;
         this.timestamp = LocalDateTime.now();
+    }
+
+    @Override
+    public synchronized void adjustValue(double delta) {
+        updateValue(getValue() + delta);
+    }
+
+    @Override
+    public synchronized void updateValue() {
+        // Do nothing by default — humidity only changes when actuators run.
+    }
+
+    public boolean isAboveMax() {
+        return getValue() > getMaxThreshold();
+    }
+
+    public boolean isBelowMin() {
+        return getValue() < getMinThreshold();
     }
 
 }
