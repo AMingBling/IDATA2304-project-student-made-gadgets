@@ -228,9 +228,30 @@ public class ControlPanelLogic {
     String type = obj.get("messageType").getAsString();
     switch (type) {
       case "SENSOR_DATA_FROM_NODE" -> updateNodeState(json);
+      case "SENSOR_NODE_DISCONNECTED" -> handleNodeDisconnected(json);
       case "ACTUATOR_STATUS" -> processActuatorStatus(json);
       case "ALERT" -> handleAlert(json);
       default -> System.out.println("[CP-Logic] Unknown type: " + type);
+    }
+  }
+
+  /** Handle notification that a node disconnected from the server. */
+  private void handleNodeDisconnected(String json) {
+    try {
+      JsonObject obj = gson.fromJson(json, JsonObject.class);
+      String nodeId = obj.has("nodeID") && !obj.get("nodeID").isJsonNull() ? obj.get("nodeID").getAsString() : null;
+      if (nodeId == null) return;
+      NodeState removed = nodes.remove(nodeId);
+      // Also clear any request tracking for that node
+      requestLatches.remove(nodeId);
+      requestPrinted.remove(nodeId);
+      if (removed != null) {
+        System.out.println("\n ---- NODE REMOVED ----\nNode " + nodeId + " disconnected and was removed from cache.\n");
+      } else {
+        System.out.println("\nNode " + nodeId + " disconnected (was not present in cache).\n");
+      }
+    } catch (Exception e) {
+      System.out.println("[CP-Logic] Failed to process SENSOR_NODE_DISCONNECTED: " + e.getMessage());
     }
   }
 

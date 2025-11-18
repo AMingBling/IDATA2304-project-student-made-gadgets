@@ -282,11 +282,19 @@ public class Server {
         return;
       }
 
-            // Only remove duplicate nodeId if it was *actually registered*
-            if (nodeId != null && sensorNodes.get(nodeId) == socket) {
-                sensorNodes.remove(nodeId);
-                System.out.println("Node removed: " + nodeId);
-            }
+                        // Only remove duplicate nodeId if it was *actually registered*
+                        if (nodeId != null && sensorNodes.get(nodeId) == socket) {
+                                sensorNodes.remove(nodeId);
+                                System.out.println("Node removed: " + nodeId);
+                                // Notify control panels that this node disconnected so they can update their cache/UI
+                                try {
+                                        com.google.gson.JsonObject outObj = new com.google.gson.JsonObject();
+                                        outObj.addProperty("messageType", "SENSOR_NODE_DISCONNECTED");
+                                        outObj.addProperty("nodeID", nodeId);
+                                        String payload = new com.google.gson.Gson().toJson(outObj);
+                                        broadcastToControlPanels(payload, nodeId);
+                                } catch (Exception ignored) {}
+                        }
         }
 
     }
