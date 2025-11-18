@@ -12,6 +12,7 @@ import entity.actuator.Actuator;
 import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import network.NodeClient;
 import com.google.gson.GsonBuilder;
@@ -38,6 +39,11 @@ public class ControlPanelLogic {
   // spawned simulated nodes created by this control panel logic (nodeId -> NodeClient)
   private final Map<String, NodeClient> spawnedNodes = new ConcurrentHashMap<>();
   private final Map<String, Socket> spawnedSockets = new ConcurrentHashMap<>();
+  // When true, incoming node updates are printed to the ControlPanel terminal.
+  // Default false to avoid periodic output in the control panel UI.
+  private volatile boolean showNodeUpdates = false;
+  // Track alerts already shown in this ControlPanel so each sensor alert is printed only once.
+  private final Set<String> shownAlerts = ConcurrentHashMap.newKeySet();
 
 
   /**
@@ -47,6 +53,16 @@ public class ControlPanelLogic {
   public ControlPanelLogic(String controlPanelId) {
     this.controlPanelId = controlPanelId;
     this.comm = new ControlPanelCommunication(this::handleIncomingJson, gson, controlPanelId);
+  }
+
+  /**
+   * Enable or disable printing incoming node state updates to the ControlPanel terminal.
+   * By default printing is disabled to avoid periodic noise in the ControlPanel UI.
+   *
+   * @param show true to enable printing of node updates, false to silence them
+   */
+  public void setShowNodeUpdates(boolean show) {
+    this.showNodeUpdates = show;
   }
 
   /**
@@ -155,15 +171,52 @@ public class ControlPanelLogic {
     }
     
     if (!obj.has("messageType")) {
+      // Some server responses (cached node JSON) may not include a messageType.
+      // If the payload contains a nodeID we treat it as SENSOR_DATA_FROM_NODE for backward compatibility.
+      if (obj.has("nodeID") && !obj.get("nodeID").isJsonNull()) {
+        updateNodeState(json);
+        return;
+      }
       System.out.println("[CP-Logic] Missing messageType in JSON: " + json);
       return;
     }
-    
+
     String type = obj.get("messageType").getAsString();
     switch (type) {
       case "SENSOR_DATA_FROM_NODE" -> updateNodeState(json);
       case "ACTUATOR_STATUS" -> processActuatorStatus(json);
+      case "ALERT" -> handleAlert(json);
       default -> System.out.println("[CP-Logic] Unknown type: " + type);
+    }
+  }
+
+  /**
+   * Handle an incoming ALERT JSON message from a node forwarded by the server.
+   * Ensures that the same sensor alert is only printed once to this ControlPanel.
+   *
+   * Expected JSON shape: { messageType: "ALERT", nodeID: "<node>", alert: "... sensor=<sensorId> ..." }
+   */
+  private void handleAlert(String json) {
+    try {
+      JsonObject obj = gson.fromJson(json, JsonObject.class);
+      String nodeId = obj.has("nodeID") && !obj.get("nodeID").isJsonNull() ? obj.get("nodeID").getAsString() : "";
+      String alert = obj.has("alert") && !obj.get("alert").isJsonNull() ? obj.get("alert").getAsString() : null;
+      if (alert == null) return;
+
+      // Try to extract sensor id from the alert string: look for 'sensor=<id>'
+      String sensorId = null;
+      java.util.regex.Matcher m = java.util.regex.Pattern.compile("sensor=([^\\s,]+)").matcher(alert);
+      if (m.find()) sensorId = m.group(1);
+
+      String key = nodeId + ":" + (sensorId == null ? alert : sensorId);
+      // If we've already shown this alert for this sensor, ignore
+      if (shownAlerts.contains(key)) return;
+
+      // First time: print alert and remember it
+      System.out.println("*** ALERT from node " + (nodeId.isEmpty() ? "?" : nodeId) + ": " + alert);
+      shownAlerts.add(key);
+    } catch (Exception e) {
+      System.out.println("[CP-Logic] Failed to process ALERT: " + e.getMessage());
     }
   }
 
@@ -224,7 +277,8 @@ public class ControlPanelLogic {
   }
 
   private void printNodeState(NodeState state) {
-    System.out.println("---- NODE UPDATE ----");
+    if (!showNodeUpdates) return;
+    System.out.println("\n ---- NODE UPDATE ----");
     System.out.println("Node ID: " + state.nodeId);
     System.out.println(" Sensors:");
     for (Sensor sensor : state.sensors.values()) {
@@ -284,7 +338,19 @@ public class ControlPanelLogic {
     obj.addProperty("messageType", "REQUEST_NODE");
     obj.addProperty("controlPanelId", controlPanelId);
     obj.addProperty("nodeID", nodeId);
+    // Temporarily enable node update printing so the single Request response is shown
+    boolean previous = this.showNodeUpdates;
+    setShowNodeUpdates(true);
     comm.sendJson(gson.toJson(obj));
+    // Restore previous verbosity after a short delay (3 seconds)
+    new Thread(() -> {
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException ignored) {
+        Thread.currentThread().interrupt();
+      }
+      setShowNodeUpdates(previous);
+    }, "cp-request-verbosity-restorer").start();
   }
 
   /**
