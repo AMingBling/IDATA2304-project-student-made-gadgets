@@ -28,7 +28,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Logikk-laget: behandler JSON, holder state og tilbyr API mot UI. lagt til controlpannelId
+ * Control panel logic and state manager.
+ *
+ * <p>This class encapsulates the logic for a Control Panel. Responsibilities
+ * include:
+ * <ul>
+ *   <li>Maintaining a local cache of known nodes and their sensor/actuator state</li>
+ *   <li>Receiving and parsing line-delimited JSON messages from the {@code Server}</li>
+ *   <li>Forwarding commands from the UI to the server (ADD_SENSOR, REMOVE_SENSOR,
+ *       ACTUATOR_COMMAND, REQUEST_NODE, TARGET_UPDATE)</li>
+ *   <li>Spawning local simulated {@code NodeClient} instances for quick testing</li>
+ *   <li>Providing a small programmatic API used by {@code ControlPanelUI}</li>
+ * </ul>
+ *
+ * <p>Incoming JSON messages are passed into {@link #handleIncomingJson(String)}
+ * (registered as a callback by {@link controlpanel.ControlPanelCommunication}).
+ * The class is thread-safe for its public methods where appropriate (internal
+ * structures use concurrent maps). Printing of periodic node updates can be
+ * toggled using {@link #setShowNodeUpdates(boolean)} to avoid noisy terminals.
  */
 public class ControlPanelLogic {
 
@@ -47,8 +64,12 @@ public class ControlPanelLogic {
 
 
   /**
-   * Oppretter ControlPanelLogic og initialiserer kommunikasjon. Kommunikasjonen vil bruke
-   * denne.handleIncomingJson som callback.
+   * Create a new ControlPanelLogic instance for a given control panel id.
+   *
+   * <p>The instance sets up the {@link ControlPanelCommunication} and registers
+   * {@link #handleIncomingJson(String)} as the callback for incoming JSON lines.
+   *
+   * @param controlPanelId identifier used to register this control panel with the server
    */
   public ControlPanelLogic(String controlPanelId) {
     this.controlPanelId = controlPanelId;
@@ -66,18 +87,23 @@ public class ControlPanelLogic {
   }
 
   /**
-   * Åpner forbindelse til serveren gjennom kommunikasjonslaget.
+   * Connect to the server using the underlying communication layer.
    *
-   * @param ip   serverens IP-adresse
-   * @param port serverens port
-   * @throws IOException hvis tilkobling feiler
+   * @param ip server IP
+   * @param port server TCP port
+   * @throws IOException if the connection fails
    */
   public void connect(String ip, int port) throws IOException {
     comm.connect(ip, port);
   }
 
   /**
-   * closing communication
+   * Close the communication channel and any spawned simulated nodes.
+   *
+   * <p>This closes the underlying {@link ControlPanelCommunication} and
+   * shuts down any simulated {@link NodeClient} instances created via
+   * {@link #spawnNode(String, String)}. The method is safe to call multiple
+   * times.
    */
   public void close() {
     comm.close();
@@ -145,6 +171,12 @@ public class ControlPanelLogic {
     }
   }
 
+  /**
+   * Disconnect and remove a previously spawned simulated node.
+   *
+   * @param nodeId id of the spawned node to disconnect
+   * @return true if a spawned node or socket was found and removed
+   */
   public boolean disconnectSpawnedNode(String nodeId) {
     NodeClient nc = spawnedNodes.remove(nodeId);
     Socket s = spawnedSockets.remove(nodeId);
@@ -155,7 +187,14 @@ public class ControlPanelLogic {
   }
 
   /**
-   * handling incoming json
+   * Handle a single line of JSON received from the server.
+   *
+   * <p>Recognized message types are {@code SENSOR_DATA_FROM_NODE},
+   * {@code ACTUATOR_STATUS} and {@code ALERT}. For backward compatibility,
+   * a payload containing a {@code nodeID} but lacking {@code messageType}
+   * will be treated as {@code SENSOR_DATA_FROM_NODE}.
+   *
+   * @param json the raw line-delimited JSON string received from the server
    */
   public void handleIncomingJson(String json) {
     if (json == null || !json.startsWith("{")) {
@@ -294,10 +333,22 @@ public class ControlPanelLogic {
   }
 
   // UI API
+  /**
+   * Return an unmodifiable view of the cached nodes state map.
+   *
+   * @return map nodeId -> {@link NodeState}
+   */
   public Map<String, NodeState> getNodes() {
     return nodes;
   }
 
+  /**
+   * Lookup an actuator in the cached node state.
+   *
+   * @param nodeId node id
+   * @param actuatorId actuator id
+   * @return actuator object or {@code null} if not found
+   */
   public Actuator getActuator(String nodeId, String actuatorId) {
     NodeState ns = nodes.get(nodeId);
     return ns == null ? null : ns.actuators.get(actuatorId);
@@ -305,7 +356,11 @@ public class ControlPanelLogic {
 
 
   /**
-   * sending a commando to change acutators on/off
+   * Send an actuator command to turn an actuator on or off on a remote node.
+   *
+   * @param nodeId target node id
+   * @param actuatorId actuator id to control
+   * @param on true to turn on, false to turn off
    */
   public void setActuatorState(String nodeId, String actuatorId, boolean on) {
     JsonObject obj = new JsonObject();
@@ -318,7 +373,12 @@ public class ControlPanelLogic {
   }
 
   /**
-   * update min/max for a sensortype on a node
+   * Update the target min/max range for a sensor type on a node.
+   *
+   * @param nodeId target node id
+   * @param sensorType sensor type name (e.g. TEMPERATURE, HUMIDITY)
+   * @param min target minimum
+   * @param max target maximum
    */
   public void updateTargetRange(String nodeId, String sensorType, double min, double max) {
     JsonObject obj = new JsonObject();
@@ -333,6 +393,15 @@ public class ControlPanelLogic {
   // ---------- ControlPanel actions ----------
   // Subscriptions removed: control panels no longer subscribe/unsubscribe to nodes.
 
+  /**
+   * Request the current state of a specific node from the server.
+   *
+   * <p>This sends a {@code REQUEST_NODE} message to the server which will
+   * either reply with a cached node JSON or forward the request to the node
+   * to fetch a fresh state.
+   *
+   * @param nodeId the id of the node to request
+   */
   public void requestNode(String nodeId) {
     JsonObject obj = new JsonObject();
     obj.addProperty("messageType", "REQUEST_NODE");
@@ -354,17 +423,23 @@ public class ControlPanelLogic {
   }
 
   /**
-   * Request the node to add a sensor at runtime.
-   * Fields: sensorType (TEMPERATURE|LIGHT|HUMIDITY|CO2), sensorId, minThreshold, maxThreshold
+   * Request that a node adds a sensor at runtime. The control panel sends an
+   * {@code ADD_SENSOR} message containing the type, id and threshold values.
+   *
+   * @param nodeId target node id
+   * @param sensorType sensor type (TEMPERATURE, LIGHT, HUMIDITY, CO2)
+   * @param sensorId unique sensor id for the node
+   * @param minThreshold minimum threshold value for alerts
+   * @param maxThreshold maximum threshold value for alerts
    */
-  public void addSensor(String nodeId, String sensorType, String sensorId, double minThreshold, double maxThreshold) {
+  public boolean addSensor(String nodeId, String sensorType, String sensorId, double minThreshold, double maxThreshold) {
       // Prevent adding duplicate sensor types for the same node
       NodeState ns = nodes.get(nodeId);
       if (ns != null && ns.sensors != null) {
         for (entity.sensor.Sensor s : ns.sensors.values()) {
           if (s.getSensorType() != null && s.getSensorType().equalsIgnoreCase(sensorType)) {
             System.out.println("Node " + nodeId + " already has a sensor of type " + sensorType + ". Skipping add.");
-            return;
+            return false;
           }
         }
       }
@@ -372,7 +447,7 @@ public class ControlPanelLogic {
       // Prevent duplicate sensor IDs on the same node
       if (ns != null && ns.sensors != null && ns.sensors.containsKey(sensorId)) {
         System.out.println("Sensor ID '" + sensorId + "' already exists on node " + nodeId + ". Skipping add.");
-        return;
+        return false;
       }
 
       JsonObject obj = new JsonObject();
@@ -384,7 +459,9 @@ public class ControlPanelLogic {
       obj.addProperty("minThreshold", minThreshold);
       obj.addProperty("maxThreshold", maxThreshold);
       comm.sendJson(gson.toJson(obj));
+      return true;
   }
+  
 
   /**
    * Request the node to remove a sensor (and associated actuators) at runtime.
@@ -399,12 +476,10 @@ public class ControlPanelLogic {
   }
 
   /**
-   * Request the node to add an actuator at runtime.
-   */
-  // addActuator removed: actuators are created automatically on the node when a sensor is added
-
-  /**
-   * holder for state per node
+   * Per-node cache containing the known sensors and actuators for a node.
+   *
+   * <p>The maps are mutable and updated by {@link ControlPanelLogic} when new
+   * snapshots arrive from the server.
    */
   public static class NodeState {
     public final String nodeId;

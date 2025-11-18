@@ -1,6 +1,18 @@
 package controlpanel;
 
-// ex: mvn --% exec:java -Dexec.mainClass=controlpanel.ControlPanelMain -Dexec.args="cp1 127.0.0.1 5000"
+/**
+ * Standalone entry point for launching a Control Panel instance.
+ *
+ * <p>Usage example (PowerShell):
+ * <pre>
+ * mvn --% exec:java -Dexec.mainClass=controlpanel.ControlPanelMain -Dexec.args="cp1 127.0.0.1 5000"
+ * </pre>
+ *
+ * <p>The program expects three command-line arguments: {@code controlPanelId},
+ * {@code serverIp} and {@code serverPort}. It will create a {@link ControlPanelLogic}
+ * instance, connect it to the server, register a shutdown hook to close the
+ * connection on JVM exit, and then start the interactive {@link ControlPanelUI}.
+ */
 public class ControlPanelMain {
 
   public static void main(String[] args) {
