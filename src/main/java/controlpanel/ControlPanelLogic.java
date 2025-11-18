@@ -192,6 +192,21 @@ public class ControlPanelLogic {
   }
 
   /**
+   * Remove a node from this Control Panel's cache and disconnect any spawned simulated node.
+   * This does not instruct the server to shut down a remote node; it only clears local state
+   * and disconnects any locally spawned {@link NodeClient} created by this control panel.
+   *
+   * @param nodeId the id of the node to remove
+   * @return true if the node was removed from cache or a spawned node/socket was disconnected
+   */
+  public boolean removeNode(String nodeId) {
+    if (nodeId == null || nodeId.isBlank()) return false;
+    NodeState removed = nodes.remove(nodeId);
+    boolean removedSpawn = disconnectSpawnedNode(nodeId);
+    return removed != null || removedSpawn;
+  }
+
+  /**
    * Handle a single line of JSON received from the server.
    *
    * <p>Recognized message types are {@code SENSOR_DATA_FROM_NODE},

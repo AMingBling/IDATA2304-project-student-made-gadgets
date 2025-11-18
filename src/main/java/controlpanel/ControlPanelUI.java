@@ -68,10 +68,11 @@ public class ControlPanelUI {
   private void showHelp() {
     System.out.println("\nCommands: ");
     System.out.println(" - CheckGreenhouse");
+    System.out.println(" - CheckNode <nodeId>");
     System.out.println(" - AddNode <nodeId> <location>");
+    System.out.println(" - RemoveNode <nodeId> <location>");
     System.out.println(" - AddSensor <nodeId>");
     System.out.println(" - RemoveSensor <nodeId> <sensorId>");
-    System.out.println(" - CheckNode <nodeId>");
     System.out.println(" - ToggleActuator <nodeId> <actuatorId> <on|off>");
     System.out.println(" - Exit\n");
   }
