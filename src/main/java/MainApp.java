@@ -8,9 +8,9 @@ public class  MainApp {
 
 	public static void main(String[] args) throws Exception {
 		// Start server in background thread using existing main
-		// Thread serverThread = new Thread(() -> network.Server.main(new String[0]), "server-thread");
-		// serverThread.setDaemon(true);
-		// serverThread.start();
+		Thread serverThread = new Thread(() -> network.Server.main(new String[0]), "server-thread");
+		serverThread.setDaemon(true);
+		serverThread.start();
 
 		// Give server time to bind
 		Thread.sleep(500);
