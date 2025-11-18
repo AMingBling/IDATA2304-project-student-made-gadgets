@@ -280,104 +280,234 @@ public class Node {
    * What si used for the actuators to continue
    * @return 
    */
-    public String applyActuatorEffects() {
-    final double EPS = 0.01;
-    if (sensors == null || actuators == null) return null;
+//   public String applyActuatorEffects() {
+//     final double EPS = 0.01;
+//     if (sensors == null || actuators == null) return null;
 
-    // 1) Apply per-tick actuator effects (delegér til actuatorene)
-    for (entity.actuator.Actuator act : actuators) {
-      if (act == null || !act.isOn()) continue;
-      try {
-        act.applyEffect(sensors);
-      } catch (Exception e) {
-        System.out.println("[Node] actuator.applyEffect failed for " + act.getActuatorId() + ": " + e.getMessage());
-      }
-    }
+//     // 1) Apply per-tick actuator effects (delegér til actuatorene)
+//     for (entity.actuator.Actuator act : actuators) {
+//         if (act == null || !act.isOn()) continue;
+//         try {
+//             act.applyEffect(sensors);
+//         } catch (Exception e) {
+//             System.out.println("[Node] actuator.applyEffect failed for " + act.getActuatorId() + ": " + e.getMessage());
+//         }
+//     }
 
-    // 2) After effects: check thresholds for each sensor type and return an alert string
-    // but only when a sensor transitions from in-range -> out-of-range. When a
-    // sensor returns to range we clear its alerted state so future crossings can
-    // trigger alerts again.
-    for (Sensor s : sensors) {
-      String type = s.getSensorType() == null ? "" : s.getSensorType().toUpperCase();
-      double v = s.getValue();
-      double max = s.getMaxThreshold();
-      double min = s.getMinThreshold();
-      String sid = s.getSensorId();
+//     // 2) After effects: check thresholds for each sensor type and return an alert string if outside
+//     for (Sensor s : sensors) {
+//         String type = s.getSensorType() == null ? "" : s.getSensorType().toUpperCase();
+//         double v = s.getValue();
+//         double max = s.getMaxThreshold();
+//         double min = s.getMinThreshold();
 
-      boolean currentlyAlerted = alertedSensors.contains(sid);
+//         if ("TEMPERATURE".equals(type)) {
+//             if (v > max + EPS) {
+//                 return String.format("TEMP_OVER_MAX node = %s sensor = %s current value = %.2f max = %.2f — Please turn on AirCondition and Turn off Heater",
+//                         getNodeID(), s.getSensorId(), v, max);
+//             }
+//             if (v < min - EPS) {
+//                 return String.format("TEMP_BELOW_MIN node = %s sensor = %s current value=%.2f min = %.2f — Please Turn on Heater and Turn off AirCondition",
+//                         getNodeID(), s.getSensorId(), v, min);
+//             }
+//         } else if ("HUMIDITY".equals(type)) {
+//             if (v > max + EPS) {
+//                 return String.format("HUMIDITY_OVER_MAX node = %s sensor = %s current value = %.2f max = %.2f — Please Turn on DeHumidifier and Turn off Humidifier",
+//                         getNodeID(), s.getSensorId(), v, max);
+//             }
+//             if (v < min - EPS) {
+//                 return String.format("HUMIDITY_BELOW_MIN node = %s sensor = %s current value = %.2f min = %.2f — please Turn on Humidifier and Turn off DeHumidifier",
+//                         getNodeID(), s.getSensorId(), v, min);
+//             }
+        
+//         } else if ("LIGHT".equals(type)) {
+//             if (v > max + EPS) {
+//                 return String.format("LIGHT_OVER_MAX node = %s sensor = %s currernt value = %.2f max = %.2f — Please TURN_ON Dimmer and TURN_OFF Brightener",
+//                         getNodeID(), s.getSensorId(), v, max);
+//             }
+//             if (v < min - EPS) {
+//                 return String.format("LIGHT_BELOW_MIN node = %s sensor = %s current value = %.2f min = %.2f — Please TURN_ON Brightener and TURN_OFF Dimmer",
+//                         getNodeID(), s.getSensorId(), v, min);
+//             }
+//         } else if ("CO2".equals(type)) {
+//             if (v > max + EPS) {
+//                 return String.format("CO2_OVER_MAX node = %s sensor = %s current value = %.2f max = %.2f — Please TURN_ON ventilation and TURN_OFF CO2Supply",
+//                         getNodeID(), s.getSensorId(), v, max);
+//             }
+//             if (v < min - EPS) {
+//                 return String.format("CO2_BELOW_MIN node = %s sensor = %s current value = %.2f min = %.2f — Please TURN_ON CO2Supplyer and TURN_OFF ventilation",
+//                         getNodeID(), s.getSensorId(), v, min);
+//             }
+        
+//     }
+//   }
 
-      if ("TEMPERATURE".equals(type)) {
-        if (v > max + EPS) {
-          if (!currentlyAlerted) {
-            alertedSensors.add(sid);
-            return String.format("TEMP_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f — please turn on AirCondition and Turn off Heater",
-                nodeID, sid, v, max);
-          }
-        } else if (v < min - EPS) {
-          if (!currentlyAlerted) {
-            alertedSensors.add(sid);
-            return String.format("TEMP_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f — please Turn on Heater and Turn off AirCondition",
-                nodeID, sid, v, min);
-          }
-        } else {
-          // in range: clear
-          alertedSensors.remove(sid);
-        }
-      } else if ("HUMIDITY".equals(type)) {
-        if (v > max + EPS) {
-          if (!currentlyAlerted) {
-            alertedSensors.add(sid);
-            return String.format("HUMIDITY_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f — please turn on DeHumidifier and Turn off Humidifier",
-                nodeID, sid, v, max);
-          }
-        } else if (v < min - EPS) {
-          if (!currentlyAlerted) {
-            alertedSensors.add(sid);
-            return String.format("HUMIDITY_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f — please Turn on Humidifier and Turn off DeHumidifier",
-                nodeID, sid, v, min);
-          }
-        } else {
-          alertedSensors.remove(sid);
-        }
-      } else if ("LIGHT".equals(type)) {
-        if (v > max + EPS) {
-          if (!currentlyAlerted) {
-            alertedSensors.add(sid);
-            return String.format("LIGHT_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f — please turn on LampDim and Turn off LampBright",
-                nodeID, sid, v, max);
-          }
-        } else if (v < min - EPS) {
-          if (!currentlyAlerted) {
-            alertedSensors.add(sid);
-            return String.format("LIGHT_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f — please Turn on LampBright and Turn off LampDim",
-                nodeID, sid, v, min);
-          }
-        } else {
-          alertedSensors.remove(sid);
-        }
-      } else if ("CO2".equals(type)) {
-        if (v > max + EPS) {
-          if (!currentlyAlerted) {
-            alertedSensors.add(sid);
-            return String.format("CO2_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f — please turn on Ventilation and Turn off CO2Supply",
-                nodeID, sid, v, max);
-          }
-        } else if (v < min - EPS) {
-          if (!currentlyAlerted) {
-            alertedSensors.add(sid);
-            return String.format("CO2_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f — please Turn on CO2Supply and Turn off Ventilation",
-                nodeID, sid, v, min);
-          }
-        } else {
-          alertedSensors.remove(sid);
-        }
-      }
-    }
-
-    return null;
-    }
+//     return null;
+// }
  
+
+    // ...existing code...
+    public String applyActuatorEffects() {
+      // apply actuator effects, then check limits / thresholds
+      applyPerTickEffects();
+      return checkLimitsAndThresholds();
+    }
+  
+    // apply effects from all ON actuators to sensors
+    private void applyPerTickEffects() {
+      if (sensors == null || actuators == null) return;
+      for (entity.actuator.Actuator act : actuators) {
+        if (act == null || !act.isOn()) continue;
+        try {
+          act.applyEffect(sensors);
+        } catch (Exception e) {
+          System.out.println("[Node] actuator.applyEffect failed for " + act.getActuatorId() + ": " + e.getMessage());
+        }
+      }
+    }
+  
+    // enforce absolute limits first (auto-shutdown), then user thresholds — return alert string or null
+    private String checkLimitsAndThresholds() {
+      final double EPS = 0.01;
+      if (sensors == null || actuators == null) return null;
+  
+      // Absolute safety limits (extract to fields if you want per-node config)
+      final double TEMP_MIN_LIMIT = 0.0;
+      final double TEMP_MAX_LIMIT = 40.0;
+      final double HUMIDITY_MIN_LIMIT = 0.0;
+      final double HUMIDITY_MAX_LIMIT = 100.0;
+      final double LIGHT_MIN_LIMIT = 0.0;
+      final double LIGHT_MAX_LIMIT = 30000.0;
+      final double CO2_MIN_LIMIT = 500.0;
+      final double CO2_MAX_LIMIT = 2000.0;
+  
+      for (Sensor s : sensors) {
+        String type = s.getSensorType() == null ? "" : s.getSensorType().toUpperCase();
+        double v = s.getValue();
+        double max = s.getMaxThreshold();
+        double min = s.getMinThreshold();
+  
+        // Absolute limits + auto-shutdown
+        if ("TEMPERATURE".equals(type)) {
+          if (v <= TEMP_MIN_LIMIT + EPS) {
+            for (entity.actuator.Actuator a : actuators) {
+              if (a == null) continue;
+              String t = a.getActuatorType() == null ? "" : a.getActuatorType().toUpperCase();
+              if (t.contains("AIRCON") || t.contains("AC")) a.setOn(false);
+            }
+            return String.format("REACHING_COLD_LIMIT node=%s sensor=%s value=%.2f — AirCondition auto-OFF",
+                getNodeID(), s.getSensorId(), v);
+          }
+          if (v >= TEMP_MAX_LIMIT - EPS) {
+            for (entity.actuator.Actuator a : actuators) {
+              if (a == null) continue;
+              String t = a.getActuatorType() == null ? "" : a.getActuatorType().toUpperCase();
+              if (t.contains("HEATER")) a.setOn(false);
+            }
+            return String.format("REACHING_WARM_LIMIT node=%s sensor=%s value=%.2f — Heater auto-OFF",
+                getNodeID(), s.getSensorId(), v);
+          }
+        } else if ("HUMIDITY".equals(type)) {
+          if (v <= HUMIDITY_MIN_LIMIT + EPS) {
+            for (entity.actuator.Actuator a : actuators) {
+              if (a == null) continue;
+              String t = a.getActuatorType() == null ? "" : a.getActuatorType().toUpperCase();
+              if (t.contains("DEHUMIDIF") || t.contains("DEHUMIDIFIER")) a.setOn(false);
+            }
+            return String.format("HUMIDITY_MIN_REACHED node=%s sensor=%s value=%.2f — DeHumidifier auto-OFF",
+                getNodeID(), s.getSensorId(), v);
+          }
+          if (v >= HUMIDITY_MAX_LIMIT - EPS) {
+            for (entity.actuator.Actuator a : actuators) {
+              if (a == null) continue;
+              String t = a.getActuatorType() == null ? "" : a.getActuatorType().toUpperCase();
+              if (t.contains("HUMIDIF") || t.contains("HUMIDIFIER")) a.setOn(false);
+            }
+            return String.format("HUMIDITY_MAX_REACHED node=%s sensor=%s value=%.2f — Humidifier auto-OFF",
+                getNodeID(), s.getSensorId(), v);
+          }
+        } else if ("LIGHT".equals(type) || "LUMINANCE".equals(type)) {
+          if (v <= LIGHT_MIN_LIMIT + EPS) {
+            for (entity.actuator.Actuator a : actuators) {
+              if (a == null) continue;
+              String t = a.getActuatorType() == null ? "" : a.getActuatorType().toUpperCase();
+              if (t.contains("DIM") || t.contains("DIMMER")) a.setOn(false);
+            }
+            return String.format("LIGHT_OFF node=%s sensor=%s value=%.2f — Dimmer auto-OFF",
+                getNodeID(), s.getSensorId(), v);
+          }
+          if (v >= LIGHT_MAX_LIMIT - EPS) {
+            for (entity.actuator.Actuator a : actuators) {
+              if (a == null) continue;
+              String t = a.getActuatorType() == null ? "" : a.getActuatorType().toUpperCase();
+              if (t.contains("BRIGHT") || t.contains("BRIGHTENER")) a.setOn(false);
+            }
+            return String.format("LIGHT_FULL_BRIGHT node=%s sensor=%s value=%.2f — Brightener auto-OFF",
+                getNodeID(), s.getSensorId(), v);
+          }
+        } else if ("CO2".equals(type)) {
+          if (v <= CO2_MIN_LIMIT + EPS) {
+            for (entity.actuator.Actuator a : actuators) {
+              if (a == null) continue;
+              String t = a.getActuatorType() == null ? "" : a.getActuatorType().toUpperCase();
+              if (t.contains("VENTIL") || t.contains("VENTILATION")) a.setOn(false);
+            }
+            return String.format("CO2_MIN_REACHED node=%s sensor=%s value=%.2f — Ventilation auto-OFF",
+                getNodeID(), s.getSensorId(), v);
+          }
+          if (v >= CO2_MAX_LIMIT - EPS) {
+            for (entity.actuator.Actuator a : actuators) {
+              if (a == null) continue;
+              String t = a.getActuatorType() == null ? "" : a.getActuatorType().toUpperCase();
+              if (t.contains("CO2") || t.contains("SUPPLY")) a.setOn(false);
+            }
+            return String.format("CO2_MAX_REACHED node=%s sensor=%s value=%.2f — CO2Supply auto-OFF",
+                getNodeID(), s.getSensorId(), v);
+          }
+        }
+  
+        // user thresholds alerts (same as before)
+        if ("TEMPERATURE".equals(type)) {
+          if (v > max + EPS) {
+            return String.format("TEMP_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f",
+                getNodeID(), s.getSensorId(), v, max);
+          }
+          if (v < min - EPS) {
+            return String.format("TEMP_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f",
+                getNodeID(), s.getSensorId(), v, min);
+          }
+        } else if ("HUMIDITY".equals(type)) {
+          if (v > max + EPS) {
+            return String.format("HUMIDITY_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f",
+                getNodeID(), s.getSensorId(), v, max);
+          }
+          if (v < min - EPS) {
+            return String.format("HUMIDITY_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f",
+                getNodeID(), s.getSensorId(), v, min);
+          }
+        } else if ("LIGHT".equals(type) || "LUMINANCE".equals(type)) {
+          if (v > max + EPS) {
+            return String.format("LIGHT_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f",
+                getNodeID(), s.getSensorId(), v, max);
+          }
+          if (v < min - EPS) {
+            return String.format("LIGHT_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f",
+                getNodeID(), s.getSensorId(), v, min);
+          }
+        } else if ("CO2".equals(type)) {
+          if (v > max + EPS) {
+            return String.format("CO2_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f",
+                getNodeID(), s.getSensorId(), v, max);
+          }
+          if (v < min - EPS) {
+            return String.format("CO2_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f",
+                getNodeID(), s.getSensorId(), v, min);
+          }
+        }
+      }
+  
+      return null;
+    }
 
   
      
