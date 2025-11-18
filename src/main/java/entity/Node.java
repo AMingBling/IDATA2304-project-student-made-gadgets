@@ -309,25 +309,44 @@ public class Node {
 
         if ("TEMPERATURE".equals(type)) {
             if (v > max + EPS) {
-                return String.format("TEMP_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f — please turn on AirCondition and Turn off Heater",
+                return String.format("TEMP_OVER_MAX node = %s sensor = %s current value = %.2f max = %.2f — Please turn on AirCondition and Turn off Heater",
                         getNodeID(), s.getSensorId(), v, max);
             }
             if (v < min - EPS) {
-                return String.format("TEMP_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f — please Turn on Heater and Turn off AirCondition",
+                return String.format("TEMP_BELOW_MIN node = %s sensor = %s current value=%.2f min = %.2f — Please Turn on Heater and Turn off AirCondition",
                         getNodeID(), s.getSensorId(), v, min);
             }
         } else if ("HUMIDITY".equals(type)) {
             if (v > max + EPS) {
-                return String.format("HUMIDITY_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f — please Turn on DeHumidifier and Turn off Humidifier",
+                return String.format("HUMIDITY_OVER_MAX node = %s sensor = %s current value = %.2f max = %.2f — Please Turn on DeHumidifier and Turn off Humidifier",
                         getNodeID(), s.getSensorId(), v, max);
             }
             if (v < min - EPS) {
-                return String.format("HUMIDITY_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f — please Turn on Humidifier and Turn off DeHumidifier",
+                return String.format("HUMIDITY_BELOW_MIN node = %s sensor = %s current value = %.2f min = %.2f — please Turn on Humidifier and Turn off DeHumidifier",
                         getNodeID(), s.getSensorId(), v, min);
             }
-        }
-        // Add other sensor types here if needed
+        
+        } else if ("LIGHT".equals(type)) {
+            if (v > max + EPS) {
+                return String.format("LIGHT_OVER_MAX node = %s sensor = %s currernt value = %.2f max = %.2f — Please TURN_ON Dimmer and TURN_OFF Brightener",
+                        getNodeID(), s.getSensorId(), v, max);
+            }
+            if (v < min - EPS) {
+                return String.format("LIGHT_BELOW_MIN node = %s sensor = %s current value = %.2f min = %.2f — Please TURN_ON Brightener and TURN_OFF Dimmer",
+                        getNodeID(), s.getSensorId(), v, min);
+            }
+        } else if ("CO2".equals(type)) {
+            if (v > max + EPS) {
+                return String.format("CO2_OVER_MAX node = %s sensor = %s current value = %.2f max = %.2f — Please TURN_ON ventilation and TURN_OFF CO2Supply",
+                        getNodeID(), s.getSensorId(), v, max);
+            }
+            if (v < min - EPS) {
+                return String.format("CO2_BELOW_MIN node = %s sensor = %s current value = %.2f min = %.2f — Please TURN_ON CO2Supplyer and TURN_OFF ventilation",
+                        getNodeID(), s.getSensorId(), v, min);
+            }
+        
     }
+  }
 
     return null;
 }
