@@ -10,10 +10,16 @@ import java.net.Socket;
 import java.util.function.Consumer;
 
 /**
- * Enkel kommunikasjonsklasse for Control Panel.
- * Åpner en TCP-forbindelse mot server, leser linjedelimited JSON i egen tråd
- * og videresender hver mottatt linje til en callback (Consumer<String>).
- * Har metoder for å sende JSON tilbake til server og for å lukke forbindelsen.
+ * Simple communication helper for a Control Panel.
+ *
+ * <p>This class opens a TCP connection to the server, reads line-delimited JSON messages
+ * on a background daemon thread and forwards each received line to a provided callback
+ * {@code Consumer<String>}. It provides thread-safe sending of JSON strings back to the
+ * server and a safe {@code close()} method that can be called multiple times.</p>
+ *
+ * <p>The class stores the connection info (ip and port) after a successful {@link #connect(String, int)}.
+ * The provided {@code Gson} instance may be {@code null} if not needed by callers of this class,
+ * but it is used when registering the control panel identity at connect time.</p>
  */
 public class ControlPanelCommunication {
 
@@ -29,10 +35,14 @@ public class ControlPanelCommunication {
     private int connectedPort = -1;
 
     /**
-     * Oppretter en kommunikasjonsinstans.
+     * Create a communication instance for a control panel.
      *
-     * @param onJson callback som mottar hver linjedelimited JSON som kommer fra server
-     * @param gson   Gson-instans brukt ved behov (kan være null hvis ikke brukt her)
+     * @param onJson         callback that receives each line-delimited JSON string from the server.
+     *                       The callback is invoked on the internal reader thread; callers should
+     *                       handle threading if they need UI-thread execution.
+     * @param gson           Gson instance used when registering identity during {@link #connect(String, int)}.
+     *                       May be {@code null} if not required by the caller.
+     * @param controlPanelId identifier string for this control panel; sent to server during connect.
      */
     public ControlPanelCommunication(Consumer<String> onJson, Gson gson, String controlPanelId) {
         this.onJson = onJson;
@@ -41,12 +51,17 @@ public class ControlPanelCommunication {
     }
 
     /**
-     * Åpner TCP-tilkobling mot gitt ip og port.
-     * Starter en lesetråd som kaller {@code onJson.accept(line)} for hver mottatt linje.
+     * Open a TCP connection to the given server IP and port.
      *
-     * @param ip   serverens ip-adresse (f.eks. "127.0.0.1")
-     * @param port serverens port (f.eks. 5000)
-     * @throws IOException ved I/O-feil ved oppkobling
+     * <p>After a successful connect this method sends a registration message
+     * (messageType = {@code REGISTER_CONTROL_PANEL}) containing the configured
+     * {@code controlPanelId}. It then starts a background daemon thread which
+     * continuously reads lines from the socket input stream and forwards them
+     * to {@code onJson}.</p>
+     *
+     * @param ip   server IPv4/IPv6 address or hostname (e.g. {@code "127.0.0.1"})
+     * @param port server TCP port (e.g. {@code 5000})
+     * @throws IOException when an I/O error occurs while creating the socket or streams
      */
     public void connect(String ip, int port) throws IOException {
         socket = new Socket(ip, port);
@@ -64,10 +79,6 @@ public class ControlPanelCommunication {
         startListenThread();
     }
 
-    /**
-     * Starter bakgrunnstråd som leser linjer fra socket og sender dem til callback.
-     * Tråden settes som daemon slik at JVM kan avslutte hvis kun daemon-tråder kjører.
-     */
 
     private void startListenThread() {
         readerThread = new Thread(() -> {
@@ -106,7 +117,6 @@ public class ControlPanelCommunication {
         try { if (socket != null) socket.close(); } catch (Exception ignored) {}
     }
 
-    // --- helpers for callers that want to reuse connection info ---
     public String getConnectedIp() { return connectedIp; }
     public int getConnectedPort() { return connectedPort; }
     public boolean isConnected() { return socket != null && socket.isConnected() && !socket.isClosed(); }

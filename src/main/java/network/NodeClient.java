@@ -155,7 +155,6 @@ public class NodeClient {
     }
   }
 
-    // ...existing code...
     private void handleActuatorCommand(JsonObject obj) {
       String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
       String command = obj.has("command") ? obj.get("command").getAsString() : null;
@@ -214,7 +213,6 @@ public class NodeClient {
       // Flere regler kan legges til her
       return false;
     }
-  // ...existing code...
 
   private void handleAddSensor(JsonObject obj) {
     try {
@@ -337,17 +335,12 @@ public class NodeClient {
         nodeClient.sendCurrentNode();
        
 
-        // 💡 Keep node alive forever
+        // Keep node alive forever
         while (true) Thread.sleep(1000);
 
     } catch (Exception e) {
         System.err.println("[NC] Failed to connect to server: " + e.getMessage());
     }
 }
-
-//----------------------------------------
-
-
-
 
 }
