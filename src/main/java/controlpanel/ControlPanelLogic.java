@@ -372,8 +372,9 @@ public class ControlPanelLogic {
     System.out.println("Node ID: " + state.nodeId);
     System.out.println(" Sensors:");
     for (Sensor sensor : state.sensors.values()) {
-      System.out.printf("  - ID: %s, Type: %s, Value: %.2f %s%n",
-          sensor.getSensorId(), sensor.getSensorType(), sensor.getValue(), sensor.getUnit());
+      System.out.printf("  - ID: %s, Type: %s, Value: %.2f %s (min: %.2f, max: %.2f)%n",
+          sensor.getSensorId(), sensor.getSensorType(), sensor.getValue(), sensor.getUnit(),
+          sensor.getMinThreshold(), sensor.getMaxThreshold());
     }
     System.out.println(" Actuators:");
     // Print actuators sorted by actuatorId so those tied to the same sensor
