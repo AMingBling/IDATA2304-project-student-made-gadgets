@@ -8,9 +8,9 @@ Student Project
 
 The system consist of sensor/actuator nodes, a server, and control panels.
 
-Both the control panels and the nodes connects to the server.
+Both the control panels and the nodes connects to the server, and communicates via the server.
 
-## How to test the application
+## How to run the application
 
 1. Run Server.java
 2. Create a node: open a new terminal and type in ***mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="01 greenhouse1"***
