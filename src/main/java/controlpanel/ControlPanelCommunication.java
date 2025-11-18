@@ -24,6 +24,9 @@ public class ControlPanelCommunication {
     private volatile Thread readerThread;
     private final Gson gson;
     private final Consumer<String> onJson;
+    // connection info stored after successful connect
+    private String connectedIp = null;
+    private int connectedPort = -1;
 
     /**
      * Oppretter en kommunikasjonsinstans.
@@ -49,7 +52,9 @@ public class ControlPanelCommunication {
         socket = new Socket(ip, port);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
-
+        // remember connection info
+        this.connectedIp = ip;
+        this.connectedPort = port;
         // Register this control panel identity at server
         JsonObject reg = new JsonObject();
         reg.addProperty("messageType", "REGISTER_CONTROL_PANEL");
@@ -100,4 +105,9 @@ public class ControlPanelCommunication {
         try { if (out != null) out.close(); } catch (Exception ignored) {}
         try { if (socket != null) socket.close(); } catch (Exception ignored) {}
     }
+
+    // --- helpers for callers that want to reuse connection info ---
+    public String getConnectedIp() { return connectedIp; }
+    public int getConnectedPort() { return connectedPort; }
+    public boolean isConnected() { return socket != null && socket.isConnected() && !socket.isClosed(); }
 }
