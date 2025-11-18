@@ -1,4 +1,5 @@
 package controlpanel;
+
 // ex: mvn --% exec:java -Dexec.mainClass=controlpanel.ControlPanelMain -Dexec.args="cp1 127.0.0.1 5000"
 public class ControlPanelMain {
 
@@ -21,15 +22,14 @@ public class ControlPanelMain {
       System.out.println(
           "Control Panel " + controlPanelId + " connected to server at " + serverIp + ":"
               + serverPort);
+      Runtime.getRuntime().addShutdownHook(new Thread(logic::close));
+
+      ControlPanelUI ui = new ControlPanelUI(logic);
+      ui.run();
     } catch (Exception e) {
-      System.err.println("Failed to connect to server: " + e.getMessage());
-      return;
+      System.err.println("[CP] Failed to connect to server: " + e.getMessage());
     }
 
-    Runtime.getRuntime().addShutdownHook (new Thread(logic::close));
-
-    ControlPanelUI ui = new ControlPanelUI(logic);
-    ui.run();
   }
 
 }
