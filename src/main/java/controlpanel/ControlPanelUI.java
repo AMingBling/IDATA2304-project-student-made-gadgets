@@ -68,11 +68,11 @@ public class ControlPanelUI {
   private void showHelp() {
     System.out.println("\nCommands: ");
     System.out.println(" - CheckGreenhouse");
+    System.out.println(" - AddNode <nodeId> <location>");
     System.out.println(" - AddSensor <nodeId>");
     System.out.println(" - RemoveSensor <nodeId> <sensorId>");
     System.out.println(" - CheckNode <nodeId>");
     System.out.println(" - ToggleActuator <nodeId> <actuatorId> <on|off>");
-    System.out.println(" - SpawnNode <nodeId> <location>");
     System.out.println(" - Exit\n");
   }
 
@@ -85,14 +85,27 @@ public class ControlPanelUI {
       System.out.println("No connected nodes.");
       return;
     }
-    System.out.println("\nConnected nodes (" + nodes.size() + "): ");
+    // Collect distinct locations
+    java.util.Set<String> locations = new java.util.TreeSet<>();
+    for (ControlPanelLogic.NodeState ns : nodes.values()) {
+      if (ns != null && ns.location != null && !ns.location.isBlank()) locations.add(ns.location);
+    }
+
+    if (locations.size() == 1) {
+      // Single greenhouse connected: show explicit message
+      String loc = locations.iterator().next();
+      System.out.println("+nYour Control Panel is connected to " + loc);
+    } else {
+      System.out.println("\nConnected nodes (" + nodes.size() + "): ");
+    }
     java.util.List<String> ids = new java.util.ArrayList<>(nodes.keySet());
     java.util.Collections.sort(ids);
     for (String id : ids) {
       ControlPanelLogic.NodeState ns = nodes.get(id);
       int sensorCount = (ns == null || ns.sensors == null) ? 0 : ns.sensors.size();
       int actuatorCount = (ns == null || ns.actuators == null) ? 0 : ns.actuators.size();
-      System.out.printf("- Node %s: sensors = %d actuators = %d%n", id, sensorCount, actuatorCount);
+      String loc = (ns == null || ns.location == null) ? "" : ns.location;
+      System.out.printf("- Node %s (location: %s): sensors = %d actuators = %d%n", id, loc, sensorCount, actuatorCount);
     }
   }
 
@@ -108,6 +121,8 @@ public class ControlPanelUI {
     if (line.isEmpty()) return;
     String[] parts = line.split("\\s+");
     String cmd = parts[0].toLowerCase();
+    // Backwards-compatible alias: treat old 'spawnnode' command as 'addnode'
+    if (cmd.equals("spawnnode")) cmd = "addnode";
     try {
       switch (cmd) {
         case "checknode" -> {
@@ -212,7 +227,7 @@ public class ControlPanelUI {
             System.out.println("Usage: addsensor <nodeId>");
           }
         }
-        case "spawnnode" -> {
+        case "addnode" -> {
           String nodeId;
           String location;
           if (parts.length >= 3) {
@@ -227,7 +242,7 @@ public class ControlPanelUI {
             if (location.isEmpty()) { System.out.println("Location cannot be empty."); break; }
           }
           boolean ok = logic.spawnNode(nodeId, location);
-          if (!ok) System.out.println("Failed to spawn node. See log for details.");
+          if (!ok) System.out.println("Failed to add node. See log for details."); else System.out.println("Successfully added node: " + nodeId);
         }
         case "toggleactuator" -> {
           if (parts.length >= 4) {
