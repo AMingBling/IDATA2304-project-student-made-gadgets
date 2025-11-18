@@ -34,6 +34,9 @@ public class Node {
   private LocalDateTime timestamp;
   private List<Sensor> sensors;
   private List<Actuator> actuators;
+  // Track sensors that are currently in an alerted (out-of-range) state so we
+  // only emit the first alert when they cross the threshold.
+  private final java.util.Set<String> alertedSensors = new java.util.HashSet<>();
 
 
   /**
@@ -78,7 +81,7 @@ public class Node {
   }
 
   /**
-   * Set sensors
+  for (Sensor s : sensors) {
    * @param sensors List of sensors associated with the node
    */
   public void setSensors(List<Sensor> sensors) {
@@ -89,10 +92,10 @@ public class Node {
     }
   }
 
-  /**
-   * Set actuators
-   * @param actuators List of actuators associated with the node
-   */
+  public List<Sensor> getSensors() {
+    return this.sensors;
+  }
+
   public void setActuators(List<Actuator> actuators) {
     if (actuators == null) {
       this.actuators = new java.util.ArrayList<>();
@@ -101,29 +104,20 @@ public class Node {
     }
   }
 
+  public List<Actuator> getActuators() {
+    return this.actuators;
+  }
+
   public String getNodeID() {
-    return nodeID;
+    return this.nodeID;
   }
 
   public String getLocation() {
-    return location;
+    return this.location;
   }
 
   public LocalDateTime getTimestamp() {
-    return timestamp;
-  }
-
-  public List<Sensor> getSensors() {
-    return sensors;
-  }
-
-  public String getSensorsAsJson() {
-    Gson gson = gsonWithLocalDateTime();
-    return gson.toJson(this.sensors);
-  }
-
-  public List<Actuator> getActuators() {
-    return actuators;
+    return this.timestamp;
   }
 
   public String getActuatorsAsJson() {
@@ -514,6 +508,7 @@ public class Node {
   
       return null;
     }
+
   
      
 public void applyImmediateActuatorEffect(entity.actuator.Actuator a) {
