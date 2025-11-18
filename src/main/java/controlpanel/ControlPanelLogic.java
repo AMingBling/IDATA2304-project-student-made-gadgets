@@ -13,6 +13,18 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import network.NodeClient;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonSerializer;
+import com.google.gson.JsonPrimitive;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Logikk-laget: behandler JSON, holder state og tilbyr API mot UI. lagt til controlpannelId
@@ -23,6 +35,9 @@ public class ControlPanelLogic {
   private final Gson gson = new Gson();
   private final ControlPanelCommunication comm;
   private final Map<String, NodeState> nodes = new ConcurrentHashMap<>();
+  // spawned simulated nodes created by this control panel logic (nodeId -> NodeClient)
+  private final Map<String, NodeClient> spawnedNodes = new ConcurrentHashMap<>();
+  private final Map<String, Socket> spawnedSockets = new ConcurrentHashMap<>();
 
 
   /**
@@ -50,6 +65,77 @@ public class ControlPanelLogic {
    */
   public void close() {
     comm.close();
+    // close any spawned simulated nodes
+    for (NodeClient nc : spawnedNodes.values()) {
+      try { nc.close(); } catch (Exception ignored) {}
+    }
+    for (Socket s : spawnedSockets.values()) {
+      try { s.close(); } catch (Exception ignored) {}
+    }
+  }
+
+  /**
+   * Spawn a simulated NodeClient that connects to the same server the control panel is connected to.
+   * UI should call this method rather than performing networking itself.
+   * Returns true if the node was spawned and accepted by server.
+   */
+  public boolean spawnNode(String nodeId, String location) {
+    if (nodeId == null || nodeId.isBlank()) return false;
+    if (spawnedNodes.containsKey(nodeId)) return false;
+    if (!comm.isConnected()) {
+      System.out.println("Control panel not connected to server. Call connect() first.");
+      return false;
+    }
+
+    String ip = comm.getConnectedIp();
+    int port = comm.getConnectedPort();
+    if (ip == null || port <= 0) {
+      System.out.println("Control panel has no server info.");
+      return false;
+    }
+
+    try {
+      Socket socket = new Socket(ip, port);
+      PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+      // Prepare Gson with LocalDateTime adapters matching node client
+      com.google.gson.Gson gson = new GsonBuilder()
+          .registerTypeAdapter(LocalDateTime.class, (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
+          .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, context) -> LocalDateTime.parse(json.getAsString()))
+          .create();
+
+      out.println("SENSOR_NODE_CONNECTED " + nodeId);
+      String serverResponse = in.readLine();
+      if (serverResponse == null || !serverResponse.equals("NODE_ID_ACCEPTED")) {
+        try { socket.close(); } catch (Exception ignored) {}
+        System.out.println("Spawn node rejected by server: " + serverResponse);
+        return false;
+      }
+
+      List<entity.sensor.Sensor> sensors = new ArrayList<>();
+      List<entity.actuator.Actuator> actuators = new ArrayList<>();
+      entity.Node nodeObj = new entity.Node(nodeId, location, sensors, actuators);
+      NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
+      nodeClient.start();
+      nodeClient.sendCurrentNode();
+      spawnedNodes.put(nodeId, nodeClient);
+      spawnedSockets.put(nodeId, socket);
+      System.out.println("Spawned simulated node: " + nodeId);
+      return true;
+    } catch (Exception e) {
+      System.out.println("Failed to spawn node: " + e.getMessage());
+      return false;
+    }
+  }
+
+  public boolean disconnectSpawnedNode(String nodeId) {
+    NodeClient nc = spawnedNodes.remove(nodeId);
+    Socket s = spawnedSockets.remove(nodeId);
+    if (nc == null && s == null) return false;
+    if (nc != null) try { nc.close(); } catch (Exception ignored) {}
+    if (s != null) try { s.close(); } catch (Exception ignored) {}
+    return true;
   }
 
   /**
@@ -91,12 +177,18 @@ public class ControlPanelLogic {
 
       NodeState state = nodes.computeIfAbsent(node.getNodeID(), NodeState::new);
 
-      for (Sensor sensor : node.getSensors()) {
-        state.sensors.put(sensor.getSensorId(), sensor);
+      // Replace existing state for this node with the incoming snapshot.
+      state.sensors.clear();
+      state.actuators.clear();
+      if (node.getSensors() != null) {
+        for (Sensor sensor : node.getSensors()) {
+          state.sensors.put(sensor.getSensorId(), sensor);
+        }
       }
-
-      for (Actuator actuator : node.getActuators()) {
-        state.actuators.put(actuator.getActuatorId(), actuator);
+      if (node.getActuators() != null) {
+        for (Actuator actuator : node.getActuators()) {
+          state.actuators.put(actuator.getActuatorId(), actuator);
+        }
       }
 
       printNodeState(state);
@@ -200,6 +292,23 @@ public class ControlPanelLogic {
    * Fields: sensorType (TEMPERATURE|LIGHT|HUMIDITY|CO2), sensorId, minThreshold, maxThreshold
    */
   public void addSensor(String nodeId, String sensorType, String sensorId, double minThreshold, double maxThreshold) {
+      // Prevent adding duplicate sensor types for the same node
+      NodeState ns = nodes.get(nodeId);
+      if (ns != null && ns.sensors != null) {
+        for (entity.sensor.Sensor s : ns.sensors.values()) {
+          if (s.getSensorType() != null && s.getSensorType().equalsIgnoreCase(sensorType)) {
+            System.out.println("Node " + nodeId + " already has a sensor of type " + sensorType + ". Skipping add.");
+            return;
+          }
+        }
+      }
+
+      // Prevent duplicate sensor IDs on the same node
+      if (ns != null && ns.sensors != null && ns.sensors.containsKey(sensorId)) {
+        System.out.println("Sensor ID '" + sensorId + "' already exists on node " + nodeId + ". Skipping add.");
+        return;
+      }
+
       JsonObject obj = new JsonObject();
       obj.addProperty("messageType", "ADD_SENSOR");
       obj.addProperty("controlPanelId", controlPanelId);
@@ -209,6 +318,18 @@ public class ControlPanelLogic {
       obj.addProperty("minThreshold", minThreshold);
       obj.addProperty("maxThreshold", maxThreshold);
       comm.sendJson(gson.toJson(obj));
+  }
+
+  /**
+   * Request the node to remove a sensor (and associated actuators) at runtime.
+   */
+  public void removeSensor(String nodeId, String sensorId) {
+    JsonObject obj = new JsonObject();
+    obj.addProperty("messageType", "REMOVE_SENSOR");
+    obj.addProperty("controlPanelId", controlPanelId);
+    obj.addProperty("nodeID", nodeId);
+    obj.addProperty("sensorId", sensorId);
+    comm.sendJson(gson.toJson(obj));
   }
 
   /**

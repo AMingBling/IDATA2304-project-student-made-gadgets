@@ -13,6 +13,19 @@ import java.util.List;
 
 /**
  * Client class for a Node that connects to the server, sends its state, and listens for commands.
+ *
+ * <p>This class represents a sensor/actuator node in the system. It is responsible for:
+ * <ul>
+ *   <li>establishing and maintaining a TCP connection to the {@code Server},</li>
+ *   <li>serializing and sending the {@link entity.Node} state as JSON,</li>
+ *   <li>listening for and handling incoming JSON commands such as
+ *       {@code ACTUATOR_COMMAND}, {@code REQUEST_STATE}, {@code ADD_SENSOR}, and {@code REMOVE_SENSOR},</li>
+ *   <li>providing a small runtime loop for keeping the client alive.</li>
+ * </ul>
+ *
+ * <p>When executed as a standalone program, the {@link #main(String[])} method
+ * connects to a server on {@code 127.0.0.1:5000}, registers the node id and
+ * location, and begins sending state updates.
  */
 public class NodeClient {
 
@@ -22,6 +35,14 @@ public class NodeClient {
   private final Gson gson;
   private Thread listener;
 
+  /**
+   * Construct a NodeClient instance.
+   *
+   * @param node the {@link entity.Node} model representing sensors and actuators
+   * @param out the {@link PrintWriter} used to send messages to the server
+   * @param in the {@link BufferedReader} used to receive messages from the server
+   * @param gson the {@link Gson} instance used for JSON serialization/deserialization
+   */
   public NodeClient(Node node, PrintWriter out, BufferedReader in, Gson gson) {
     this.node = node;
     this.out = out;
@@ -30,6 +51,12 @@ public class NodeClient {
     
   }
 
+  /**
+   * Start the client's background listener thread.
+   *
+   * <p>This will spawn a daemon thread that listens for incoming JSON commands
+   * from the server and reacts to them. The method returns immediately.
+   */
   public void start() {
     listener = new Thread(this::listenForCommands);
     listener.setDaemon(true);
@@ -66,6 +93,11 @@ public class NodeClient {
    t.start();
  }
 
+  /**
+   * Send the current {@link entity.Node} state to the server.
+   *
+   * <p>If the internal node model is {@code null} this method does nothing.
+   */
   public void sendCurrentNode() {
     if (node == null) {
       return;
@@ -73,6 +105,12 @@ public class NodeClient {
     sendNode(node);
   }
 
+  /**
+   * Serialize and send the provided {@link entity.Node} to the server as JSON.
+   *
+   * @param n the node to send; must not be {@code null}
+   * @throws IllegalArgumentException when {@code n} is {@code null}
+   */
   public void sendNode(Node n) {
     if (n == null) {
       throw new IllegalArgumentException("Node cannot be null");
@@ -81,7 +119,7 @@ public class NodeClient {
     obj.addProperty("messageType", "SENSOR_DATA_FROM_NODE");
     out.println(obj.toString());
     out.flush();
-    System.out.println("Node -> Server: " + obj.toString());
+    System.out.println("\n Node -> Server: " + obj.toString());
   }
 
   private void listenForCommands() {
@@ -104,6 +142,8 @@ public class NodeClient {
               sendCurrentNode();
             } else if ("ADD_SENSOR".equals(mt)) {
               handleAddSensor(obj);
+            } else if ("REMOVE_SENSOR".equals(mt)) {
+              handleRemoveSensor(obj);
             }
           } catch (Exception e) {
             System.out.println("Error processing command: " + e.getMessage());
@@ -192,6 +232,16 @@ public class NodeClient {
           node.addActuator(new Humidifier(sensorId + "_humidifier"));
           node.addActuator(new DeHumidifier(sensorId + "_dehumidifier"));
         }
+        else if ("CO2".equals(sensorType)) {
+          node.addSensor(new CO2Sensor(sensorId, min, max));
+          node.addActuator(new Ventilation(sensorId + "_ventilation"));
+          node.addActuator(new CO2Supply(sensorId + "_co2_supply"));
+        }
+        else if ("LIGHT".equals(sensorType)) {
+          node.addSensor(new LightSensor(sensorId, min, max));
+          node.addActuator(new LampDimming(sensorId + "_lamp_dimming"));
+          node.addActuator(new LampBrightning(sensorId + "_lamp_brightning"));
+        }  
         System.out.println(
             "Added sensor " + sensorId + " of type " + sensorType + " with actuators.");
         sendCurrentNode();
@@ -201,6 +251,25 @@ public class NodeClient {
     }
   }
 
+  private void handleRemoveSensor(JsonObject obj) {
+    try {
+      String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
+      if (sensorId == null) return;
+      // Remove sensors with matching id
+      node.getSensors().removeIf(s -> sensorId.equals(s.getSensorId()));
+      // Remove actuators that were created for the sensor (use prefix matching)
+      String prefix = sensorId + "_";
+      node.getActuators().removeIf(a -> a.getActuatorId() != null && a.getActuatorId().startsWith(prefix));
+      System.out.println("Removed sensor " + sensorId + " and associated actuators");
+      sendCurrentNode();
+    } catch (Exception e) {
+      System.out.println("Failed to remove sensor: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Close the client's IO resources and stop the listener thread.
+   */
   public void close() {
     try {
       if (in != null) {
@@ -216,6 +285,13 @@ public class NodeClient {
     }
   }
 
+  /**
+   * Command line entry point for starting a standalone NodeClient.
+   *
+   * <p>Usage: {@code NodeClient <ID> <Location>}.
+   *
+   * @param args program arguments: node id and location
+   */
   public static void main(String[] args) {
     if (args.length < 2) {
         System.out.println("Usage: NodeClient <ID> <Location>");
@@ -265,7 +341,7 @@ public class NodeClient {
         while (true) Thread.sleep(1000);
 
     } catch (Exception e) {
-        e.printStackTrace();
+        System.err.println("[NC] Failed to connect to server: " + e.getMessage());
     }
 }
 
