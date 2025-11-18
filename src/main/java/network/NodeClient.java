@@ -333,7 +333,7 @@ public class NodeClient {
 
         NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
         nodeClient.start();
-        nodeClient.startControlLoop(10000); // 10s tick
+        nodeClient.startControlLoop(3000); // 5s tick
         nodeClient.sendCurrentNode();
        
 
