@@ -274,6 +274,11 @@ public class ControlPanelLogic {
 
       NodeState state = nodes.computeIfAbsent(node.getNodeID(), NodeState::new);
 
+      // Store location from incoming node snapshot so the UI can show it
+      try {
+        if (node.getLocation() != null) state.location = node.getLocation();
+      } catch (Exception ignored) {}
+
       // Replace existing state for this node with the incoming snapshot.
       state.sensors.clear();
       state.actuators.clear();
@@ -517,6 +522,7 @@ public class ControlPanelLogic {
    */
   public static class NodeState {
     public final String nodeId;
+    public String location = "";
     public final Map<String, Sensor> sensors = new HashMap<>();
     public final Map<String, Actuator> actuators = new HashMap<>();
 
