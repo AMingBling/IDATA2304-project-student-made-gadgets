@@ -2,27 +2,35 @@ package entity.sensor;
 
 import java.time.LocalDateTime;
 
-/**
- * Class representing a Humidity Sensor.
- */
 public class HumiditySensor extends Sensor {
-    /**
-     * Constructor for HumiditySensor.
-     * Min and max thresholds are specified in percentage. 30 and 85 would be natural values.
-     * @param sensorId the id of the sensor
-     * @param minThreshold minimum threshold value
-     * @param maxThreshold maximum threshold value
-     */
-    public HumiditySensor(String sensorId,
-        double minThreshold, double maxThreshold) {
+
+    public HumiditySensor(String sensorId, double minThreshold, double maxThreshold) {
         super(sensorId, "HUMIDITY", "%", minThreshold, maxThreshold);
+        // startverdien i veksthus
+        updateValue(50.0);
     }
-    
+
     @Override
-    public void updateValue() {
-        // Simulate humidity reading between 25% and 90%
-        this.value = 25 + Math.random() * 65;
+    public void updateValue(double newValue) {
+        this.value = newValue;
         this.timestamp = LocalDateTime.now();
     }
 
+    @Override
+    public synchronized void adjustValue(double delta) {
+        updateValue(getValue() + delta);
+    }
+
+    @Override
+    public synchronized void updateValue() {
+        // Do nothing by default — humidity only changes when actuators run.
+    }
+
+    public boolean isAboveMax() {
+        return getValue() > getMaxThreshold();
+    }
+
+    public boolean isBelowMin() {
+        return getValue() < getMinThreshold();
+    }
 }

@@ -27,6 +27,7 @@ public class NodeClient {
     this.out = out;
     this.in = in;
     this.gson = gson;
+    
   }
 
   public void start() {
@@ -34,6 +35,36 @@ public class NodeClient {
     listener.setDaemon(true);
     listener.start();
   }
+
+  public void startControlLoop(long tickMillis) {
+   Thread t = new Thread(() -> {
+     try {
+       while (true) {
+         try {
+           node.updateAllSensors();
+           String alert = node.applyActuatorEffects(); // må finnes i Node
+           if (alert != null) {
+             JsonObject al = new JsonObject();
+             al.addProperty("messageType", "ALERT");
+             al.addProperty("nodeID", node.getNodeID());
+             al.addProperty("alert", alert);
+             out.println(al.toString());
+             out.flush();
+             System.out.println("[NodeClient] Sent ALERT: " + alert);
+           }
+           sendCurrentNode();
+         } catch (Exception e) {
+           System.out.println("[NodeClient] control loop error: " + e.getMessage());
+         }
+         Thread.sleep(tickMillis);
+       }
+     } catch (InterruptedException ie) {
+       Thread.currentThread().interrupt();
+     }
+   }, "NodeClient-ControlLoop");
+   t.setDaemon(true);
+   t.start();
+ }
 
   public void sendCurrentNode() {
     if (node == null) {
@@ -84,21 +115,66 @@ public class NodeClient {
     }
   }
 
-  private void handleActuatorCommand(JsonObject obj) {
-    String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
-    String command = obj.has("command") ? obj.get("command").getAsString() : null;
-    if (actuatorId != null && command != null) {
-      boolean on = "TURN_ON".equals(command);
-      node.getActuators().stream()
-          .filter(a -> a.getActuatorId().equals(actuatorId))
-          .findFirst()
-          .ifPresent(a -> {
-            a.setOn(on);
-            System.out.println("Actuator " + actuatorId + " set to " + on);
-          });
-      sendCurrentNode();
+    // ...existing code...
+    private void handleActuatorCommand(JsonObject obj) {
+      String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
+      String command = obj.has("command") ? obj.get("command").getAsString() : null;
+      if (actuatorId != null && command != null) {
+        boolean on = "TURN_ON".equals(command);
+  
+        // Finn target-aktuator først
+        entity.actuator.Actuator target = node.getActuators().stream()
+            .filter(a -> a.getActuatorId().equals(actuatorId))
+            .findFirst()
+            .orElse(null);
+  
+        if (target != null) {
+          String targetType = target.getActuatorType() != null ? target.getActuatorType().toUpperCase() : "";
+  
+          // Hvis vi slår på en aktuator, slå av konfliktende aktuatorer
+          if (on) {
+            for (entity.actuator.Actuator a : node.getActuators()) {
+              if (a == null) continue;
+              if (a.getActuatorId().equals(actuatorId)) continue;
+              String t = a.getActuatorType() != null ? a.getActuatorType().toUpperCase() : "";
+              if (isConflict(targetType, t)) {
+                a.setOn(false);
+                System.out.println("Actuator " + a.getActuatorId() + " (type=" + a.getActuatorType() + ") turned OFF due to conflict with " + actuatorId);
+              }
+            }
+          }
+  
+          target.setOn(on);
+          System.out.println("Actuator " + actuatorId + " set to " + on);
+        } else {
+          System.out.println("Actuator not found: " + actuatorId);
+        }
+  
+        sendCurrentNode();
+      }
     }
-  }
+  
+    // Hjelpemetode for konfliktregler (legg til flere par ved behov)
+    private boolean isConflict(String typeA, String typeB) {
+      if (typeA == null || typeB == null) return false;
+      if (typeA.equals(typeB)) return false; // samme type - ikke konflikt her
+  
+      // Heater vs AirCondition
+      if ((typeA.equals("HEATER") && (typeB.equals("AIRCON") || typeB.equals("AIRCONDITION")))
+          || (typeB.equals("HEATER") && (typeA.equals("AIRCON") || typeA.equals("AIRCONDITION")))) {
+        return true;
+      }
+  
+      // Humidifier vs DeHumidifier
+      if ((typeA.equals("HUMIDIFIER") && typeB.equals("DEHUMIDIFIER"))
+          || (typeB.equals("HUMIDIFIER") && typeA.equals("DEHUMIDIFIER"))) {
+        return true;
+      }
+  
+      // Flere regler kan legges til her
+      return false;
+    }
+  // ...existing code...
 
   private void handleAddSensor(JsonObject obj) {
     try {
@@ -181,7 +257,9 @@ public class NodeClient {
 
         NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
         nodeClient.start();
+        nodeClient.startControlLoop(10000); // 10s tick
         nodeClient.sendCurrentNode();
+       
 
         // 💡 Keep node alive forever
         while (true) Thread.sleep(1000);
@@ -190,6 +268,9 @@ public class NodeClient {
         e.printStackTrace();
     }
 }
+
+//----------------------------------------
+
 
 
 

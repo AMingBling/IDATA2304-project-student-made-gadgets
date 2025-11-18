@@ -268,16 +268,97 @@ public class Node {
   }
 
   // -----------------------------------------------------
+  //WHAT IS USED FOR THE ACTUATORS TO WORK
 
+  /**
+   * Bruker epsilon
+   * What si used for the actuators to continue
+   * @return 
+   */
+  public String applyActuatorEffects() {
+    final double EPS = 0.01;
+    if (sensors == null || actuators == null) return null;
 
- public void applyActuatorEffects() {
-        if (this.actuators == null || this.sensors == null) return;
-        for (entity.actuator.Actuator a : this.actuators) {
-            a.applyEffect(this.sensors); // hver actuator håndterer sine egne effekter
+    // 1) Apply per-tick actuator effects (delegér til actuatorene)
+    for (entity.actuator.Actuator act : actuators) {
+        if (act == null || !act.isOn()) continue;
+        try {
+            act.applyEffect(sensors);
+        } catch (Exception e) {
+            System.out.println("[Node] actuator.applyEffect failed for " + act.getActuatorId() + ": " + e.getMessage());
         }
+    }
+
+    // 2) After effects: check thresholds for each sensor type and return an alert string if outside
+    for (Sensor s : sensors) {
+        String type = s.getSensorType() == null ? "" : s.getSensorType().toUpperCase();
+        double v = s.getValue();
+        double max = s.getMaxThreshold();
+        double min = s.getMinThreshold();
+
+        if ("TEMPERATURE".equals(type)) {
+            if (v > max + EPS) {
+                return String.format("TEMP_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f — please turn on AirCondition and Turn off Heater",
+                        getNodeID(), s.getSensorId(), v, max);
+            }
+            if (v < min - EPS) {
+                return String.format("TEMP_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f — please Turn on Heater and Turn off AirCondition",
+                        getNodeID(), s.getSensorId(), v, min);
+            }
+        } else if ("HUMIDITY".equals(type)) {
+            if (v > max + EPS) {
+                return String.format("HUMIDITY_OVER_MAX node=%s sensor=%s value=%.2f max=%.2f — please Turn on DeHumidifier and Turn off Humidifier",
+                        getNodeID(), s.getSensorId(), v, max);
+            }
+            if (v < min - EPS) {
+                return String.format("HUMIDITY_BELOW_MIN node=%s sensor=%s value=%.2f min=%.2f — please Turn on Humidifier and Turn off DeHumidifier",
+                        getNodeID(), s.getSensorId(), v, min);
+            }
+        }
+        // Add other sensor types here if needed
+    }
+
+    return null;
+}
+ 
+
+  
+     
+public void applyImmediateActuatorEffect(entity.actuator.Actuator a) {
+    // intentionally do nothing: user must toggle actuators manually.
+    if (a == null) return;
+    System.out.println("[Node] applyImmediateActuatorEffect called for " + a.getActuatorId() + " — no automatic changes (user controls actuators).");
+}
+
+ 
 
 
+/**
+ * For controlling the temperature
+ * DETTE KAN GÅ BORT MULIGENS
+ */
 
+public void controlTemperature() {
+    TemperatureSensor tempSensor = null;
+    for (Sensor s : sensors) {
+        if ("TEMPERATURE".equalsIgnoreCase(s.getSensorType())) {
+            tempSensor = (TemperatureSensor) s;
+            break;
+        }
+    }
+    if (tempSensor == null) return;
+
+    // Oppdater sensorer basert på aktive aktuatorer
+    for (Actuator actuator : actuators) {
+        actuator.applyEffect(sensors);
+    }
+
+    // Sjekk grenser og gi beskjed
+    if (tempSensor.isAboveMax()) {
+        System.out.println("⚠ Temperaturen er over maksverdi! Slå av Heater og slå på AirCondition.");
+    } else if (tempSensor.isBelowMin()) {
+        System.out.println("⚠ Temperaturen er under minverdi! Slå av AirCondition og slå på Heater.");
+    }
 }
 
 }

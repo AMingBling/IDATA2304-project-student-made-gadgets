@@ -1,19 +1,15 @@
-// ...existing code...
 package entity.actuator;
 
 import java.util.List;
 import entity.sensor.Sensor;
 
-/**
- * Class of a Humidifier actuator that increases humidity when turned on.
- */
 public class Humidifier extends Actuator {
 
     private final double humidDelta;
 
     public Humidifier(String id) {
         super(id, "HUMIDIFIER");
-        this.humidDelta = 2.0; // default økning per tick, juster etter behov
+        this.humidDelta = 2.0; // juster etter tick-intervall
     }
 
     public Humidifier(String id, double humidDelta) {
@@ -32,4 +28,3 @@ public class Humidifier extends Actuator {
         System.out.println("[Humidifier] applied humidity effect: +" + humidDelta);
     }
 }
-
