@@ -237,7 +237,7 @@ public class Server {
                             System.out.println("[ControlPanel] Non-JSON message ignored: " + inputLine);
                         }
                     } else {
-                        System.out.println("Received from node: " + inputLine);
+                        System.out.println("\n Received from node: " + inputLine);
                         // Ensure control panels receive a messageType so they can handle it;
                         // add messageType if missing (merge into top-level JSON)
                         String toSend = inputLine;

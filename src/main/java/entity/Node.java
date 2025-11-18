@@ -376,8 +376,8 @@ public class Node {
       final double TEMP_MAX_LIMIT = 40.0;
       final double HUMIDITY_MIN_LIMIT = 0.0;
       final double HUMIDITY_MAX_LIMIT = 100.0;
-      final double LIGHT_MIN_LIMIT = 15000.0;
-      final double LIGHT_MAX_LIMIT = 30000.0;
+      final double LIGHT_MIN_LIMIT = 600.0;
+      final double LIGHT_MAX_LIMIT = 25000.0;
       final double CO2_MIN_LIMIT = 500.0;
       final double CO2_MAX_LIMIT = 2000.0;
   
