@@ -331,12 +331,21 @@ public class ControlPanelLogic {
 
   private void printNodeState(NodeState state) {
     if (!showNodeUpdates) return;
-    // If this node was recently requested, only allow printing the first update
-    if (state != null && state.nodeId != null && requestLatches.containsKey(state.nodeId)) {
+
+    // If there is an active request window, only print updates for the requested node(s).
+    // This prevents other nodes' periodic updates from appearing while we wait for the
+    // requested node's response.
+    boolean hasActiveRequests = !requestLatches.isEmpty();
+    if (hasActiveRequests) {
+      if (state == null || state.nodeId == null) return;
+      if (!requestLatches.containsKey(state.nodeId)) {
+        // there are active requests, but this update is for a different node -> skip
+        return;
+      }
+      // If this node was recently requested, only allow printing the first update
       if (requestPrinted.contains(state.nodeId)) return; // already printed one response for this request
-      // mark as printed
+      // mark as printed (we'll count down the latch after printing to preserve ordering)
       requestPrinted.add(state.nodeId);
-      // after printing we'll count down the latch to notify any waiting thread
     }
     System.out.println("\n ---- NODE UPDATE ----");
     System.out.println("Node ID: " + state.nodeId);
@@ -355,6 +364,11 @@ public class ControlPanelLogic {
           actuator.getActuatorId(), actuator.getActuatorType(), actuator.isOn() ? "ON" : "OFF");
     }
     System.out.println("---------------------\n");
+    // If we were printing in response to an active request, notify the waiting thread
+    if (hasActiveRequests && state != null && state.nodeId != null) {
+      CountDownLatch l = requestLatches.get(state.nodeId);
+      if (l != null) l.countDown();
+    }
   }
 
   // UI API
