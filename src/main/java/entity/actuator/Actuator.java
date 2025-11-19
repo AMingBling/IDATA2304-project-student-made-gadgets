@@ -60,18 +60,32 @@ public abstract class Actuator {
     this.on = on;
   }
 
+  /**
+   * Gets the actuator ID.
+   * @return the actuator ID
+   */
   public String getActuatorId() {
     return actuatorId;
   }
+
+  /**
+   * Gets the actuator type.
+   * 
+   * @return the actuator type
+   */
 
   public String getActuatorType() {
     return actuatorType;
   }
 
+  /**
+   * Checks if the actuator is on.
+   * @return true if the actuator is on, false otherwise
+   */
   public boolean isOn() {
     return on;
   }
-  //----------------------------------------------
+ 
 
   /**
    * Applies the effect of the actuator on the provided sensors.
