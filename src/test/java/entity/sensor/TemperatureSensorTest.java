@@ -88,5 +88,22 @@ public class TemperatureSensorTest {
     assertTrue(ts.getTimestamp().isAfter(before));
     assertFalse(Double.isNaN(ts.getValue()), "Value should remain a number after update");
   }
-    
+
+    /**
+     * Verify isAboveMax() and isBelowMin() methods.
+     *
+     * <p>Expected outcome: correct boolean results based on current value.</p>
+     */
+
+  @Test
+  public void thresholdChecks_isAboveMaxAndIsBelowMin() {
+    TemperatureSensor ts = new TemperatureSensor("t5", 0.0, 100.0);
+    ts.updateValue(150.0);
+    assertTrue(ts.isAboveMax(), "Value should be above max threshold");
+    assertFalse(ts.isBelowMin(), "Value should not be below min threshold");
+
+    ts.updateValue(-20.0);
+    assertTrue(ts.isBelowMin(), "Value should be below min threshold");
+    assertFalse(ts.isAboveMax(), "Value should not be above max threshold");
+  }
 }
