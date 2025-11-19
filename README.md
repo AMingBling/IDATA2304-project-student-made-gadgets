@@ -15,10 +15,10 @@ When a node is added, the user can use the control panel to add sensors with ass
 ### Available Control Panel commands
 
 - CheckGreenhouse
-- AddSensor <nodeId>
-- RemoveSensor <nodeId> <sensorId>
-- CheckNode <nodeId>
-- ToggleActuator <nodeId> <actuatorId> <on|off>
+- AddSensor \<nodeId\>
+- RemoveSensor \<nodeId\> \<sensorId\>
+- CheckNode \<nodeId\>
+- ToggleActuator \<nodeId\> \<actuatorId\> \<on|off\>
 - Exit
 
 ### About commands
