@@ -12,7 +12,7 @@ Both the control panels and the nodes connects to the server, and communicates v
 
 When a node is added, the user can use the control panel to add sensors with associated actuators.
 
-The user can also check the status of nodes which checks the status of connected sensors and actuators.
+The user can also check the status of nodes which checks the status of connected sensors and actuators, or check the status of a specific sensor type.
 
 If the measured values are too high or too low in relation to the desired values of the user, the associated actuators can be toggled on/off.
 
@@ -23,6 +23,7 @@ If the measured values are too high or too low in relation to the desired values
 - RemoveSensor \<nodeId\> \<sensorId\>
 - CheckNode \<nodeId\>
 - ToggleActuator \<nodeId\> \<actuatorId\> \<on|off\>
+- CheckAllSensorOfType
 - Exit
 
 ### About commands
@@ -54,6 +55,10 @@ The sensor will automatically get assigned an ID.
 #### ToggleActuator
 
 *Toggles a specific actuator on/off*
+
+#### CheckAllSensorsOfType
+
+*Check the status of all sensors of a specific type*
 
 #### Exit
 
