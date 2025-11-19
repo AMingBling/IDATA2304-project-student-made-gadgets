@@ -36,9 +36,20 @@ public class NodeClient {
   private final Gson gson;
   private Thread listener;
 
+  /**
+   * DateTimeFormatter for logging timestamps.
+   * Formats timestamps as "yyyy-MM-dd HH:mm:ss".
+   *
+   */
   private static final DateTimeFormatter LOG_TIME = DateTimeFormatter.ofPattern(
       "yyyy-MM-dd HH:mm:ss");
 
+  /**
+   * Log a formatted message with a role prefix and timestamp.
+   * @param role the role or source of the log message
+   * @param fmt the format string
+   * @param args the arguments for the format string
+   */
   private static void log(String role, String fmt, Object... args) {
     String msg = String.format(fmt, args);
     System.out.printf("\n[%s] %s: %s%n", LOG_TIME.format(LocalDateTime.now()), role, msg);
@@ -73,6 +84,11 @@ public class NodeClient {
     listener.start();
   }
 
+  /**
+   * Start the control loop that periodically updates sensors and applies actuator effects.
+   * @param tickMillis the interval in milliseconds between each control loop iteration
+   *
+   */
   public void startControlLoop(long tickMillis) {
     Thread t = new Thread(() -> {
       try {
@@ -133,6 +149,12 @@ public class NodeClient {
     System.out.println("\n Node -> Server: " + obj.toString());
   }
 
+  /**
+   * Listen for incoming commands from the server and handle them.
+   * This method runs in a loop, reading lines from the input stream,
+   * parsing them as JSON, and executing actions based on the message type.
+   *
+   */
   private void listenForCommands() {
     try {
       String incoming;
@@ -166,6 +188,11 @@ public class NodeClient {
     }
   }
 
+  /**
+   * Handle an actuator command received from the server.
+   * @param obj the JSON object containing the actuator command
+   *
+   */
   private void handleActuatorCommand(JsonObject obj) {
     String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
     String command = obj.has("command") ? obj.get("command").getAsString() : null;
@@ -251,6 +278,11 @@ public class NodeClient {
   }
 
 
+  /**
+   * Handle a request to remove a sensor from the node.
+   * @param obj the JSON object containing the sensor removal request
+   *
+   */
   private void handleRemoveSensor(JsonObject obj) {
     try {
       String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;

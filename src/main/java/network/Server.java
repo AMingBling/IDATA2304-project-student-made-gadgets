@@ -19,11 +19,21 @@ public class Server {
   private static final DateTimeFormatter LOG_TIME = DateTimeFormatter.ofPattern(
       "yyyy-MM-dd HH:mm:ss");
 
+  /**
+   * Log a message with timestamp and role.
+   * @param role "Server", "ControlPanel", or "Node"
+   * @param fmt format string
+   * @param args format arguments
+   */
   private static void log(String role, String fmt, Object... args) {
     String msg = String.format(fmt, args);
     System.out.printf("\n[%s] %s: %s%n", LOG_TIME.format(LocalDateTime.now()), role, msg);
   }
 
+  /**
+   * List of connected control panel sockets.
+   *
+   */
   private static List<Socket> controlPanels = Collections.synchronizedList(new ArrayList<>());
   // Map socket -> controlPanelId (if provided during registration) for nicer disconnect logs
   private static Map<Socket, String> controlPanelIds = new ConcurrentHashMap<>();

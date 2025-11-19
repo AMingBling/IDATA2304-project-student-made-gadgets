@@ -24,15 +24,7 @@ public class CO2Supply extends Actuator {
     this.co2Delta = 8.0; 
   }
 
-  /**
-   * Create a CO2Supply with a specified CO2 increase delta per tick.
-   * @param id unique actuator id
-   * @param co2Delta amount to increase CO2 sensors by when enabled
-   */
-  public CO2Supply(String id, double co2Delta) {
-    super(id, "CO2_SUPPLY");
-    this.co2Delta = co2Delta;
-  }
+
 
   /**
    * Apply the CO2 increasing effect to CO2 sensors in the provided list.

@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 /**
  * Abstract class representing a generic Sensor.
+ * Includes common attributes and methods for all sensor types.
+ *
  */
 public abstract class Sensor {
 
@@ -139,33 +141,17 @@ public abstract class Sensor {
     this.timestamp = LocalDateTime.now();
   }
 
-  /**
-   * Check if the sensor value is out of range (below min or above max threshold).
-   * @return true if out of range, false otherwise
-   */
-  public boolean isOutOfRange() {
-    return this.value < this.minThreshold || this.value > this.maxThreshold;
-  }
+
+
+
+
 
   /**
-   * Convert the sensor reading to a JSON object.
-   * @return JSON representation of the sensor reading
-   */
-  public com.google.gson.JsonObject toReadingJson() {
-    com.google.gson.JsonObject jo = new com.google.gson.JsonObject();
-    jo.addProperty("sensorId", this.sensorId);
-    jo.addProperty("type", this.sensorType);
-    jo.addProperty("value", this.value);
-    jo.addProperty("unit", this.unit);
-    jo.addProperty("timestamp", this.timestamp != null ? this.timestamp.toString() : "");
-    return jo;
-  }
-
-
-  /**   * Get unit of measurement
+   * Get unit of measurement
    * @return unit of measurement
    */
   public String getUnit() {
+
     return unit;
   }
 
@@ -183,6 +169,7 @@ public abstract class Sensor {
    * @return maximum threshold value
    */
   public double getMaxThreshold() {
+
     return maxThreshold;
   }
 
@@ -191,6 +178,7 @@ public abstract class Sensor {
    * @return timestamp of the last update
    */
   public LocalDateTime getTimestamp() {
+
     return timestamp;
   }
 
@@ -202,29 +190,12 @@ public abstract class Sensor {
 
 
 
-  /**
-   * Create Sensor object from JSON string
-   *
-   * @param json JSON representation of a Sensor object
-   * @return Sensor object
-   */
-  public static Sensor fromJson(String json) {
-    Gson gson = new Gson();
-    return gson.fromJson(json, Sensor.class);
-  }
+
 
   
 
 
-  /**
-   * Convert Sensor object to JSON string
-   *
-   * @return JSON representation of the Sensor object
-   */
-  public String toJson() {
-    Gson gson = new Gson();
-    return gson.toJson(this);
-  }
+
 
 
 }

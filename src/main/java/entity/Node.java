@@ -24,6 +24,9 @@ import com.google.gson.Gson;
 
 /**
  * Represents a Node in the network, containing sensors and actuators.
+ * A Node has a unique ID, location, timestamp, and lists of associated sensors and actuators.
+ * It provides methods for JSON serialization/deserialization, updating sensor values,
+ * and applying actuator effects.
  */
 public class Node {
 
@@ -32,9 +35,8 @@ public class Node {
   private LocalDateTime timestamp;
   private List<Sensor> sensors;
   private List<Actuator> actuators;
-  // Track sensors that are currently in an alerted (out-of-range) state so we
-  // only emit the first alert when they cross the threshold.
-  private final java.util.Set<String> alertedSensors = new java.util.HashSet<>();
+
+
 
 
   /**
@@ -93,10 +95,18 @@ public class Node {
     }
   }
 
+  /**
+   * Get list of sensors
+   * @return List of sensors associated with the node
+   */
   public List<Sensor> getSensors() {
     return this.sensors;
   }
 
+  /**
+   * Set list of actuators
+   * @param actuators List of actuators associated with the node
+   */
   public void setActuators(List<Actuator> actuators) {
     if (actuators == null) {
       this.actuators = new java.util.ArrayList<>();
@@ -105,26 +115,32 @@ public class Node {
     }
   }
 
+  /**
+   * Get list of actuators
+   * @return List of actuators associated with the node
+   */
   public List<Actuator> getActuators() {
     return this.actuators;
   }
 
+  /**
+   * Get node ID
+   * @return Unique identifier for the node
+   */
   public String getNodeID() {
     return this.nodeID;
   }
 
+  /**
+   * Get node location
+   * @return Physical location of the node
+   */
   public String getLocation() {
+
     return this.location;
   }
 
-  public LocalDateTime getTimestamp() {
-    return this.timestamp;
-  }
 
-  public String getActuatorsAsJson() {
-    Gson gson = gsonWithLocalDateTime();
-    return gson.toJson(this.actuators);
-  }
 
   //-------------------------------------------------
 
@@ -146,25 +162,22 @@ public class Node {
     this.actuators.add(actuator);
   }
 
-  //--------------------------------------------------
 
-  // JSON helpers that include LocalDateTime adapters
+
+  /**
+   * Create a Node object from its JSON representation.
+   * @param json JSON string representing the Node
+   * @return Node object deserialized from JSON
+   */
   public static Node nodeFromJson(String json) {
     return gsonWithLocalDateTime().fromJson(json, Node.class);
   }
 
-  public static Node nodeFromJson(String json, Gson gson) {
-    return gson.fromJson(json, Node.class);
-  }
 
-  public String nodeToJson() {
-    return gsonWithLocalDateTime().toJson(this);
-  }
-
-  public String nodeToJson(Gson gson) {
-    return gson.toJson(this);
-  }
-
+  /**
+   * Convert the Node object to its JSON representation.
+   * @return JSON string representing the Node
+   */
   private static Gson gsonWithLocalDateTime() {
     return new GsonBuilder()
         .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeSerializer())
@@ -249,6 +262,11 @@ public class Node {
         .create();
   }
 
+  /**
+   * Convert the Node object to its JSON representation.
+   * @return JSON string representing the Node
+   *
+   */
   public void updateAllSensors() {
     for (Sensor sensor : sensors) {
       sensor.updateValue();
@@ -256,8 +274,20 @@ public class Node {
     this.timestamp = LocalDateTime.now();
   }
 
+  /**
+   * Custom serializer for LocalDateTime to JSON.
+   * Returns the string representation of LocalDateTime.
+   *
+   */
   private static class LocalDateTimeSerializer implements JsonSerializer<LocalDateTime> {
 
+    /**
+     * Serialize LocalDateTime to JsonElement.
+     * @param src the object that needs to be converted to Json.
+     * @param typeOfSrc the actual type (fully genericized version) of the source object.
+     * @param context context for serialization that is passed to a custom serializer during invocation.
+     * @return JsonElement representing the LocalDateTime
+     */
     @Override
     public JsonElement serialize(LocalDateTime src, Type typeOfSrc,
         JsonSerializationContext context) {
@@ -265,8 +295,21 @@ public class Node {
     }
   }
 
+  /**
+   * Custom deserializer for LocalDateTime from JSON.
+   * Parses the string representation of LocalDateTime.
+   *
+   */
   private static class LocalDateTimeDeserializer implements JsonDeserializer<LocalDateTime> {
 
+    /**
+     * Deserialize JsonElement to LocalDateTime.
+     * @param json The Json data being deserialized
+     * @param typeOfT The type of the Object to deserialize to
+     * @param context Context for deserialization that is passed to a custom deserializer during invocation
+     * @return LocalDateTime object deserialized from JsonElement
+     * @throws JsonParseException if the JSON is not in the expected format
+     */
     @Override
     public LocalDateTime deserialize(JsonElement json, Type typeOfT,
         JsonDeserializationContext context)
@@ -275,8 +318,7 @@ public class Node {
     }
   }
 
-  // -----------------------------------------------------
-  //WHAT IS USED FOR THE ACTUATORS TO WORK
+
 
   /**
    * Applies the effects of all active actuators to the sensors and checks for any limit or threshold
@@ -288,7 +330,10 @@ public class Node {
     return checkLimitsAndThresholds();
   }
 
-  // apply effects from all ON actuators to sensors
+  /**
+   * Apply the effects of all active actuators to the sensors.
+   *
+   */
   private void applyPerTickEffects() {
     if (sensors == null || actuators == null) {
       return;
@@ -306,7 +351,10 @@ public class Node {
     }
   }
 
-  // enforce absolute limits first (auto-shutdown), then user thresholds — return alert string or null
+  /**
+   * Check sensors against absolute limits and user-defined thresholds.
+   * @return Alert string if any limit or threshold is breached, otherwise null
+   */
   private String checkLimitsAndThresholds() {
     final double EPS = 0.01;
     if (sensors == null || actuators == null) {
@@ -489,14 +537,6 @@ public class Node {
   }
 
 
-  public void applyImmediateActuatorEffect(entity.actuator.Actuator a) {
-    // intentionally do nothing: user must toggle actuators manually.
-    if (a == null) {
-      return;
-    }
-    System.out.println("[Node] applyImmediateActuatorEffect called for " + a.getActuatorId()
-        + " — no automatic changes (user controls actuators).");
-  }
 
 
   
