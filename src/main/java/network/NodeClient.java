@@ -8,7 +8,6 @@ import entity.sensor.*;
 import java.io.*;
 import java.net.Socket;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +34,7 @@ public class NodeClient {
   private final BufferedReader in;
   private final Gson gson;
   private Thread listener;
+
   private static final DateTimeFormatter LOG_TIME = DateTimeFormatter.ofPattern(
       "yyyy-MM-dd HH:mm:ss");
 
@@ -42,6 +42,7 @@ public class NodeClient {
     String msg = String.format(fmt, args);
     System.out.printf("\n[%s] %s: %s%n", LOG_TIME.format(LocalDateTime.now()), role, msg);
   }
+
 
   /**
    * Construct a NodeClient instance.
@@ -101,6 +102,7 @@ public class NodeClient {
     t.start();
   }
 
+
   /**
    * Send the current {@link entity.Node} state to the server.
    *
@@ -127,14 +129,14 @@ public class NodeClient {
     obj.addProperty("messageType", "SENSOR_DATA_FROM_NODE");
     out.println(obj.toString());
     out.flush();
-    log("NodeClient", "Sent state -> %s", obj.toString());
+    System.out.println("\n Node -> Server: " + obj.toString());
   }
 
   private void listenForCommands() {
     try {
       String incoming;
       while ((incoming = in.readLine()) != null) {
-        log("NodeClient", "Command received: %s", incoming);
+        System.out.println("Command received: " + incoming);
         String trimmed = incoming.trim();
         if (trimmed.startsWith("{")) {
           try {
@@ -154,12 +156,12 @@ public class NodeClient {
               handleRemoveSensor(obj);
             }
           } catch (Exception e) {
-            log("NodeClient", "Error processing command: %s", e.getMessage());
+            System.out.println("Error processing command: " + e.getMessage());
           }
         }
       }
     } catch (IOException e) {
-      log("NodeClient", "Error reading from server: %s", e.getMessage());
+      System.out.println("Error reading from server: " + e.getMessage());
     }
   }
 
@@ -195,6 +197,7 @@ public class NodeClient {
                   a.getActuatorId(), a.getActuatorType(), actuatorId);
             }
           }
+
         }
 
         target.setOn(on);
@@ -257,12 +260,13 @@ public class NodeClient {
       node.getSensors().removeIf(s -> sensorId.equals(s.getSensorId()));
       // Remove actuators that were created for the sensor (use prefix matching)
       String prefix = sensorId + "_";
+
       node.getActuators()
           .removeIf(a -> a.getActuatorId() != null && a.getActuatorId().startsWith(prefix));
       log("NodeClient", "Removed sensor %s and associated actuators", sensorId);
       sendCurrentNode();
     } catch (Exception e) {
-      log("NodeClient", "Failed to remove sensor: %s", e.getMessage());
+      System.out.println("Failed to remove sensor: " + e.getMessage());
     }
   }
 
@@ -298,15 +302,15 @@ public class NodeClient {
         node.addActuator(new LampBrightning(sensorId + "_lamp_brightning"));
 
       } else {
-        log("NodeClient", "Unsupported sensor type: %s", sensorType);
+        System.out.println("Unsupported sensor type: " + sensorType);
         return;
       }
 
-      log("NodeClient", "Added sensor %s of type %s with actuators", sensorId, sensorType);
+      System.out.println("Added sensor " + sensorId + " of type " + sensorType + " with actuators.");
       sendCurrentNode();
 
     } catch (Exception e) {
-      log("NodeClient", "Failed to add sensor: %s", e.getMessage());
+      System.out.println("Failed to add sensor: " + e.getMessage());
     }
   }
 
@@ -385,7 +389,7 @@ public class NodeClient {
       }
 
     } catch (Exception e) {
-      log("NodeClient", "Failed to connect to server: %s", e.getMessage());
+        System.err.println("[NC] Failed to connect to server: " + e.getMessage());
     }
   }
 
