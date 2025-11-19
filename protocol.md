@@ -99,7 +99,7 @@ The protocol uses port **5000** for all node-server communication.
 
 ## 9. Message Framing and Format
 
-- **Framing / marshalling:** application messages are sent as single-line JSON payloads (line-delimited JSON). Each message occupies one text line terminated by `\n`. The server treats a received line starting with `{` as JSON; otherwise it interprets some legacy plaintext handshake messages (see registration above).
+- **Framing / marshalling:** application messages are sent as single-line JSON payloads (line-delimited JSON). Each message occupies one text line terminated by `\n`. The server treats a received line starting with `{` as JSON otherwise it interprets some legacy plaintext handshake messages (see registration above).
 
 - **Message envelope (required fields):** most messages are JSON objects containing at least:
   - `messageType` &mdash; string that indicates the semantic type (e.g. `SENSOR_DATA_FROM_NODE`, `ACTUATOR_COMMAND`, `ADD_SENSOR`, `ALERT`, `REQUEST_NODE`).
