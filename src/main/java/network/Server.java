@@ -61,9 +61,10 @@ public class Server {
     private boolean isControlPanel = false;
     private String nodeId = null;
 
-        public ClientHandler(Socket socket) {
-            this.socket = socket;
-        }
+    public ClientHandler(Socket socket) {
+        this.socket = socket;        
+    }
+
 
     /**
      * Run method to handle client communication.
@@ -256,14 +257,7 @@ public class Server {
             }
         }
 
-    /**
-     * Broadcast a message to all connected control panels.
-     *
-     * @param message the message to broadcast
-     */
-    private void broadcastToControlPanels(String message) {
-      broadcastToControlPanels(message, null);
-    }
+   
 
     /**
      * Broadcast a message to all connected control panels, optionally filtering by nodeId subscription.
