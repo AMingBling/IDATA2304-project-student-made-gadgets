@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 /**
  * Abstract class representing a generic Sensor.
+ * Includes common attributes and methods for all sensor types.
+ *
  */
 public abstract class Sensor {
 
@@ -97,92 +99,103 @@ public abstract class Sensor {
   }
 
 
+  /**
+   * Get sensor ID
+   * @return sensor ID
+   */
   public String getSensorId() {
     return sensorId;
   }
 
+  /**
+   * Get sensor type
+   * @return sensor type
+   */
   public String getSensorType() {
     return sensorType;
   }
 
-  //-------------------------------------------------
+  /**
+   * Get current sensor value
+   * @return current sensor value
+   */
   public synchronized double getValue() {
     return value;
   }
 
+  /**
+   * Update the sensor value to a new reading.
+   * @param newValue the new sensor value
+   */
   public synchronized void updateValue(double newValue) {
     this.value = newValue;
     this.timestamp = LocalDateTime.now();
   }
 
+  /**
+   * Adjust the sensor value by a delta.
+   * @param delta the amount to adjust the sensor value by
+   */
   public synchronized void adjustValue(double delta) {
     this.value += delta;
     this.timestamp = LocalDateTime.now();
   }
 
-  public boolean isOutOfRange() {
-    return this.value < this.minThreshold || this.value > this.maxThreshold;
-  }
-
-  public com.google.gson.JsonObject toReadingJson() {
-    com.google.gson.JsonObject jo = new com.google.gson.JsonObject();
-    jo.addProperty("sensorId", this.sensorId);
-    jo.addProperty("type", this.sensorType);
-    jo.addProperty("value", this.value);
-    jo.addProperty("unit", this.unit);
-    jo.addProperty("timestamp", this.timestamp != null ? this.timestamp.toString() : "");
-    return jo;
-  }
 
 
-  //-------------------------------------------------------
+
+
+
+  /**
+   * Get unit of measurement
+   * @return unit of measurement
+   */
   public String getUnit() {
+
     return unit;
   }
 
 
+  /**
+   * Get minimum threshold value
+   * @return minimum threshold value
+   */
   public double getMinThreshold() {
     return minThreshold;
   }
 
+  /**
+   * Get maximum threshold value
+   * @return maximum threshold value
+   */
   public double getMaxThreshold() {
+
     return maxThreshold;
   }
 
+  /**
+   * Get timestamp of the last sensor value update
+   * @return timestamp of the last update
+   */
   public LocalDateTime getTimestamp() {
+
     return timestamp;
   }
 
   /**
    * Abstract method to update the sensor value.
+   * 
    */
   public abstract void updateValue();
-  //-------------------------------------------------
 
 
-  /**
-   * Create Sensor object from JSON string
-   *
-   * @param json JSON representation of a Sensor object
-   * @return Sensor object
-   */
-  public static Sensor fromJson(String json) {
-    Gson gson = new Gson();
-    return gson.fromJson(json, Sensor.class);
-  }
-
-  //-----------------------------------------------
 
 
-  /**
-   * Convert Sensor object to JSON string
-   *
-   * @return JSON representation of the Sensor object
-   */
-  public String toJson() {
-    Gson gson = new Gson();
-    return gson.toJson(this);
-  }
+
+  
+
+
+
 
 
 }

@@ -65,7 +65,7 @@ The sensor will automatically get assigned an ID.
 *Exits the control panel*
 
 ## How to run the application
-
+**NOTE** Standard location for NodeClient: greenhouse1
 1. Run Server.java
 2. **Create a node:** open a new terminal and input:  
 ```mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="01 greenhouse1"```
@@ -74,7 +74,7 @@ The sensor will automatically get assigned an ID.
 
 To add a new node:
 - **Open a new terminal and input:**  
-```mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="<nodeId> <location>"```
+```mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="<nodeId> greenhouse1"```
 
 To add a new control panel:
 - **Open a new terminal and input:**  

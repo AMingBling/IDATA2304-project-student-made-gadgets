@@ -44,6 +44,7 @@ public class CO2Sensor extends Sensor {
    */
   @Override
   public synchronized void adjustValue(double delta) {
+
     updateValue(getValue() + delta);
   }
 
@@ -58,20 +59,8 @@ public class CO2Sensor extends Sensor {
     // Do nothing by default — humidity only changes when actuators run.
   }
 
-  /**
-   * Check if the CO2 level is above the maximum threshold .
-   * @return true if above max threshold, false otherwise 
-   */
-  public boolean isAboveMax() {
-    return getValue() > getMaxThreshold();
-  }
 
-  /**
-   * Check if the CO2 level is below the minimum threshold.
-   * @return true if below min threshold, false otherwise
-   */
-  public boolean isBelowMin() {
-    return getValue() < getMinThreshold();
-  }
+
+
 
 }

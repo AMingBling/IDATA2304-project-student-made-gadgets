@@ -6,9 +6,13 @@ import java.time.LocalDateTime;
  * Class representing a Light Sensor.
  * <p>
  * The LightSensor class extends the generic Sensor class to specifically handle light
+
  * measurements. It initializes with a default value and provides methods to update 
  * and adjust the light level.
  * </p>
+ * measurements. It initializes with a default value and provides methods to update and adjust
+ * the light level.
+ * 
  */
 public class LightSensor extends Sensor {
 
@@ -55,22 +59,5 @@ public class LightSensor extends Sensor {
     // Do nothing by default — humidity only changes when actuators run.
   }
 
-  /**
-   * Check if the Light level is above the maximum threshold .
-   * 
-   * @return true if above max threshold, false otherwise
-   */
-  public boolean isAboveMax() {
-    return getValue() > getMaxThreshold();
-  }
-
-  /**
-   * Check if the Light level is below the minimum threshold.
-   * 
-   * @return true if below min threshold, false otherwise
-   */
-  public boolean isBelowMin() {
-    return getValue() < getMinThreshold();
-  }
 
 }

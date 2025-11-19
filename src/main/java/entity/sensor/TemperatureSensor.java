@@ -2,6 +2,7 @@ package entity.sensor;
 
 /**
  * Class representing a Temperature Sensor.
+ * Extends the base Sensor class.
  */
 public class TemperatureSensor extends Sensor {
 
@@ -20,6 +21,10 @@ public class TemperatureSensor extends Sensor {
     updateValue(20.0);
   }
 
+  /**
+   * Updates the sensor value.
+   * @param newValue the new sensor value
+   */
   @Override
   public void updateValue(double newValue) {
     // Temperature should only change when actuators modify it
@@ -27,42 +32,30 @@ public class TemperatureSensor extends Sensor {
     this.timestamp = java.time.LocalDateTime.now();
   }
 
+  /**
+   * Adjusts the sensor value by a given delta.
+   * @param delta the amount to adjust the sensor value by
+   */
   @Override
   public void adjustValue(double delta) {
     updateValue(getValue() + delta);
   }
 
-  // Implement parameterless updateValue required by base Sensor
+  /**
+   * Periodically updates the sensor value with a small random noise.
+   * This simulates minor fluctuations in temperature readings.
+   *
+   */
   @Override
   public void updateValue() {
-    // Optional: add tiny noise so sensor updates even without actuator input
+
     double noise = (Math.random() - 0.5) * 0.02;
     updateValue(getValue() + noise);
   }
 
-  private double clamp(double v) {
-    double min = this.minThreshold;
-    double max = this.maxThreshold;
-    if (v < min)
-      return min;
-    if (v > max)
-      return max;
-    return v;
-  }
 
-  public boolean isBelowMin() {
-    return getValue() < getMinThreshold();
-  }
 
-  /**
-   * Above or under thresholds, needs to know what value is when the tick is right
-   * under threshold,
-   * this is where the message wil come
-   *
-   * @return true if the sensor value is above the maximum threshold
-   */
-  public boolean isAboveMax() {
-    return getValue() > getMaxThreshold();
-  }
+
+
 
 }
