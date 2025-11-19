@@ -12,6 +12,29 @@ import org.junit.jupiter.api.Test;
 
 import com.google.gson.JsonObject;
 
+
+/**
+ * Tests for base Sensor behaviour using TemperatureSensor as a concrete instance.
+ *
+ * <p>The following is tested:</p>
+ *
+ * <b>Positive tests:</b>
+ * <ul>
+ *   <li>constructorAndGetters: verifies constructor sets id, type, unit and thresholds.</li>
+ *   <li>updateAndAdjust_updateTimestampAndValue: verifies updateValue(double) and adjustValue(double) change value and timestamp.</li>
+ *   <li>toReadingJson_containsExpectedProperties: verifies toReadingJson contains sensorId, type, value, unit and timestamp.</li>
+ *   <li>isOutOfRange_reflectsThresholds: verifies isOutOfRange returns true when value outside thresholds.</li>
+ * </ul>
+ *
+ * <b>Negative tests:</b>
+ * <ul>
+ *   <li>constructorInvalidThresholds_throws: verifies constructor throws when max < min.</li>
+ *   <li>constructorInvalidId_throws: verifies constructor throws for empty/null id.</li>
+ * </ul>
+ *
+ * @author Group 1
+ * @version 2025-11-19
+ */
 public class SensorTest {
 
     /**
