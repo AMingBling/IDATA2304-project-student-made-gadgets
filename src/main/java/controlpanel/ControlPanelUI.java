@@ -92,6 +92,7 @@ public class ControlPanelUI {
     System.out.println(" - RemoveSensor <nodeId> <sensorId>");
     System.out.println(" - CheckNode <nodeId>");
     System.out.println(" - ToggleActuator <nodeId> <actuatorId> <on|off>");
+    System.out.println(" - CheckAllSensorsOfType");
     System.out.println(" - Exit\n");
   }
 
@@ -312,6 +313,39 @@ private void handleCommand(String line) {
             System.out.println("Usage: addsensor <nodeId>");
           }
       }
+        case "checkallsensorsoftype", "checkallsensors" -> {
+          // Prompt user to select sensor type
+          java.util.List<String> types = java.util.Arrays.asList("TEMPERATURE", "LIGHT", "HUMIDITY", "CO2");
+          System.out.println("\nSensor types:");
+          for (int i = 0; i < types.size(); i++) System.out.printf("  %d) %s%n", i + 1, types.get(i));
+          System.out.print("\nChoose type (number): ");
+          String choiceLine = scanner.nextLine();
+          int choice = 0;
+          try { choice = Integer.parseInt(choiceLine.trim()); } catch (Exception e) { choice = 0; }
+          if (choice < 1 || choice > types.size()) {
+            System.out.println("Invalid selection.");
+            break;
+          }
+          String sensorType = types.get(choice - 1);
+          java.util.Map<String, java.util.List<entity.sensor.Sensor>> found = logic.getSensorsByType(sensorType);
+          if (found == null || found.isEmpty()) {
+            System.out.println("No sensors of type " + sensorType + " found.");
+            break;
+          }
+          System.out.println("\nSensors of type " + sensorType + ":");
+          // Print grouped by node
+          java.util.List<String> nodeIds = new java.util.ArrayList<>(found.keySet());
+          java.util.Collections.sort(nodeIds);
+          for (String nid : nodeIds) {
+            System.out.println("Node: " + nid);
+            java.util.List<entity.sensor.Sensor> list = found.get(nid);
+            list.sort((a, b) -> a.getSensorId().compareToIgnoreCase(b.getSensorId()));
+            for (entity.sensor.Sensor s : list) {
+              System.out.printf("  - ID: %s, Value: %.2f %s, Range: %.2f - %.2f, Type: %s%n",
+                  s.getSensorId(), s.getValue(), s.getUnit(), s.getMinThreshold(), s.getMaxThreshold(), s.getSensorType());
+            }
+          }
+        }
 
       case "toggleactuator" -> {
         if (!validateArgs(parts, 4, "Usage: ToggleActuator <nodeId> <actuatorId> <on|off>")) return;
