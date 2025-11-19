@@ -121,6 +121,31 @@ public class ControlPanelLogic {
     }
   }
 
+  public String validateThresholds(String sensorType, double min, double max) {
+    if (sensorType == null || sensorType.isBlank()) return "Ugyldig sensortype.";
+    if (min > max) return "Min kan ikke være større enn Max.";
+
+    String t = sensorType.toUpperCase();
+    switch (t) {
+      case "TEMPERATURE":
+        if (min < 10.0 || max > 40.0) return "Temperatur-grenser må ligge innen [10, 40] °C.";
+        break;
+      case "HUMIDITY":
+        if (min < 0.0 || max > 100.0) return "Fuktighets-grenser må ligge innen [0, 100] %.";
+        break;
+      case "LIGHT":
+        if (min < 600.0 || max > 30000.0) return "Lys-grenser må ligge innen [600, 30000] lux.";
+        break;
+      case "CO2":
+        if (min < 500.0 || max > 2000.0) return "CO2-grenser må ligge innen [500, 2000] ppm.";
+        break;
+      default:
+        return "Ukjent sensortype.";
+    }
+    return null;
+    
+  }
+
   // /**
   //  * Spawn a simulated NodeClient that connects to the same server the control panel is connected to.
   //  * UI should call this method rather than performing networking itself.

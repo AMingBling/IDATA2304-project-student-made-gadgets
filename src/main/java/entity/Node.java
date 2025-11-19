@@ -372,6 +372,7 @@ public class Node {
       if (sensors == null || actuators == null) return null;
   
       // Absolute safety limits (extract to fields if you want per-node config)
+      //TODO: fjerne feltene de liogger i klassene istedet. 
       final double TEMP_MIN_LIMIT = 10.0;
       final double TEMP_MAX_LIMIT = 40.0;
       final double HUMIDITY_MIN_LIMIT = 0.0;
