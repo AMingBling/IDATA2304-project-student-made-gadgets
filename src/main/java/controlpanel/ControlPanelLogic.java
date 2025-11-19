@@ -121,60 +121,60 @@ public class ControlPanelLogic {
     }
   }
 
-  /**
-   * Spawn a simulated NodeClient that connects to the same server the control panel is connected to.
-   * UI should call this method rather than performing networking itself.
-   * Returns true if the node was spawned and accepted by server.
-   */
-  public boolean spawnNode(String nodeId, String location) {
-    if (nodeId == null || nodeId.isBlank()) return false;
-    if (spawnedNodes.containsKey(nodeId)) return false;
-    if (!comm.isConnected()) {
-      System.out.println("Control panel not connected to server. Call connect() first.");
-      return false;
-    }
+  // /**
+  //  * Spawn a simulated NodeClient that connects to the same server the control panel is connected to.
+  //  * UI should call this method rather than performing networking itself.
+  //  * Returns true if the node was spawned and accepted by server.
+  //  */
+  // public boolean spawnNode(String nodeId, String location) {
+  //   if (nodeId == null || nodeId.isBlank()) return false;
+  //   if (spawnedNodes.containsKey(nodeId)) return false;
+  //   if (!comm.isConnected()) {
+  //     System.out.println("Control panel not connected to server. Call connect() first.");
+  //     return false;
+  //   }
 
-    String ip = comm.getConnectedIp();
-    int port = comm.getConnectedPort();
-    if (ip == null || port <= 0) {
-      System.out.println("Control panel has no server info.");
-      return false;
-    }
+  //   String ip = comm.getConnectedIp();
+  //   int port = comm.getConnectedPort();
+  //   if (ip == null || port <= 0) {
+  //     System.out.println("Control panel has no server info.");
+  //     return false;
+  //   }
 
-    try {
-      Socket socket = new Socket(ip, port);
-      PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+  //   try {
+  //     Socket socket = new Socket(ip, port);
+  //     PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+  //     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-      // Prepare Gson with LocalDateTime adapters matching node client
-      com.google.gson.Gson gson = new GsonBuilder()
-          .registerTypeAdapter(LocalDateTime.class, (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
-          .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, context) -> LocalDateTime.parse(json.getAsString()))
-          .create();
+  //     // Prepare Gson with LocalDateTime adapters matching node client
+  //     com.google.gson.Gson gson = new GsonBuilder()
+  //         .registerTypeAdapter(LocalDateTime.class, (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
+  //         .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, context) -> LocalDateTime.parse(json.getAsString()))
+  //         .create();
 
-      out.println("SENSOR_NODE_CONNECTED " + nodeId);
-      String serverResponse = in.readLine();
-      if (serverResponse == null || !serverResponse.equals("NODE_ID_ACCEPTED")) {
-        try { socket.close(); } catch (Exception ignored) {}
-        System.out.println("Spawn node rejected by server: " + serverResponse);
-        return false;
-      }
+  //     out.println("SENSOR_NODE_CONNECTED " + nodeId);
+  //     String serverResponse = in.readLine();
+  //     if (serverResponse == null || !serverResponse.equals("NODE_ID_ACCEPTED")) {
+  //       try { socket.close(); } catch (Exception ignored) {}
+  //       System.out.println("Spawn node rejected by server: " + serverResponse);
+  //       return false;
+  //     }
 
-      List<entity.sensor.Sensor> sensors = new ArrayList<>();
-      List<entity.actuator.Actuator> actuators = new ArrayList<>();
-      entity.Node nodeObj = new entity.Node(nodeId, location, sensors, actuators);
-      NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
-      nodeClient.start();
-      nodeClient.sendCurrentNode();
-      spawnedNodes.put(nodeId, nodeClient);
-      spawnedSockets.put(nodeId, socket);
-      System.out.println("Spawned simulated node: " + nodeId);
-      return true;
-    } catch (Exception e) {
-      System.out.println("Failed to spawn node: " + e.getMessage());
-      return false;
-    }
-  }
+  //     List<entity.sensor.Sensor> sensors = new ArrayList<>();
+  //     List<entity.actuator.Actuator> actuators = new ArrayList<>();
+  //     entity.Node nodeObj = new entity.Node(nodeId, location, sensors, actuators);
+  //     NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
+  //     nodeClient.start();
+  //     nodeClient.sendCurrentNode();
+  //     spawnedNodes.put(nodeId, nodeClient);
+  //     spawnedSockets.put(nodeId, socket);
+  //     System.out.println("Spawned simulated node: " + nodeId);
+  //     return true;
+  //   } catch (Exception e) {
+  //     System.out.println("Failed to spawn node: " + e.getMessage());
+  //     return false;
+  //   }
+  // }
 
   /**
    * Disconnect and remove a previously spawned simulated node.

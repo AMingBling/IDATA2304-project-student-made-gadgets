@@ -68,7 +68,7 @@ public class ControlPanelUI {
   private void showHelp() {
     System.out.println("\nCommands: ");
     System.out.println(" - CheckGreenhouse");
-    System.out.println(" - AddNode <nodeId> <location>");
+    // System.out.println(" - AddNode <nodeId> <location>");
     System.out.println(" - AddSensor <nodeId>");
     System.out.println(" - RemoveSensor <nodeId> <sensorId>");
     System.out.println(" - CheckNode <nodeId>");
@@ -227,23 +227,23 @@ public class ControlPanelUI {
             System.out.println("Usage: addsensor <nodeId>");
           }
         }
-        case "addnode" -> {
-          String nodeId;
-          String location;
-          if (parts.length >= 3) {
-            nodeId = parts[1];
-            location = parts[2];
-          } else {
-            System.out.print("Node ID: ");
-            nodeId = scanner.nextLine().trim();
-            if (nodeId.isEmpty()) { System.out.println("Node ID cannot be empty."); break; }
-            System.out.print("Location: ");
-            location = scanner.nextLine().trim();
-            if (location.isEmpty()) { System.out.println("Location cannot be empty."); break; }
-          }
-          boolean ok = logic.spawnNode(nodeId, location);
-          if (!ok) System.out.println("Failed to add node. See log for details."); else System.out.println("Successfully added node: " + nodeId);
-        }
+        // case "addnode" -> {
+        //   String nodeId;
+        //   String location;
+        //   if (parts.length >= 3) {
+        //     nodeId = parts[1];
+        //     location = parts[2];
+        //   } else {
+        //     System.out.print("Node ID: ");
+        //     nodeId = scanner.nextLine().trim();
+        //     if (nodeId.isEmpty()) { System.out.println("Node ID cannot be empty."); break; }
+        //     System.out.print("Location: ");
+        //     location = scanner.nextLine().trim();
+        //     if (location.isEmpty()) { System.out.println("Location cannot be empty."); break; }
+        //   }
+        //   boolean ok = logic.spawnNode(nodeId, location);
+        //   if (!ok) System.out.println("Failed to add node. See log for details."); else System.out.println("Successfully added node: " + nodeId);
+        // }
         case "toggleactuator" -> {
           if (parts.length >= 4) {
             String nodeId = parts[1];
