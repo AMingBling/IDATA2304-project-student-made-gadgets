@@ -26,22 +26,34 @@ public class DeHumidifier extends Actuator {
   private final double dryDelta;
 
 
+  /**
+   * Create a DeHumidifier with a sensible default drying delta per tick.
+   *
+   * @param id unique actuator id
+   */
   public DeHumidifier(String id) {
     super(id, "DEHUMIDIFIER");
     this.dryDelta = 2.0; // juster etter tick-intervall
   }
 
-  /**
-   * 
-   * @param id
-   * @param dryDelta
-   */
 
+
+  /**
+   * Create a DeHumidifier with a specified drying delta per tick.
+   *
+   * @param id unique actuator id
+   * @param dryDelta amount to decrease humidity sensors by when enabled
+   */
   public DeHumidifier(String id, double dryDelta) {
     super(id, "DEHUMIDIFIER");
     this.dryDelta = dryDelta;
   }
 
+  /**
+   * Apply the dehumidifying effect to humidity sensors in the provided list.
+   * 
+   * @param sensors list of sensors to potentially affect
+   */
   @Override
   public void applyEffect(List<Sensor> sensors) {
     if (!isOn() || sensors == null) {
