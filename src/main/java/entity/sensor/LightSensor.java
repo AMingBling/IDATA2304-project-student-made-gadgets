@@ -4,6 +4,11 @@ import java.time.LocalDateTime;
 
 /**
  * Class representing a Light Sensor.
+ * <p>
+ * The LightSensor class extends the generic Sensor class to specifically handle light
+ * measurements. It initializes with a default value and provides methods to update 
+ * and adjust the light level.
+ * </p>
  */
 public class LightSensor extends Sensor {
 
@@ -21,26 +26,49 @@ public class LightSensor extends Sensor {
     updateValue(15000);
   }
 
+  /**
+   * Update the Light sensor value to a new reading.
+   * @param newValue the new Light value
+   */
   @Override
   public void updateValue(double newValue) {
     this.value = newValue;
     this.timestamp = LocalDateTime.now();
   }
 
+  /**
+   * Adjust the Light sensor value by a delta.
+   * @param delta the amount to adjust the Light value by
+   */
   @Override
   public synchronized void adjustValue(double delta) {
     updateValue(getValue() + delta);
   }
 
+  /**
+   * Update the Light sensor value without parameters.
+   * This method is required by the base Sensor class but does nothing by default.
+   * 
+   */
   @Override
   public synchronized void updateValue() {
     // Do nothing by default — humidity only changes when actuators run.
   }
 
+  /**
+   * Check if the Light level is above the maximum threshold .
+   * 
+   * @return true if above max threshold, false otherwise
+   */
   public boolean isAboveMax() {
     return getValue() > getMaxThreshold();
   }
 
+  /**
+   * Check if the Light level is below the minimum threshold.
+   * 
+   * @return true if below min threshold, false otherwise
+   */
   public boolean isBelowMin() {
     return getValue() < getMinThreshold();
   }
