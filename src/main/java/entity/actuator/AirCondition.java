@@ -14,9 +14,9 @@ public class AirCondition extends Actuator {
 
   @Override
   public void applyEffect(List<Sensor> sensors) {
-      if (!isOn()) {
-          return;
-      }
+    if (!isOn()) {
+      return;
+    }
 
     for (Sensor s : sensors) {
       if ("TEMPERATURE".equalsIgnoreCase(s.getSensorType())) {
@@ -25,8 +25,6 @@ public class AirCondition extends Actuator {
     }
     System.out.println("[AirCondition] applied temp effect: -1.0");
   }
-  
 
 
-  
 }
