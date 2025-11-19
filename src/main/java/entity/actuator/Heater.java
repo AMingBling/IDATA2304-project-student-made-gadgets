@@ -20,9 +20,11 @@ public class Heater extends Actuator {
     this.heatDelta = heatDelta;
   }
 
-   @Override
+  @Override
   public void applyEffect(List<Sensor> sensors) {
-    if (!isOn()) return;
+    if (!isOn()) {
+      return;
+    }
     double heatDelta = 1.0; // eller bruk eksisterende felt
     for (Sensor s : sensors) {
       if ("TEMPERATURE".equalsIgnoreCase(s.getSensorType())) {

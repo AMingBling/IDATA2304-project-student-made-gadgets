@@ -1,5 +1,8 @@
 package entity.actuator;
 
+/**
+ * Class of a LampDimming actuator that decreases light levels when turned on.
+ */
 public class LampDimming extends Actuator {
 
   private double dimDelta;
@@ -11,7 +14,9 @@ public class LampDimming extends Actuator {
 
   @Override
   public void applyEffect(java.util.List<entity.sensor.Sensor> sensors) {
-    if (!isOn() || sensors == null) return;
+    if (!isOn() || sensors == null) {
+      return;
+    }
     for (entity.sensor.Sensor s : sensors) {
       if ("LIGHT".equalsIgnoreCase(s.getSensorType())) {
         s.adjustValue(-dimDelta);
@@ -19,12 +24,6 @@ public class LampDimming extends Actuator {
     }
     System.out.println("[LAMP_DIMMING] applied light effect: -" + dimDelta);
   }
-
-
-
-
-
-
 
 
 }

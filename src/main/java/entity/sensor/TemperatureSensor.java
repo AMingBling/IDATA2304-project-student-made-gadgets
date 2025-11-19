@@ -18,17 +18,18 @@ public class TemperatureSensor extends Sensor {
         updateValue(20.0);
     }
 
-    @Override
-    public void updateValue(double newValue) {
-        // Temperature should only change when actuators modify it
-        this.value = newValue;
-        this.timestamp = java.time.LocalDateTime.now();
-    }
+  @Override
+  public void updateValue(double newValue) {
+    // Temperature should only change when actuators modify it
+    this.value = newValue;
+    this.timestamp = java.time.LocalDateTime.now();
+  }
 
-    @Override
-    public void adjustValue(double delta) {
-        updateValue(getValue() + delta);
-    }
+  @Override
+  public void adjustValue(double delta) {
+    updateValue(getValue() + delta);
+  }
+
 
     // Implement parameterless updateValue required by base Sensor
    @Override
@@ -44,7 +45,7 @@ public class TemperatureSensor extends Sensor {
          if (v < min) return min;
         if (v > max) return max;
         return v;
-    }
+
 
     /**
      * Obove or under tresholds, neds to know what value is when the tick is right under treshold, this is where the message wil come
@@ -57,5 +58,18 @@ public boolean isAboveMax() {
 public boolean isBelowMin() {
     return getValue() < getMinThreshold();
 }
+
+
+  /**
+   * Above or under thresholds, needs to know what value is when the tick is right under threshold,
+   * this is where the message wil come
+   *
+   * @return true if the sensor value is above the maximum threshold
+   */
+  public boolean isAboveMax() {
+    return getValue() > getMaxThreshold();
+  }
+
+
 
 }
