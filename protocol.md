@@ -17,36 +17,52 @@ We use **TCP** for reliable communication between nodes.
 The protocol uses port **5000** for all node-server communication.
 
 ## 5. Architecture
-- **Sensor Node (client)**
-    - Implements entity.Node and network.NodeClient.
+- **NodeClient (client)**
+    - Implements entity.Node
     - Connects to the central server over TCP and sends sensor snapshots
-    - Listens for commands (ACTUATOR_COMMAND, REQUEST_NODE, ADD_SENSOR) and applies changes locally, then sends updated state.
-- **Control Panel (client)**
-    - Implements controlpanel.ControlPanelLogic + ControlPanelUI / ControlPanelMain.
+    - Listens for commands (e.g. ADD_SENSOR, CheckGreenHouse, CheckNode) and applies changes locally, then sends updated state.
+- **ControlPanelMain (client)**
+    - Implements controlpanel.ControlPanelLogic + ControlPanelUI + ControlPanelCommunication
     - Connects to the same central server over TCP and issues commands.
     - Recieves node state updates from the server and displays them in the UI.
 - **Central Server (server)**
     - Single coordinator listening on TCP port 5000.
-    - Accepts connections from sensor nodes and control panels, validates node IDs, keeps registry of connected cleints, and forwards messages between nodes and control panels according to messageType.
-    - Responsible for routing: e.g. forward ACTUATOR_COMMAND from a control panel to the target sensor code.
+    - Accepts connections from nodeclients and control panels, validates node IDs, keeps registry of connected cleints, and forwards messages between nodes and control panels according to messageType.
+    - Responsible for routing: e.g. forward ToggleActuator from a control panel to the target sensor code.
 
-## 6. Informmation Flow.
-- **Transport:** TCP over port 5000. Server is the single router.
-- **Sensor nodes -> Server**
-    - Sensor nodes periodically send their state to the server.
-- **Control panels -> Server -> Sensor node (command forwarding)**
-    - User issues a command in the UI. Control panel sends the command to the server, which forwards it to the target sensor node.
-- **Control panels -> Server**
-    - Control panel can request the state of a node. Server forwards the request to node or replies from cached state.
-- **Control panels -> Server -> Sensor node (runtime changes)**
-    - Control panels can instruct nodes to add sensors. Server forwards to the target node, node applies the change and replies with updated state.
+## 6. Information Flow
+
+- **Transport:** TCP over port `5000`. The server acts as the single router and long-lived connection manager for both sensor nodes and control panels.
+
+- **Registration / handshake**
+  - Sensor nodes use a small legacy plaintext handshake when they first connect: `SENSOR_NODE_CONNECTED <nodeId>` (single line). The server replies with `NODE_ID_ACCEPTED` or `NODE_ID_REJECTED` and stores the node's socket in an internal map if accepted.
+  - Control panels may use the legacy `CONTROL_PANEL_CONNECTED` plain-text registration or a JSON registration payload (e.g. `{ "messageType": "REGISTER_CONTROL_PANEL", "controlPanelId": "cp-1" }`). The server keeps a list of control panel sockets for broadcasting.
+
+- **Node -> Server (state & alerts)**
+  - Nodes periodically send their state as a single line JSON object. These messages include `messageType` (commonly `SENSOR_DATA_FROM_NODE`), `nodeID`, an array of `sensors`, and an array of `actuators`. The server caches the last-known JSON per `nodeID` (used to quickly serve `REQUEST_NODE`).
+  - When a node detects a threshold breach it can send an `ALERT` message (JSON with `messageType":"ALERT"`, `nodeID` and `alert` text). The server forwards these alerts to all connected control panels.
+
+- **Control Panel -> Server -> Node (command forwarding)**
+  - Control panels send JSON commands to the server. Typical commands and their flow:
+    - `ACTUATOR_COMMAND`: control panel -> server -> target node. JSON shape: `{ "messageType": "ACTUATOR_COMMAND", "controlPanelId": "cp1", "nodeID": "01", "actuatorId": "s1_heater", "command": "TURN_ON/TURN_OFF" }`.
+    - `ADD_SENSOR`: control panel -> server -> target node. JSON shape: `{ "messageType": "ADD_SENSOR", "controlPanelId": "cp1", "nodeID": "01", "sensorType": "TEMPERATURE", "sensorId": "s3", "minThreshold": 15, "maxThreshold": 30 }`.
+    - `REMOVE_SENSOR`: control panel -> server -> target node. JSON shape: `{ "messageType": "REMOVE_SENSOR", "controlPanelId": "cp1", "nodeID": "n1", "sensorId": "s3" }`.
+  - The server looks up the target node's socket in its `sensorNodes` map and forwards the raw JSON line to the node if connected. If the node is not connected, the server logs that the target node is not connected and does not forward the message.
+
+- **Control Panel -> Server (requests and cached replies)**
+  - `REQUEST_NODE` (or `REQUEST_STATE`) messages allow a control panel to ask for the latest node snapshot. If the server has a cached last-known JSON for the requested `nodeID`, it immediately replies with that JSON; otherwise it forwards a `REQUEST_STATE` message to the node and waits for the node to send an updated state which will then be broadcast to control panels.
+
+- **Broadcasting / subscriptions**
+  - The current implementation broadcasts node updates to the control panel that sent the command. There is no per-control-panel subscription model in the code; control panels are expected to filter messages they care about locally.
+
+- **Failure modes and logging**
+  - If a control panel sends a command for a node that is not connected the server will log the event (`Target node not connected`) and will not forward the command. There is no built-in error reply back to the control panel in the current server implementation for this case (only server-side logging).
 
 ## 7. Protocol Type
-- **Connection-oriented (TCP):** uses stream sockets for reliable, ordered delivery between clients and central server.
-- **Stateful server:** the server keeps active connections and a registry of known node/client IDs (used for routing)
-- **Application-layer messages:** simple JSON messages with a messageType field (extensible and human-readable)
-- **Router pattern:** single server acts as the central router - supports point-to-point forwarding (control-panel -> node).
-- **Design goals:** reliability and simplicity (TCP + JSON), easy to extend with new messageTypes, and straightforward error/reconnect handling on client side.
+
+- **
+
+
 
 ## 8. Constants and Types
 
@@ -59,7 +75,7 @@ The protocol uses port **5000** for all node-server communication.
   - `ERROR` — any → server/control panel (error reporting)
 
 - Sensor types
-  - `TEMPERATURE` / `TEMP`
+  - `TEMPERATURE`
   - `HUMIDITY`
   - `LIGHT`
   - `CO2`
@@ -67,27 +83,45 @@ The protocol uses port **5000** for all node-server communication.
 - Actuator types
   - `FAN`
   - `HEATER`
+  - `AIRCON`
+  - `VENTILATION`
+  - `CO2Supply`
   - `HUMIDIFIER`
-  - `WINDOW`
-  - `LAMPS`
+  - `DEHUMIDIFIER`
+  - `LAMPBRIGHTNING`
+  - `LIGHTDIMMING`
 
 - Status / state values
   - Binary / boolean: `ON` / `OFF` (or true/false)
-  - Position/state: `OPEN` / `CLOSED`
   - Numeric readings: use numeric values (e.g., temperature = 21.5)
 
 ------------------------------------------------------------------
 
-  ## 9. Message Format MÅ FINNE UT AV DET HER
-- **Marshalling**: Fixed-size fields / separator-based / TLV (choose one)
+## 9. Message Framing and Format
 
+- **Framing / marshalling:** application messages are sent as single-line JSON payloads (line-delimited JSON). Each message occupies one text line terminated by `\n`. The server treats a received line starting with `{` as JSON; otherwise it interprets some legacy plaintext handshake messages (see registration above).
 
+- **Message envelope (required fields):** most messages are JSON objects containing at least:
+  - `messageType` &mdash; string that indicates the semantic type (e.g. `SENSOR_DATA_FROM_NODE`, `ACTUATOR_COMMAND`, `ADD_SENSOR`, `ALERT`, `REQUEST_NODE`).
+  - `nodeID` &mdash; the target or source node id (when applicable).
 
-- **Examples**:
+- **Common application-layer message types (concrete)**
+  - `SENSOR_DATA_FROM_NODE` &mdash; node -> server. Contains `nodeID`, `sensors` (array of sensor objects, with their `sensorId`, `value`, `unit`, `minTreshold`, `maxTreshold`, `timestamp`), `actuators` (array of actuator objects, with their `actuatorId`, `actuatorType`, `on status`).
+  - `ACTUATOR_COMMAND` &mdash; control panel -> server -> node. Contains `nodeID`, `actuatorId`, `command` (`TURN_ON` / `TURN_OFF`).
+  - `ADD_SENSOR` / `REMOVE_SENSOR` &mdash; control panel -> server -> node. Contains sensor metadata (`sensorType`, `sensorId`, `minThreshold`, `maxThreshold`).
+  - `REQUEST_NODE` &mdash; control panel -> server -> (possibly forwarded to node). Server may answer directly using cached JSON. Contains `controlPaneId` and `nodeId`
+  - `ALERT` &mdash; node -> server -> control panels. Contains `nodeID` and `alert` text.
 
+- **Legacy plain-text tokens**
+  - `SENSOR_NODE_CONNECTED <nodeId>` &mdash; node -> server (plain text). Server responds with `NODE_ID_ACCEPTED` or `NODE_ID_REJECTED` (plain text).
+  - `CONTROL_PANEL_CONNECTED` &mdash; legacy control-panel registration.
 
+- **Routing / server behavior**
+  - The server keeps a map `sensorNodes: Map<nodeId, Socket>` and a list of control panel sockets. On receiving a control-panel JSON command with `nodeID`, the server looks up the node socket and forwards the original JSON line if connected. Node-originated JSON lines are cached under `lastKnownNodeJson[nodeID]` and broadcast to all control panels.
 
-- **Direction**:
+- **Security / reliability notes (current limitations)**
+  - There are no cryptographic protections on the wire (no TLS) and no message authentication: the protocol assumes a trusted environment.
+  - There is no built-in acknowledgement (ACK) from the target node back to the control panel for forwarded commands; the server forwards raw JSON and logs non-delivery. If higher assurance is required, we should add explicit ACK/response messages and timeouts.
  
  --------------------------------------------------------------------
 
