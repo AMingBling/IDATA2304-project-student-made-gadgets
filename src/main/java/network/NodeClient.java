@@ -8,7 +8,6 @@ import entity.sensor.*;
 import java.io.*;
 import java.net.Socket;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,19 +34,22 @@ public class NodeClient {
   private final BufferedReader in;
   private final Gson gson;
   private Thread listener;
-  private static final DateTimeFormatter LOG_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+  private static final DateTimeFormatter LOG_TIME = DateTimeFormatter.ofPattern(
+      "yyyy-MM-dd HH:mm:ss");
 
   private static void log(String role, String fmt, Object... args) {
     String msg = String.format(fmt, args);
     System.out.printf("\n[%s] %s: %s%n", LOG_TIME.format(LocalDateTime.now()), role, msg);
   }
 
+
   /**
    * Construct a NodeClient instance.
    *
    * @param node the {@link entity.Node} model representing sensors and actuators
-   * @param out the {@link PrintWriter} used to send messages to the server
-   * @param in the {@link BufferedReader} used to receive messages from the server
+   * @param out  the {@link PrintWriter} used to send messages to the server
+   * @param in   the {@link BufferedReader} used to receive messages from the server
    * @param gson the {@link Gson} instance used for JSON serialization/deserialization
    */
   public NodeClient(Node node, PrintWriter out, BufferedReader in, Gson gson) {
@@ -55,7 +57,7 @@ public class NodeClient {
     this.out = out;
     this.in = in;
     this.gson = gson;
-    
+
   }
 
   /**
@@ -71,34 +73,35 @@ public class NodeClient {
   }
 
   public void startControlLoop(long tickMillis) {
-   Thread t = new Thread(() -> {
-     try {
-       while (true) {
-         try {
-           node.updateAllSensors();
-           String alert = node.applyActuatorEffects(); // må finnes i Node
-             if (alert != null) {
-             JsonObject al = new JsonObject();
-             al.addProperty("messageType", "ALERT");
-             al.addProperty("nodeID", node.getNodeID());
-             al.addProperty("alert", alert);
-             out.println(al.toString());
-             out.flush();
-             log("NodeClient", "Sent ALERT: %s", alert);
-           }
-           sendCurrentNode();
-           } catch (Exception e) {
-           log("NodeClient", "Control loop error: %s", e.getMessage());
-         }
-         Thread.sleep(tickMillis);
-       }
-     } catch (InterruptedException ie) {
-       Thread.currentThread().interrupt();
-     }
-   }, "NodeClient-ControlLoop");
-   t.setDaemon(true);
-   t.start();
- }
+    Thread t = new Thread(() -> {
+      try {
+        while (true) {
+          try {
+            node.updateAllSensors();
+            String alert = node.applyActuatorEffects(); // må finnes i Node
+            if (alert != null) {
+              JsonObject al = new JsonObject();
+              al.addProperty("messageType", "ALERT");
+              al.addProperty("nodeID", node.getNodeID());
+              al.addProperty("alert", alert);
+              out.println(al.toString());
+              out.flush();
+              log("NodeClient", "Sent ALERT: %s", alert);
+            }
+            sendCurrentNode();
+          } catch (Exception e) {
+            log("NodeClient", "Control loop error: %s", e.getMessage());
+          }
+          Thread.sleep(tickMillis);
+        }
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt();
+      }
+    }, "NodeClient-ControlLoop");
+    t.setDaemon(true);
+    t.start();
+  }
+
 
   /**
    * Send the current {@link entity.Node} state to the server.
@@ -126,14 +129,14 @@ public class NodeClient {
     obj.addProperty("messageType", "SENSOR_DATA_FROM_NODE");
     out.println(obj.toString());
     out.flush();
-    log("NodeClient", "Sent state -> %s", obj.toString());
+    System.out.println("\n Node -> Server: " + obj.toString());
   }
 
   private void listenForCommands() {
     try {
       String incoming;
       while ((incoming = in.readLine()) != null) {
-        log("NodeClient", "Command received: %s", incoming);
+        System.out.println("Command received: " + incoming);
         String trimmed = incoming.trim();
         if (trimmed.startsWith("{")) {
           try {
@@ -153,113 +156,130 @@ public class NodeClient {
               handleRemoveSensor(obj);
             }
           } catch (Exception e) {
-            log("NodeClient", "Error processing command: %s", e.getMessage());
+            System.out.println("Error processing command: " + e.getMessage());
           }
         }
       }
     } catch (IOException e) {
-      log("NodeClient", "Error reading from server: %s", e.getMessage());
+      System.out.println("Error reading from server: " + e.getMessage());
     }
   }
 
-    private void handleActuatorCommand(JsonObject obj) {
-      String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
-      String command = obj.has("command") ? obj.get("command").getAsString() : null;
-      if (actuatorId != null && command != null) {
-        boolean on = "TURN_ON".equals(command);
-  
-        // Finn target-aktuator først
-        entity.actuator.Actuator target = node.getActuators().stream()
-            .filter(a -> a.getActuatorId().equals(actuatorId))
-            .findFirst()
-            .orElse(null);
-  
-        if (target != null) {
-          String targetType = target.getActuatorType() != null ? target.getActuatorType().toUpperCase() : "";
-  
-          // Hvis vi slår på en aktuator, slå av konfliktende aktuatorer
-                if (on) {
-            for (entity.actuator.Actuator a : node.getActuators()) {
-              if (a == null) continue;
-              if (a.getActuatorId().equals(actuatorId)) continue;
-              String t = a.getActuatorType() != null ? a.getActuatorType().toUpperCase() : "";
-              if (isConflict(targetType, t)) {
-                a.setOn(false);
-                log("NodeClient", "Actuator %s (type=%s) turned OFF due to conflict with %s", a.getActuatorId(), a.getActuatorType(), actuatorId);
-              }
+  private void handleActuatorCommand(JsonObject obj) {
+    String actuatorId = obj.has("actuatorId") ? obj.get("actuatorId").getAsString() : null;
+    String command = obj.has("command") ? obj.get("command").getAsString() : null;
+    if (actuatorId != null && command != null) {
+      boolean on = "TURN_ON".equals(command);
+
+      // Finn target-aktuator først
+      entity.actuator.Actuator target = node.getActuators().stream()
+          .filter(a -> a.getActuatorId().equals(actuatorId))
+          .findFirst()
+          .orElse(null);
+
+      if (target != null) {
+        String targetType =
+            target.getActuatorType() != null ? target.getActuatorType().toUpperCase() : "";
+
+        // Hvis vi slår på en aktuator, slå av konfliktende aktuatorer
+        if (on) {
+          for (entity.actuator.Actuator a : node.getActuators()) {
+            if (a == null) {
+              continue;
+            }
+            if (a.getActuatorId().equals(actuatorId)) {
+              continue;
+            }
+            String t = a.getActuatorType() != null ? a.getActuatorType().toUpperCase() : "";
+            if (isConflict(targetType, t)) {
+              a.setOn(false);
+              log("NodeClient", "Actuator %s (type=%s) turned OFF due to conflict with %s",
+                  a.getActuatorId(), a.getActuatorType(), actuatorId);
             }
           }
-  
-          target.setOn(on);
-          log("NodeClient", "Actuator %s set to %s", actuatorId, on);
-        } else {
-          log("NodeClient", "Actuator not found: %s", actuatorId);
+
         }
-  
-        sendCurrentNode();
+
+        target.setOn(on);
+        log("NodeClient", "Actuator %s set to %s", actuatorId, on);
+      } else {
+        log("NodeClient", "Actuator not found: %s", actuatorId);
       }
+
+      sendCurrentNode();
     }
-  
-    // Hjelpemetode for konfliktregler (legg til flere par ved behov)
-    private boolean isConflict(String typeA, String typeB) {
-      if (typeA == null || typeB == null) return false;
-      if (typeA.equals(typeB)) return false; // samme type - ikke konflikt her
-  
-      // Heater vs AirCondition
-      if ((typeA.equals("HEATER") && (typeB.equals("AIRCON") || typeB.equals("AIRCONDITION")))
-          || (typeB.equals("HEATER") && (typeA.equals("AIRCON") || typeA.equals("AIRCONDITION")))) {
-        return true;
-      }
-  
-      // Humidifier vs DeHumidifier
-      if ((typeA.equals("HUMIDIFIER") && typeB.equals("DEHUMIDIFIER"))
-          || (typeB.equals("HUMIDIFIER") && typeA.equals("DEHUMIDIFIER"))) {
-        return true;
-      }
-      // add lamp conflict: Brightening vs Dimming
-    if ((typeA.equals("BRIGHT") && typeB.equals("DIM")) || (typeB.equals("BRIGHT") && typeA.equals("DIM"))) {
-        return true;
+  }
+
+  // Hjelpemetode for konfliktregler (legg til flere par ved behov)
+  private boolean isConflict(String typeA, String typeB) {
+    if (typeA == null || typeB == null) {
+      return false;
+    }
+    if (typeA.equals(typeB)) {
+      return false; // samme type - ikke konflikt her
+    }
+
+    // Heater vs AirCondition
+    if ((typeA.equals("HEATER") && (typeB.equals("AIRCON") || typeB.equals("AIRCONDITION")))
+        || (typeB.equals("HEATER") && (typeA.equals("AIRCON") || typeA.equals("AIRCONDITION")))) {
+      return true;
+    }
+
+    // Humidifier vs DeHumidifier
+    if ((typeA.equals("HUMIDIFIER") && typeB.equals("DEHUMIDIFIER"))
+        || (typeB.equals("HUMIDIFIER") && typeA.equals("DEHUMIDIFIER"))) {
+      return true;
+    }
+    // add lamp conflict: Brightening vs Dimming
+    if ((typeA.equals("BRIGHT") && typeB.equals("DIM")) || (typeB.equals("BRIGHT") && typeA.equals(
+        "DIM"))) {
+      return true;
     }
 
     // add humidity conflicts if not present...
-    if ((typeA.equals("HUMIDIFIER") && typeB.equals("DEHUMIDIFIER")) || (typeB.equals("HUMIDIFIER") && typeA.equals("DEHUMIDIFIER"))) {
-        return true;
+    if ((typeA.equals("HUMIDIFIER") && typeB.equals("DEHUMIDIFIER")) || (typeB.equals("HUMIDIFIER")
+        && typeA.equals("DEHUMIDIFIER"))) {
+      return true;
     }
-    if ((typeA.contains("BRIGHT") && typeB.contains("DIM")) || (typeB.contains("BRIGHT") && typeA.contains("DIM"))) {
-        return true;
-    }
-
-
-  
-      
-      return false;
+    if ((typeA.contains("BRIGHT") && typeB.contains("DIM")) || (typeB.contains("BRIGHT")
+        && typeA.contains("DIM"))) {
+      return true;
     }
 
-  
+    return false;
+  }
+
 
   private void handleRemoveSensor(JsonObject obj) {
     try {
       String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
-      if (sensorId == null) return;
+      if (sensorId == null) {
+        return;
+      }
       // Remove sensors with matching id
       node.getSensors().removeIf(s -> sensorId.equals(s.getSensorId()));
       // Remove actuators that were created for the sensor (use prefix matching)
       String prefix = sensorId + "_";
-      node.getActuators().removeIf(a -> a.getActuatorId() != null && a.getActuatorId().startsWith(prefix));
+
+      node.getActuators()
+          .removeIf(a -> a.getActuatorId() != null && a.getActuatorId().startsWith(prefix));
       log("NodeClient", "Removed sensor %s and associated actuators", sensorId);
       sendCurrentNode();
     } catch (Exception e) {
-      log("NodeClient", "Failed to remove sensor: %s", e.getMessage());
+      System.out.println("Failed to remove sensor: " + e.getMessage());
     }
   }
-private void handleAddSensor(JsonObject obj) {
+
+  private void handleAddSensor(JsonObject obj) {
     try {
       String sensorType = obj.has("sensorType") ? obj.get("sensorType").getAsString() : null;
-      String sensorId   = obj.has("sensorId")   ? obj.get("sensorId").getAsString()   : null;
-      double min        = obj.has("minThreshold") ? obj.get("minThreshold").getAsDouble() : 0.0;
-      double max        = obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
+      String sensorId = obj.has("sensorId") ? obj.get("sensorId").getAsString() : null;
+      double min = obj.has("minThreshold") ? obj.get("minThreshold").getAsDouble() : 0.0;
+      double max = obj.has("maxThreshold") ? obj.get("maxThreshold").getAsDouble() : 100.0;
 
-      if (sensorType == null || sensorId == null) return;
+      if (sensorType == null || sensorId == null) {
+        return;
+      }
 
       if ("TEMPERATURE".equalsIgnoreCase(sensorType)) {
         node.addSensor(new TemperatureSensor(sensorId, min, max));
@@ -282,17 +302,18 @@ private void handleAddSensor(JsonObject obj) {
         node.addActuator(new LampBrightning(sensorId + "_lamp_brightning"));
 
       } else {
-        log("NodeClient", "Unsupported sensor type: %s", sensorType);
+        System.out.println("Unsupported sensor type: " + sensorType);
         return;
       }
 
-      log("NodeClient", "Added sensor %s of type %s with actuators", sensorId, sensorType);
+      System.out.println("Added sensor " + sensorId + " of type " + sensorType + " with actuators.");
       sendCurrentNode();
 
     } catch (Exception e) {
-      log("NodeClient", "Failed to add sensor: %s", e.getMessage());
+      System.out.println("Failed to add sensor: " + e.getMessage());
     }
   }
+
   /**
    * Close the client's IO resources and stop the listener thread.
    */
@@ -321,7 +342,7 @@ private void handleAddSensor(JsonObject obj) {
   public static void main(String[] args) {
     if (args.length < 2) {
       log("NodeClient", "Usage: NodeClient <ID> <Location>");
-        return;
+      return;
     }
 
     String nodeId = args[0];
@@ -340,35 +361,36 @@ private void handleAddSensor(JsonObject obj) {
         .create();
 
     try {
-        Socket socket = new Socket(SERVER_IP, SERVER_PORT);
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+      Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+      PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-        log("NodeClient", "Node %s connected to server", nodeId);
+      log("NodeClient", "Node %s connected to server", nodeId);
 
-        out.println("SENSOR_NODE_CONNECTED " + nodeId);
-        String serverResponse = in.readLine();
-        if (serverResponse == null || !serverResponse.equals("NODE_ID_ACCEPTED")) {
-          log("NodeClient", "Node ID rejected or unexpected response. Exiting.");
-            return;
-        }
+      out.println("SENSOR_NODE_CONNECTED " + nodeId);
+      String serverResponse = in.readLine();
+      if (serverResponse == null || !serverResponse.equals("NODE_ID_ACCEPTED")) {
+        log("NodeClient", "Node ID rejected or unexpected response. Exiting.");
+        return;
+      }
 
-        List<Sensor> sensors = new ArrayList<>();
-        List<Actuator> actuators = new ArrayList<>();
-        Node nodeObj = new Node(nodeId, location, sensors, actuators);
+      List<Sensor> sensors = new ArrayList<>();
+      List<Actuator> actuators = new ArrayList<>();
+      Node nodeObj = new Node(nodeId, location, sensors, actuators);
 
-        NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
-        nodeClient.start();
-        nodeClient.startControlLoop(3000); // 5s tick
-        nodeClient.sendCurrentNode();
-       
+      NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
+      nodeClient.start();
+      nodeClient.startControlLoop(3000); // 5s tick
+      nodeClient.sendCurrentNode();
 
-        // Keep node alive forever
-        while (true) Thread.sleep(1000);
+      // Keep node alive forever
+      while (true) {
+        Thread.sleep(1000);
+      }
 
     } catch (Exception e) {
-      log("NodeClient", "Failed to connect to server: %s", e.getMessage());
+        System.err.println("[NC] Failed to connect to server: " + e.getMessage());
     }
-}
+  }
 
 }

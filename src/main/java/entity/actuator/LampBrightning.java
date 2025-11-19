@@ -1,5 +1,8 @@
 package entity.actuator;
 
+/**
+ * Class of a LampBrightning actuator that increases light levels when turned on.
+ */
 public class LampBrightning extends Actuator {
 
   private double brightDelta;
@@ -11,7 +14,9 @@ public class LampBrightning extends Actuator {
 
   @Override
   public void applyEffect(java.util.List<entity.sensor.Sensor> sensors) {
-    if (!isOn() || sensors == null) return;
+    if (!isOn() || sensors == null) {
+      return;
+    }
     for (entity.sensor.Sensor s : sensors) {
       if ("LIGHT".equalsIgnoreCase(s.getSensorType())) {
         s.adjustValue(brightDelta);

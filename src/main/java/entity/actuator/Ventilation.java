@@ -22,7 +22,9 @@ public class Ventilation extends Actuator {
 
   @Override
   public void applyEffect(List<Sensor> sensors) {
-    if (!isOn() || sensors == null) return;
+    if (!isOn() || sensors == null) {
+      return;
+    }
     for (Sensor s : sensors) {
       if ("CO2".equalsIgnoreCase(s.getSensorType())) {
         s.adjustValue(-co2Delta);

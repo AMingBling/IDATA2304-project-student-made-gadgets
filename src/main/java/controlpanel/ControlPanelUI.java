@@ -7,14 +7,21 @@ import java.util.Scanner;
  * Interactive command-line UI for a Control Panel.
  *
  * <p>This class provides a simple text-based interface that allows an operator
- * to list known nodes, request node state, add/remove sensors, spawn simulated
- * nodes and control actuators. It delegates all business logic and networking
- * to {@link ControlPanelLogic}.
+ * to list known nodes, request node state, add/remove sensors, spawn simulated nodes and control
+ * actuators. It delegates all business logic and networking to {@link ControlPanelLogic}.
  */
 public class ControlPanelUI {
+
   private final ControlPanelLogic logic;
   private final Scanner scanner = new Scanner(System.in);
   private boolean running = true;
+  private static final Map<String, double[]> ABSOLUTE_LIMITS = Map.of(
+    "TEMPERATURE", new double[]{0, 40},
+    "HUMIDITY",    new double[]{0, 100},
+    "LIGHT",       new double[]{0, 30000},
+    "CO2",         new double[]{400, 5000}
+);
+
 
   /**
    * Create a new ControlPanelUI bound to the provided logic instance.
@@ -25,60 +32,65 @@ public class ControlPanelUI {
     this.logic = logic;
   }
 
+  private boolean validateThresholds(String sensorType, double min, double max) {
+    double[] limits = ABSOLUTE_LIMITS.get(sensorType.toUpperCase());
+    if (limits == null) return true; // fallback if unknown type
+
+    double absMin = limits[0];
+    double absMax = limits[1];
+
+    if (min < absMin || min > absMax) {
+        System.out.println("❌ Min threshold must be between " + absMin + " and " + absMax);
+        return false;
+    }
+    if (max < absMin || max > absMax) {
+        System.out.println("❌ Max threshold must be between " + absMin + " and " + absMax);
+        return false;
+    }
+    if (min >= max) {
+        System.out.println("❌ Min threshold must be LESS than max threshold.");
+        return false;
+    }
+    return true;
+}
+
+
   /**
    * Start the interactive UI loop.
    *
    * <p>This method blocks until the user issues the {@code Exit} command. It
-   * prints a dashboard and a help menu on each iteration and reads commands
-   * from standard input.</p>
+   * prints a dashboard and a help menu on each iteration and reads commands from standard
+   * input.</p>
    */
-  // public void run() {
-  //   boolean first = true;
-  //   while (running) {
-  //     if (first) {
-  //       showDashboard();
-  //       showHelp();
-  //       first = false;
-  //     }
-  //     System.out.print("> ");
-  //     String line = scanner.nextLine();
-  //     if (line == null) break;
-  //     handleCommand(line.trim());
-  //     // Show dashboard/help after handling the command so any immediate responses
-  //     // (for example the response to CheckNode) are printed before the menu.
-  //     showDashboard();
-  //     showHelp();
-  //   }
-  // }
-
   public void run() {
     while (running) {
-        showDashboard();
-        showHelp();
-        System.out.print("> ");
-        String line = scanner.nextLine();
-        if (line == null) break;
+      showDashboard();
+      showHelp();
+      System.out.print("> ");
+      String line = scanner.nextLine();
+      if (line == null) {
+        break;
+      }
 
-        if (line.trim().isEmpty()) {
-            System.out.println("Please write a command (cannot be empty).");
-            continue; // viser menyen på nytt i neste loop
-        }
+      if (line.trim().isEmpty()) {
+        System.out.println("\nPlease write a command (cannot be empty).");
+        continue; // viser menyen på nytt i neste loop
+      }
 
-        handleCommand(line.trim());
+      handleCommand(line.trim());
     }
-}
+  }
 
- 
 
   /**
-   * Print a compact dashboard showing connected nodes and counts of sensors
-   * and actuators for each node.
+   * Print a compact dashboard showing connected nodes and counts of sensors and actuators for each
+   * node.
    */
   private void showDashboard() {
     System.out.println("\n==============================================");
     System.out.println(" SMART GREENHOUSE CONTROL PANEL - SMG SYSTEM ");
     System.out.println("==============================================");
-    System.out.println("     Welcome to the Smart Greenhouse System");    
+    System.out.println("     Welcome to the Smart Greenhouse System");
   }
 
   /**
@@ -108,7 +120,9 @@ public class ControlPanelUI {
     // Collect distinct locations
     java.util.Set<String> locations = new java.util.TreeSet<>();
     for (ControlPanelLogic.NodeState ns : nodes.values()) {
-      if (ns != null && ns.location != null && !ns.location.isBlank()) locations.add(ns.location);
+      if (ns != null && ns.location != null && !ns.location.isBlank()) {
+        locations.add(ns.location);
+      }
     }
 
     if (locations.size() == 1) {
@@ -125,15 +139,23 @@ public class ControlPanelUI {
       int sensorCount = (ns == null || ns.sensors == null) ? 0 : ns.sensors.size();
       int actuatorCount = (ns == null || ns.actuators == null) ? 0 : ns.actuators.size();
       String loc = (ns == null || ns.location == null) ? "" : ns.location;
-      System.out.printf("- Node %s (location: %s): sensors = %d actuators = %d%n", id, loc, sensorCount, actuatorCount);
+      System.out.printf("- Node %s (location: %s): sensors = %d actuators = %d%n", id, loc,
+          sensorCount, actuatorCount);
     }
   }
 
   /**
-   * WHen the suer wrotes something not valid
+   * Validate that the provided command arguments are sufficient.
+   *
+   * @param parts          the split command line parts
+   * @param requiredTokens number of required tokens (including command itself)
+   * @param usage          usage string to print on error
+   * @return true if validation passed, false if not (and error printed)
    */
   private boolean validateArgs(String[] parts, int requiredTokens, String usage) {
-    if (parts == null) return false;
+    if (parts == null) {
+      return false;
+    }
     if (parts.length < requiredTokens) {
       System.out.println("Please write a command (cannot be empty).");
       System.out.println(usage);
@@ -150,7 +172,6 @@ public class ControlPanelUI {
     return true;
   }
 
- 
 
   /**
    * Parse and execute a single command entered by the user.
@@ -160,83 +181,90 @@ public class ControlPanelUI {
    *
    * @param line the raw command line entered by the user
    */
-  // ...existing code...
-private void handleCommand(String line) {
-  if (line == null) return;
-  line = line.trim();
-  if (line.isEmpty()) {
-    System.out.println("Please write a command (cannot be empty).");
-    return;
-  }
+  private void handleCommand(String line) {
+    if (line == null) {
+      return;
+    }
+    line = line.trim();
+    if (line.isEmpty()) {
+      System.out.println("Please write a command (cannot be empty).");
+      return;
+    }
 
-  String[] parts = line.split("\\s+");
-  String cmd = parts[0].toLowerCase();
-  if (cmd.equals("spawnnode")) cmd = "addnode";
+    String[] parts = line.split("\\s+");
+    String cmd = parts[0].toLowerCase();
+    if (cmd.equals("spawnnode")) {
+      cmd = "addnode";
+    }
 
-  try {
-    switch (cmd) {
-      case "checknode" -> {
-        if (!validateArgs(parts, 2, "Usage: CheckNode <nodeId>")) return;
-        logic.requestNode(parts[1]);
-      }
+    try {
+      switch (cmd) {
+        case "checknode" -> {
+          if (!validateArgs(parts, 2, "Usage: CheckNode <nodeId>")) {
+            return;
+          }
+          logic.requestNode(parts[1]);
+        }
 
-      case "checkgreenhouse" -> {
-        checkGreenhouse();
-      }
+        case "checkgreenhouse" -> {
+          checkGreenhouse();
+        }
 
-      // case "addsensor" -> {
-      //   if (!validateArgs(parts, 2, "Usage: AddSensor <nodeId>")) return;
-      //   String nodeId = parts[1];
+        // case "addsensor" -> {
+        //   if (!validateArgs(parts, 2, "Usage: AddSensor <nodeId>")) return;
+        //   String nodeId = parts[1];
 
-      //   java.util.List<String> allTypes = java.util.Arrays.asList("TEMPERATURE", "LIGHT", "HUMIDITY", "CO2");
-      //   java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
+        //   java.util.List<String> allTypes = java.util.Arrays.asList("TEMPERATURE", "LIGHT", "HUMIDITY", "CO2");
+        //   java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
 
-      //   if (nodes == null || !nodes.containsKey(nodeId)) {
-      //     System.out.println("\nNode '" + nodeId + "' is not connected to the server. Use CheckGreenhouse to see connected nodes.");
-      //     break;
-      //   }
+        //   if (nodes == null || !nodes.containsKey(nodeId)) {
+        //     System.out.println("\nNode '" + nodeId + "' is not connected to the server. Use CheckGreenhouse to see connected nodes.");
+        //     break;
+        //   }
 
-      //   java.util.Set<String> existing = new java.util.HashSet<>();
-      //   ControlPanelLogic.NodeState ns = nodes.get(nodeId);
-      //   if (ns != null && ns.sensors != null) {
-      //     for (entity.sensor.Sensor s : ns.sensors.values()) if (s != null && s.getSensorType() != null) existing.add(s.getSensorType().toUpperCase());
-      //   }
+        //   java.util.Set<String> existing = new java.util.HashSet<>();
+        //   ControlPanelLogic.NodeState ns = nodes.get(nodeId);
+        //   if (ns != null && ns.sensors != null) {
+        //     for (entity.sensor.Sensor s : ns.sensors.values()) if (s != null && s.getSensorType() != null) existing.add(s.getSensorType().toUpperCase());
+        //   }
 
-      //   java.util.List<String> available = new java.util.ArrayList<>();
-      //   for (String t : allTypes) if (!existing.contains(t)) available.add(t);
+        //   java.util.List<String> available = new java.util.ArrayList<>();
+        //   for (String t : allTypes) if (!existing.contains(t)) available.add(t);
 
-      //   if (available.isEmpty()) {
-      //     System.out.println("Node " + nodeId + " already has all supported sensor types.");
-      //     break;
-      //   }
+        //   if (available.isEmpty()) {
+        //     System.out.println("Node " + nodeId + " already has all supported sensor types.");
+        //     break;
+        //   }
 
-      //   System.out.println("\nAvailable sensor types:");
-      //   for (int i = 0; i < available.size(); i++) System.out.printf("  %d) %s%n", i + 1, available.get(i));
+        //   System.out.println("\nAvailable sensor types:");
+        //   for (int i = 0; i < available.size(); i++) System.out.printf("  %d) %s%n", i + 1, available.get(i));
 
-      //   System.out.print("\nChoose type (number): ");
-      //   String choiceLine = scanner.nextLine();
-      //   if (choiceLine == null || choiceLine.trim().isEmpty()) {
-      //     System.out.println("Please write a command (cannot be empty).");
-      //     break;
-      //   }
-      //   int choice;
-      //   try { choice = Integer.parseInt(choiceLine.trim()); } catch (Exception e) { choice = 0; }
-      //   if (choice < 1 || choice > available.size()) {
-      //     System.out.println("Invalid selection.");
-      //     break;
-      //   }
-      // }
+        //   System.out.print("\nChoose type (number): ");
+        //   String choiceLine = scanner.nextLine();
+        //   if (choiceLine == null || choiceLine.trim().isEmpty()) {
+        //     System.out.println("Please write a command (cannot be empty).");
+        //     break;
+        //   }
+        //   int choice;
+        //   try { choice = Integer.parseInt(choiceLine.trim()); } catch (Exception e) { choice = 0; }
+        //   if (choice < 1 || choice > available.size()) {
+        //     System.out.println("Invalid selection.");
+        //     break;
+        //   }
+        // }
 
         case "addsensor" -> {
           if (parts.length >= 2) {
             String nodeId = parts[1];
             // Determine available sensor types and filter out those already present
-            java.util.List<String> allTypes = java.util.Arrays.asList("TEMPERATURE", "LIGHT", "HUMIDITY", "CO2");
+            java.util.List<String> allTypes = java.util.Arrays.asList("TEMPERATURE", "LIGHT",
+                "HUMIDITY", "CO2");
             java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
 
             // Immediately inform user if the nodeId is not connected/known
             if (nodes == null || !nodes.containsKey(nodeId)) {
-              System.out.println("\nNode '" + nodeId + "' is not connected to the server. Use CheckGreenhouse to see connected nodes.");
+              System.out.println("\nNode '" + nodeId
+                  + "' is not connected to the server. Use CheckGreenhouse to see connected nodes.");
               break;
             }
             java.util.Set<String> existing = new java.util.HashSet<>();
@@ -250,7 +278,11 @@ private void handleCommand(String line) {
             }
 
             java.util.List<String> available = new java.util.ArrayList<>();
-            for (String t : allTypes) if (!existing.contains(t)) available.add(t);
+            for (String t : allTypes) {
+              if (!existing.contains(t)) {
+                available.add(t);
+              }
+            }
 
             if (available.isEmpty()) {
               System.out.println("Node " + nodeId + " already has all supported sensor types.");
@@ -264,7 +296,11 @@ private void handleCommand(String line) {
             System.out.print("\nChoose type (number): ");
             String choiceLine = scanner.nextLine();
             int choice = 0;
-            try { choice = Integer.parseInt(choiceLine.trim()); } catch (Exception e) { choice = 0; }
+            try {
+              choice = Integer.parseInt(choiceLine.trim());
+            } catch (Exception e) {
+              choice = 0;
+            }
             if (choice < 1 || choice > available.size()) {
               System.out.println("Invalid selection.");
               break;
@@ -276,25 +312,31 @@ private void handleCommand(String line) {
             // Get recommended ranges for the chosen sensor type
             double[] recommended = getRecommendedRange(sensorType);
             String unit = getUnitForType(sensorType);
-            String recMinStr = recommended != null ? String.valueOf((int)recommended[0]) : "";
-            String recMaxStr = recommended != null ? String.valueOf((int)recommended[1]) : "";
+            String recMinStr = recommended != null ? String.valueOf((int) recommended[0]) : "";
+            String recMaxStr = recommended != null ? String.valueOf((int) recommended[1]) : "";
 
             // Prompt with recommended values and allow empty input to accept recommendation
             if (recommended != null) {
-              System.out.print("\nMin threshold (number) (" + recMinStr + " " + unit + " recommended): ");
+              System.out.print(
+                  "\nMin threshold (number) (" + recMinStr + " " + unit + " recommended): ");
             } else {
               System.out.print("\nMin threshold (number): ");
             }
             String minLine = scanner.nextLine().trim();
-            if (minLine.isEmpty() && recommended != null) minLine = recMinStr;
+            if (minLine.isEmpty() && recommended != null) {
+              minLine = recMinStr;
+            }
 
             if (recommended != null) {
-              System.out.print("\nMax threshold (number) (" + recMaxStr + " " + unit + " recommended): ");
+              System.out.print(
+                  "\nMax threshold (number) (" + recMaxStr + " " + unit + " recommended): ");
             } else {
               System.out.print("\nMax threshold (number): ");
             }
             String maxLine = scanner.nextLine().trim();
-            if (maxLine.isEmpty() && recommended != null) maxLine = recMaxStr;
+            if (maxLine.isEmpty() && recommended != null) {
+              maxLine = recMaxStr;
+            }
 
             double min, max;
             try {
@@ -304,10 +346,17 @@ private void handleCommand(String line) {
               System.out.println("Invalid threshold numbers.");
               break;
             }
+            if (!validateThresholds(sensorType, min, max)) {
+              System.out.println("Sensor not added due to invalid thresholds.");
+              break;
+            }
+            
 
             String assigned = logic.addSensorAuto(nodeId, sensorType, min, max);
             if (assigned != null) {
-              System.out.println("\nSuccessfully added sensor ID:" + assigned + " type:" + sensorType + " to Node " + nodeId);
+              System.out.println(
+                  "\nSuccessfully added sensor ID:" + assigned + " type:" + sensorType + " to Node "
+                      + nodeId);
             }
           } else {
             System.out.println("Usage: addsensor <nodeId>");
@@ -347,71 +396,88 @@ private void handleCommand(String line) {
           }
         }
 
-      case "toggleactuator" -> {
-        if (!validateArgs(parts, 4, "Usage: ToggleActuator <nodeId> <actuatorId> <on|off>")) return;
-        String nodeId = parts[1];
-        String actuatorId = parts[2];
-        String onOff = parts[3].toLowerCase();
-        if (!("on".equals(onOff) || "off".equals(onOff) || "true".equals(onOff) || "false".equals(onOff))) {
-          System.out.println("Invalid value: " + parts[3] + ". Use 'on' or 'off'.");
-          System.out.println("Usage: ToggleActuator <nodeId> <actuatorId> <on|off>");
-          break;
+  
         }
-        boolean on = onOff.equals("on") || onOff.equals("true");
-        java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
-        if (nodes == null || !nodes.containsKey(nodeId)) {
-          System.out.println("Node '" + nodeId + "' is not known. Use CheckGreenhouse to list nodes.");
-          break;
-        }
-        ControlPanelLogic.NodeState ns2 = nodes.get(nodeId);
-        if (ns2 == null || ns2.actuators == null || !ns2.actuators.containsKey(actuatorId)) {
-          System.out.println("Warning: actuator '" + actuatorId + "' not found on node " + nodeId + ". Sending command anyway.");
-        }
-        logic.setActuatorState(nodeId, actuatorId, on);
-        System.out.println(on ? ("\nSuccessfully turned on actuator ID:" + actuatorId + " to Node " + nodeId)
-                             : ("\nSuccessfully turned off actuator ID:" + actuatorId + " from Node " + nodeId));
-      }
 
-      case "removesensor" -> {
-        if (!validateArgs(parts, 3, "Usage: RemoveSensor <nodeId> <sensorId>")) return;
-        String nodeId = parts[1];
-        String sensorId = parts[2];
-        java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
-        if (nodes == null || !nodes.containsKey(nodeId)) {
-          System.out.println("Node '" + nodeId + "' is not known. Use CheckGreenhouse to list nodes.");
-          break;
+        case "toggleactuator" -> {
+          if (!validateArgs(parts, 4, "Usage: ToggleActuator <nodeId> <actuatorId> <on|off>")) {
+            return;
+          }
+          String nodeId = parts[1];
+          String actuatorId = parts[2];
+          String onOff = parts[3].toLowerCase();
+          if (!("on".equals(onOff) || "off".equals(onOff) || "true".equals(onOff) || "false".equals(
+              onOff))) {
+            System.out.println("Invalid value: " + parts[3] + ". Use 'on' or 'off'.");
+            System.out.println("Usage: ToggleActuator <nodeId> <actuatorId> <on|off>");
+            break;
+          }
+          boolean on = onOff.equals("on") || onOff.equals("true");
+          java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
+          if (nodes == null || !nodes.containsKey(nodeId)) {
+            System.out.println(
+                "Node '" + nodeId + "' is not known. Use CheckGreenhouse to list nodes.");
+            break;
+          }
+          ControlPanelLogic.NodeState ns2 = nodes.get(nodeId);
+          if (ns2 == null || ns2.actuators == null || !ns2.actuators.containsKey(actuatorId)) {
+            System.out.println("Warning: actuator '" + actuatorId + "' not found on node " + nodeId
+                + ". Sending command anyway.");
+          }
+          logic.setActuatorState(nodeId, actuatorId, on);
+          System.out.println(
+              on ? ("\nSuccessfully turned on actuator ID:" + actuatorId + " to Node " + nodeId)
+                  : ("\nSuccessfully turned off actuator ID:" + actuatorId + " from Node "
+                      + nodeId));
         }
-        ControlPanelLogic.NodeState ns3 = nodes.get(nodeId);
-        if (ns3 == null || ns3.sensors == null || !ns3.sensors.containsKey(sensorId)) {
-          System.out.println("Sensor '" + sensorId + "' not found on node " + nodeId + ".");
-          break;
+
+        case "removesensor" -> {
+          if (!validateArgs(parts, 3, "Usage: RemoveSensor <nodeId> <sensorId>")) {
+            return;
+          }
+          String nodeId = parts[1];
+          String sensorId = parts[2];
+          java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
+          if (nodes == null || !nodes.containsKey(nodeId)) {
+            System.out.println(
+                "Node '" + nodeId + "' is not known. Use CheckGreenhouse to list nodes.");
+            break;
+          }
+          ControlPanelLogic.NodeState ns3 = nodes.get(nodeId);
+          if (ns3 == null || ns3.sensors == null || !ns3.sensors.containsKey(sensorId)) {
+            System.out.println("Sensor '" + sensorId + "' not found on node " + nodeId + ".");
+            break;
+          }
+          String sensorType = ns3.sensors.get(sensorId).getSensorType();
+          boolean removed = logic.removeSensor(nodeId, sensorId);
+          if (removed) {
+            System.out.println(
+                "\nSuccessfully removed sensor ID:" + sensorId + " type:" + sensorType
+                    + " from Node " + nodeId);
+          }
         }
-        String sensorType = ns3.sensors.get(sensorId).getSensorType();
-        boolean removed = logic.removeSensor(nodeId, sensorId);
-        if (removed) System.out.println("\nSuccessfully removed sensor ID:" + sensorId + " type:" + sensorType + " from Node " + nodeId);
-      }
 
-      case "exit" -> {
-        System.out.println("Exiting...");
-        running = false;
-        logic.close();
-      }
+        case "exit" -> {
+          System.out.println("Exiting...");
+          running = false;
+          logic.close();
+        }
 
-      default -> {
-        System.out.println("Unknown command: " + cmd);
-        System.out.println("Valid commands:");
-        System.out.println(" - CheckGreenhouse");
-        System.out.println(" - AddSensor <nodeId>");
-        System.out.println(" - RemoveSensor <nodeId> <sensorId>");
-        System.out.println(" - CheckNode <nodeId>");
-        System.out.println(" - ToggleActuator <nodeId> <actuatorId> <on|off>");
-        System.out.println(" - Exit");
+        default -> {
+          System.out.println("Unknown command: " + cmd);
+          System.out.println("Valid commands:");
+          System.out.println(" - CheckGreenhouse");
+          System.out.println(" - AddSensor <nodeId>");
+          System.out.println(" - RemoveSensor <nodeId> <sensorId>");
+          System.out.println(" - CheckNode <nodeId>");
+          System.out.println(" - ToggleActuator <nodeId> <actuatorId> <on|off>");
+          System.out.println(" - Exit");
+        }
       }
+    } catch (Exception e) {
+      System.out.println("Error handling command: " + e.getMessage());
     }
-  } catch (Exception e) {
-    System.out.println("Error handling command: " + e.getMessage());
   }
-}
 
 
   /**
@@ -421,7 +487,9 @@ private void handleCommand(String line) {
    * @return two-element array {min, max} or {@code null} if no recommendation
    */
   private double[] getRecommendedRange(String sensorType) {
-    if (sensorType == null) return null;
+    if (sensorType == null) {
+      return null;
+    }
     switch (sensorType.toUpperCase()) {
       case "TEMPERATURE":
         return new double[]{15, 30};
@@ -443,13 +511,20 @@ private void handleCommand(String line) {
    * @return unit string (e.g. "°C", "%", "lux") or empty string if unknown
    */
   private String getUnitForType(String sensorType) {
-    if (sensorType == null) return "";
+    if (sensorType == null) {
+      return "";
+    }
     switch (sensorType.toUpperCase()) {
-      case "TEMPERATURE": return "°C";
-      case "LIGHT": return "lux";
-      case "HUMIDITY": return "%";
-      case "CO2": return "ppm";
-      default: return "";
+      case "TEMPERATURE":
+        return "°C";
+      case "LIGHT":
+        return "lux";
+      case "HUMIDITY":
+        return "%";
+      case "CO2":
+        return "ppm";
+      default:
+        return "";
     }
   }
 }

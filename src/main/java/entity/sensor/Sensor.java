@@ -18,9 +18,10 @@ public abstract class Sensor {
 
   /**
    * Constructor for Sensor
-   * @param sensorId the id of the sensor
-   * @param sensorType the type of the sensor (ex. temperature, humidity)
-   * @param unit the unit of measurement (ex. °C, %)
+   *
+   * @param sensorId     the id of the sensor
+   * @param sensorType   the type of the sensor (ex. temperature, humidity)
+   * @param unit         the unit of measurement (ex. °C, %)
    * @param minThreshold minimum threshold value
    * @param maxThreshold maximum threshold value
    */
@@ -43,6 +44,7 @@ public abstract class Sensor {
 
   /**
    * Set sensor ID
+   *
    * @param sensorId the id of the sensor
    */
   private void setSensorId(String sensorId) {
@@ -54,6 +56,7 @@ public abstract class Sensor {
 
   /**
    * Set sensor type
+   *
    * @param sensorType the type of the sensor
    */
   private void setSensorType(String sensorType) {
@@ -65,6 +68,7 @@ public abstract class Sensor {
 
   /**
    * Set unit of measurement
+   *
    * @param unit the unit of measurement
    */
   private void setUnit(String unit) {
@@ -76,6 +80,7 @@ public abstract class Sensor {
 
   /**
    * Set minimum threshold
+   *
    * @param minThreshold minimum threshold value
    */
   private void setMinThreshold(double minThreshold) {
@@ -84,6 +89,7 @@ public abstract class Sensor {
 
   /**
    * Set maximum threshold
+   *
    * @param maxThreshold maximum threshold value
    */
   private void setMaxThreshold(double maxThreshold) {
@@ -129,8 +135,7 @@ public abstract class Sensor {
   }
 
 
-
-//-------------------------------------------------------
+  //-------------------------------------------------------
   public String getUnit() {
     return unit;
   }
@@ -157,6 +162,7 @@ public abstract class Sensor {
 
   /**
    * Create Sensor object from JSON string
+   *
    * @param json JSON representation of a Sensor object
    * @return Sensor object
    */
@@ -166,16 +172,15 @@ public abstract class Sensor {
   }
 
   //-----------------------------------------------
-    
-    
-    
 
-/**
-  * Convert Sensor object to JSON string
-  * @return JSON representation of the Sensor object
+
+  /**
+   * Convert Sensor object to JSON string
+   *
+   * @return JSON representation of the Sensor object
    */
   public String toJson() {
-   Gson gson = new Gson();
+    Gson gson = new Gson();
     return gson.toJson(this);
   }
 
