@@ -9,9 +9,9 @@ package controlpanel;
  * </pre>
  *
  * <p>The program expects three command-line arguments: {@code controlPanelId},
- * {@code serverIp} and {@code serverPort}. It will create a {@link ControlPanelLogic}
- * instance, connect it to the server, register a shutdown hook to close the
- * connection on JVM exit, and then start the interactive {@link ControlPanelUI}.
+ * {@code serverIp} and {@code serverPort}. It will create a {@link ControlPanelLogic} instance,
+ * connect it to the server, register a shutdown hook to close the connection on JVM exit, and then
+ * start the interactive {@link ControlPanelUI}.
  */
 public class ControlPanelMain {
 

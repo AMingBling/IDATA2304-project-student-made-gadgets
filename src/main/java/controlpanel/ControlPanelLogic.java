@@ -16,17 +16,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import network.NodeClient;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
-import com.google.gson.JsonPrimitive;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+//import com.google.gson.GsonBuilder;
+//import com.google.gson.JsonDeserializer;
+//import com.google.gson.JsonSerializer;
+//import com.google.gson.JsonPrimitive;
+//import java.io.BufferedReader;
+//import java.io.InputStreamReader;
+//import java.io.PrintWriter;
 import java.net.Socket;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+//import java.time.LocalDateTime;
+//import java.util.ArrayList;
+//import java.util.List;
 
 /**
  * Control panel logic and state manager.
@@ -38,7 +38,6 @@ import java.util.List;
  *   <li>Receiving and parsing line-delimited JSON messages from the {@code Server}</li>
  *   <li>Forwarding commands from the UI to the server (ADD_SENSOR, REMOVE_SENSOR,
  *       ACTUATOR_COMMAND, REQUEST_NODE, TARGET_UPDATE)</li>
- *   <li>Spawning local simulated {@code NodeClient} instances for quick testing</li>
  *   <li>Providing a small programmatic API used by {@code ControlPanelUI}</li>
  * </ul>
  *
@@ -82,8 +81,8 @@ public class ControlPanelLogic {
   }
 
   /**
-   * Enable or disable printing incoming node state updates to the ControlPanel terminal.
-   * By default printing is disabled to avoid periodic noise in the ControlPanel UI.
+   * Enable or disable printing incoming node state updates to the ControlPanel terminal. By default
+   * printing is disabled to avoid periodic noise in the ControlPanel UI.
    *
    * @param show true to enable printing of node updates, false to silence them
    */
@@ -94,7 +93,7 @@ public class ControlPanelLogic {
   /**
    * Connect to the server using the underlying communication layer.
    *
-   * @param ip server IP
+   * @param ip   server IP
    * @param port server TCP port
    * @throws IOException if the connection fails
    */
@@ -107,17 +106,22 @@ public class ControlPanelLogic {
    *
    * <p>This closes the underlying {@link ControlPanelCommunication} and
    * shuts down any simulated {@link NodeClient} instances created via
-   * {@link #spawnNode(String, String)}. The method is safe to call multiple
-   * times.
+   * {@link #spawnNode(String, String)}. The method is safe to call multiple times.
    */
   public void close() {
     comm.close();
     // close any spawned simulated nodes
     for (NodeClient nc : spawnedNodes.values()) {
-      try { nc.close(); } catch (Exception ignored) {}
+      try {
+        nc.close();
+      } catch (Exception ignored) {
+      }
     }
     for (Socket s : spawnedSockets.values()) {
-      try { s.close(); } catch (Exception ignored) {}
+      try {
+        s.close();
+      } catch (Exception ignored) {
+      }
     }
   }
 
@@ -176,28 +180,28 @@ public class ControlPanelLogic {
   //   }
   // }
 
-  /**
-   * Disconnect and remove a previously spawned simulated node.
-   *
-   * @param nodeId id of the spawned node to disconnect
-   * @return true if a spawned node or socket was found and removed
-   */
-  public boolean disconnectSpawnedNode(String nodeId) {
-    NodeClient nc = spawnedNodes.remove(nodeId);
-    Socket s = spawnedSockets.remove(nodeId);
-    if (nc == null && s == null) return false;
-    if (nc != null) try { nc.close(); } catch (Exception ignored) {}
-    if (s != null) try { s.close(); } catch (Exception ignored) {}
-    return true;
-  }
+//  /**
+//   * Disconnect and remove a previously spawned simulated node.
+//   *
+//   * @param nodeId id of the spawned node to disconnect
+//   * @return true if a spawned node or socket was found and removed
+//   */
+//  public boolean disconnectSpawnedNode(String nodeId) {
+//    NodeClient nc = spawnedNodes.remove(nodeId);
+//    Socket s = spawnedSockets.remove(nodeId);
+//    if (nc == null && s == null) return false;
+//    if (nc != null) try { nc.close(); } catch (Exception ignored) {}
+//    if (s != null) try { s.close(); } catch (Exception ignored) {}
+//    return true;
+//  }
 
   /**
    * Handle a single line of JSON received from the server.
    *
    * <p>Recognized message types are {@code SENSOR_DATA_FROM_NODE},
-   * {@code ACTUATOR_STATUS} and {@code ALERT}. For backward compatibility,
-   * a payload containing a {@code nodeID} but lacking {@code messageType}
-   * will be treated as {@code SENSOR_DATA_FROM_NODE}.
+   * {@code ACTUATOR_STATUS} and {@code ALERT}. For backward compatibility, a payload containing a
+   * {@code nodeID} but lacking {@code messageType} will be treated as
+   * {@code SENSOR_DATA_FROM_NODE}.
    *
    * @param json the raw line-delimited JSON string received from the server
    */
@@ -213,7 +217,7 @@ public class ControlPanelLogic {
       System.out.println("[CP-Logic] malformed JSON: " + json);
       return;
     }
-    
+
     if (!obj.has("messageType")) {
       // Some server responses (cached node JSON) may not include a messageType.
       // If the payload contains a nodeID we treat it as SENSOR_DATA_FROM_NODE for backward compatibility.
@@ -235,43 +239,59 @@ public class ControlPanelLogic {
     }
   }
 
-  /** Handle notification that a node disconnected from the server. */
+  /**
+   * Handle notification that a node disconnected from the server.
+   */
   private void handleNodeDisconnected(String json) {
     try {
       JsonObject obj = gson.fromJson(json, JsonObject.class);
-      String nodeId = obj.has("nodeID") && !obj.get("nodeID").isJsonNull() ? obj.get("nodeID").getAsString() : null;
-      if (nodeId == null) return;
+      String nodeId =
+          obj.has("nodeID") && !obj.get("nodeID").isJsonNull() ? obj.get("nodeID").getAsString()
+              : null;
+      if (nodeId == null) {
+        return;
+      }
       NodeState removed = nodes.remove(nodeId);
       // Also clear any request tracking for that node
       requestLatches.remove(nodeId);
       requestPrinted.remove(nodeId);
       if (removed != null) {
-        System.out.println("\n ---- NODE REMOVED ----\nNode " + nodeId + " disconnected and was removed from cache.\n");
+        System.out.println("\n ---- NODE REMOVED ----\nNode " + nodeId
+            + " disconnected and was removed from cache.\n");
       } else {
         System.out.println("\nNode " + nodeId + " disconnected (was not present in cache).\n");
       }
     } catch (Exception e) {
-      System.out.println("[CP-Logic] Failed to process SENSOR_NODE_DISCONNECTED: " + e.getMessage());
+      System.out.println(
+          "[CP-Logic] Failed to process SENSOR_NODE_DISCONNECTED: " + e.getMessage());
     }
   }
 
   /**
-   * Handle an incoming ALERT JSON message from a node forwarded by the server.
-   * Ensures that the same sensor alert is only printed once to this ControlPanel.
-   *
-   * Expected JSON shape: { messageType: "ALERT", nodeID: "<node>", alert: "... sensor=<sensorId> ..." }
+   * Handle an incoming ALERT JSON message from a node forwarded by the server. Ensures that the
+   * same sensor alert is only printed once to this ControlPanel.
+   * <p>
+   * Expected JSON shape: { messageType: "ALERT", nodeID: "<node>", alert: "... sensor=<sensorId>
+   * ..." }
    */
   private void handleAlert(String json) {
     try {
       JsonObject obj = gson.fromJson(json, JsonObject.class);
-      String nodeId = obj.has("nodeID") && !obj.get("nodeID").isJsonNull() ? obj.get("nodeID").getAsString() : "";
-      String alert = obj.has("alert") && !obj.get("alert").isJsonNull() ? obj.get("alert").getAsString() : null;
-      if (alert == null) return;
+      String nodeId =
+          obj.has("nodeID") && !obj.get("nodeID").isJsonNull() ? obj.get("nodeID").getAsString()
+              : "";
+      String alert =
+          obj.has("alert") && !obj.get("alert").isJsonNull() ? obj.get("alert").getAsString()
+              : null;
+      if (alert == null) {
+        return;
+      }
 
       // Try to extract sensor id from the alert string. Accept both
       // 'sensor=<id>' and 'sensor = <id>' (and variations like 'sensor: <id>').
       String sensorId = null;
-      java.util.regex.Pattern p = java.util.regex.Pattern.compile("sensor\\s*(?:=|:)\\s*([^\\s,]+)", java.util.regex.Pattern.CASE_INSENSITIVE);
+      java.util.regex.Pattern p = java.util.regex.Pattern.compile("sensor\\s*(?:=|:)\\s*([^\\s,]+)",
+          java.util.regex.Pattern.CASE_INSENSITIVE);
       java.util.regex.Matcher m = p.matcher(alert);
       if (m.find()) {
         sensorId = m.group(1);
@@ -279,10 +299,13 @@ public class ControlPanelLogic {
 
       String key = nodeId + ":" + (sensorId == null ? alert : sensorId);
       // If we've already shown this alert for this sensor, ignore
-      if (shownAlerts.contains(key)) return;
+      if (shownAlerts.contains(key)) {
+        return;
+      }
 
       // First time: print alert and remember it
-      System.out.println("! ALERT from node " + (nodeId.isEmpty() ? "?" : nodeId) + ": " + alert + " !\n");
+      System.out.println(
+          "! ALERT from node " + (nodeId.isEmpty() ? "?" : nodeId) + ": " + alert + " !\n");
       shownAlerts.add(key);
     } catch (Exception e) {
       System.out.println("[CP-Logic] Failed to process ALERT: " + e.getMessage());
@@ -295,14 +318,19 @@ public class ControlPanelLogic {
   private void updateNodeState(String json) {
     try {
       Node node = Node.nodeFromJson(json);
-      if (node == null) return;
+      if (node == null) {
+        return;
+      }
 
       NodeState state = nodes.computeIfAbsent(node.getNodeID(), NodeState::new);
 
       // Store location from incoming node snapshot so the UI can show it
       try {
-        if (node.getLocation() != null) state.location = node.getLocation();
-      } catch (Exception ignored) {}
+        if (node.getLocation() != null) {
+          state.location = node.getLocation();
+        }
+      } catch (Exception ignored) {
+      }
 
       // Replace existing state for this node with the incoming snapshot.
       state.sensors.clear();
@@ -331,7 +359,9 @@ public class ControlPanelLogic {
   private void processActuatorStatus(String json) {
     try {
       Node node = Node.nodeFromJson(json);
-      if (node == null) return;
+      if (node == null) {
+        return;
+      }
 
       NodeState state = nodes.computeIfAbsent(node.getNodeID(), NodeState::new);
 
@@ -351,20 +381,26 @@ public class ControlPanelLogic {
   }
 
   private void printNodeState(NodeState state) {
-    if (!showNodeUpdates) return;
+    if (!showNodeUpdates) {
+      return;
+    }
 
     // If there is an active request window, only print updates for the requested node(s).
     // This prevents other nodes' periodic updates from appearing while we wait for the
     // requested node's response.
     boolean hasActiveRequests = !requestLatches.isEmpty();
     if (hasActiveRequests) {
-      if (state == null || state.nodeId == null) return;
+      if (state == null || state.nodeId == null) {
+        return;
+      }
       if (!requestLatches.containsKey(state.nodeId)) {
         // there are active requests, but this update is for a different node -> skip
         return;
       }
       // If this node was recently requested, only allow printing the first update
-      if (requestPrinted.contains(state.nodeId)) return; // already printed one response for this request
+      if (requestPrinted.contains(state.nodeId)) {
+        return; // already printed one response for this request
+      }
       // mark as printed (we'll count down the latch after printing to preserve ordering)
       requestPrinted.add(state.nodeId);
     }
@@ -389,11 +425,14 @@ public class ControlPanelLogic {
     // If we were printing in response to an active request, notify the waiting thread
     if (hasActiveRequests && state != null && state.nodeId != null) {
       CountDownLatch l = requestLatches.get(state.nodeId);
-      if (l != null) l.countDown();
+      if (l != null) {
+        l.countDown();
+      }
     }
   }
 
   // UI API
+
   /**
    * Return an unmodifiable view of the cached nodes state map.
    *
@@ -406,7 +445,7 @@ public class ControlPanelLogic {
   /**
    * Lookup an actuator in the cached node state.
    *
-   * @param nodeId node id
+   * @param nodeId     node id
    * @param actuatorId actuator id
    * @return actuator object or {@code null} if not found
    */
@@ -419,9 +458,9 @@ public class ControlPanelLogic {
   /**
    * Send an actuator command to turn an actuator on or off on a remote node.
    *
-   * @param nodeId target node id
+   * @param nodeId     target node id
    * @param actuatorId actuator id to control
-   * @param on true to turn on, false to turn off
+   * @param on         true to turn on, false to turn off
    */
   public void setActuatorState(String nodeId, String actuatorId, boolean on) {
     JsonObject obj = new JsonObject();
@@ -433,23 +472,23 @@ public class ControlPanelLogic {
     comm.sendJson(gson.toJson(obj));
   }
 
-  /**
-   * Update the target min/max range for a sensor type on a node.
-   *
-   * @param nodeId target node id
-   * @param sensorType sensor type name (e.g. TEMPERATURE, HUMIDITY)
-   * @param min target minimum
-   * @param max target maximum
-   */
-  public void updateTargetRange(String nodeId, String sensorType, double min, double max) {
-    JsonObject obj = new JsonObject();
-    obj.addProperty("messageType", "TARGET_UPDATE");
-    obj.addProperty("nodeID", nodeId);
-    obj.addProperty("sensorType", sensorType);
-    obj.addProperty("targetMin", min);
-    obj.addProperty("targetMax", max);
-    comm.sendJson(gson.toJson(obj));
-  }
+//  /**
+//   * Update the target min/max range for a sensor type on a node.
+//   *
+//   * @param nodeId target node id
+//   * @param sensorType sensor type name (e.g. TEMPERATURE, HUMIDITY)
+//   * @param min target minimum
+//   * @param max target maximum
+//   */
+//  public void updateTargetRange(String nodeId, String sensorType, double min, double max) {
+//    JsonObject obj = new JsonObject();
+//    obj.addProperty("messageType", "TARGET_UPDATE");
+//    obj.addProperty("nodeID", nodeId);
+//    obj.addProperty("sensorType", sensorType);
+//    obj.addProperty("targetMin", min);
+//    obj.addProperty("targetMax", max);
+//    comm.sendJson(gson.toJson(obj));
+//  }
 
   // ---------- ControlPanel actions ----------
   // Subscriptions removed: control panels no longer subscribe/unsubscribe to nodes.
@@ -458,8 +497,8 @@ public class ControlPanelLogic {
    * Request the current state of a specific node from the server.
    *
    * <p>This sends a {@code REQUEST_NODE} message to the server which will
-   * either reply with a cached node JSON or forward the request to the node
-   * to fetch a fresh state.
+   * either reply with a cached node JSON or forward the request to the node to fetch a fresh
+   * state.
    *
    * @param nodeId the id of the node to request
    */
@@ -489,48 +528,51 @@ public class ControlPanelLogic {
   }
 
   /**
-   * Request that a node adds a sensor at runtime. The control panel sends an
-   * {@code ADD_SENSOR} message containing the type, id and threshold values.
+   * Request that a node adds a sensor at runtime. The control panel sends an {@code ADD_SENSOR}
+   * message containing the type, id and threshold values.
    *
-   * @param nodeId target node id
-   * @param sensorType sensor type (TEMPERATURE, LIGHT, HUMIDITY, CO2)
-   * @param sensorId unique sensor id for the node
+   * @param nodeId       target node id
+   * @param sensorType   sensor type (TEMPERATURE, LIGHT, HUMIDITY, CO2)
+   * @param sensorId     unique sensor id for the node
    * @param minThreshold minimum threshold value for alerts
    * @param maxThreshold maximum threshold value for alerts
    */
-  public boolean addSensor(String nodeId, String sensorType, String sensorId, double minThreshold, double maxThreshold) {
-      // Prevent adding duplicate sensor types for the same node
-      NodeState ns = nodes.get(nodeId);
-      if (ns != null && ns.sensors != null) {
-        for (entity.sensor.Sensor s : ns.sensors.values()) {
-          if (s.getSensorType() != null && s.getSensorType().equalsIgnoreCase(sensorType)) {
-            System.out.println("Node " + nodeId + " already has a sensor of type " + sensorType + ". Skipping add.");
-            return false;
-          }
+  public boolean addSensor(String nodeId, String sensorType, String sensorId, double minThreshold,
+      double maxThreshold) {
+    // Prevent adding duplicate sensor types for the same node
+    NodeState ns = nodes.get(nodeId);
+    if (ns != null && ns.sensors != null) {
+      for (entity.sensor.Sensor s : ns.sensors.values()) {
+        if (s.getSensorType() != null && s.getSensorType().equalsIgnoreCase(sensorType)) {
+          System.out.println(
+              "Node " + nodeId + " already has a sensor of type " + sensorType + ". Skipping add.");
+          return false;
         }
       }
+    }
 
-      // Prevent duplicate sensor IDs on the same node
-      if (ns != null && ns.sensors != null && ns.sensors.containsKey(sensorId)) {
-        System.out.println("Sensor ID '" + sensorId + "' already exists on node " + nodeId + ". Skipping add.");
-        return false;
-      }
+    // Prevent duplicate sensor IDs on the same node
+    if (ns != null && ns.sensors != null && ns.sensors.containsKey(sensorId)) {
+      System.out.println(
+          "Sensor ID '" + sensorId + "' already exists on node " + nodeId + ". Skipping add.");
+      return false;
+    }
 
-      JsonObject obj = new JsonObject();
-      obj.addProperty("messageType", "ADD_SENSOR");
-      obj.addProperty("controlPanelId", controlPanelId);
-      obj.addProperty("nodeID", nodeId);
-      obj.addProperty("sensorType", sensorType);
-      obj.addProperty("sensorId", sensorId);
-      obj.addProperty("minThreshold", minThreshold);
-      obj.addProperty("maxThreshold", maxThreshold);
-      comm.sendJson(gson.toJson(obj));
-      return true;
+    JsonObject obj = new JsonObject();
+    obj.addProperty("messageType", "ADD_SENSOR");
+    obj.addProperty("controlPanelId", controlPanelId);
+    obj.addProperty("nodeID", nodeId);
+    obj.addProperty("sensorType", sensorType);
+    obj.addProperty("sensorId", sensorId);
+    obj.addProperty("minThreshold", minThreshold);
+    obj.addProperty("maxThreshold", maxThreshold);
+    comm.sendJson(gson.toJson(obj));
+    return true;
   }
 
   /**
-   * Generate a new unique sensor id for the given node using the pattern sN.
-   * This consults the cached node state to avoid obvious duplicates.
+   * Generate a new unique sensor id for the given node using the pattern sN. This consults the
+   * cached node state to avoid obvious duplicates.
    *
    * @param nodeId the node id to generate an id for
    * @return a sensor id (e.g. "s1").
@@ -538,7 +580,9 @@ public class ControlPanelLogic {
   public String generateUniqueSensorId(String nodeId) {
     NodeState ns = nodes.get(nodeId);
     java.util.Set<String> existingIds = new java.util.HashSet<>();
-    if (ns != null && ns.sensors != null) existingIds.addAll(ns.sensors.keySet());
+    if (ns != null && ns.sensors != null) {
+      existingIds.addAll(ns.sensors.keySet());
+    }
     int gen = 1;
     String candidate;
     do {
@@ -548,30 +592,30 @@ public class ControlPanelLogic {
   }
 
   /**
-   * Convenience method that generates a unique sensor id and sends the ADD_SENSOR
-   * request for the node. Returns the assigned sensor id on success, or null on
-   * failure.
+   * Convenience method that generates a unique sensor id and sends the ADD_SENSOR request for the
+   * node. Returns the assigned sensor id on success, or null on failure.
    */
-  public String addSensorAuto(String nodeId, String sensorType, double minThreshold, double maxThreshold) {
+  public String addSensorAuto(String nodeId, String sensorType, double minThreshold,
+      double maxThreshold) {
     String sensorId = generateUniqueSensorId(nodeId);
     boolean ok = addSensor(nodeId, sensorType, sensorId, minThreshold, maxThreshold);
     return ok ? sensorId : null;
   }
-  
 
   /**
    * Request the node to remove a sensor (and associated actuators) at runtime.
    */
   /**
-   * Request the node to remove a sensor (and associated actuators) at runtime.
-   * Returns true if a REMOVE_SENSOR message was actually sent to the server.
+   * Request the node to remove a sensor (and associated actuators) at runtime. Returns true if a
+   * REMOVE_SENSOR message was actually sent to the server.
    */
   public boolean removeSensor(String nodeId, String sensorId) {
     // Basic validation against cached state: if we don't know the node or sensor,
     // report and skip sending the request.
     NodeState ns = nodes.get(nodeId);
     if (ns == null || ns.sensors == null || !ns.sensors.containsKey(sensorId)) {
-      System.out.println("Sensor '" + sensorId + "' not found on node " + nodeId + ". Skipping remove.");
+      System.out.println(
+          "Sensor '" + sensorId + "' not found on node " + nodeId + ". Skipping remove.");
       return false;
     }
 
@@ -591,6 +635,7 @@ public class ControlPanelLogic {
    * snapshots arrive from the server.
    */
   public static class NodeState {
+
     public final String nodeId;
     public String location = "";
     public final Map<String, Sensor> sensors = new HashMap<>();

@@ -2,6 +2,9 @@ package entity.actuator;
 
 import java.util.List;
 
+/**
+ * Class of a CO2Supply actuator that increases CO2 levels when turned on.
+ */
 public class CO2Supply extends Actuator {
 
   private double co2Delta;
@@ -18,7 +21,9 @@ public class CO2Supply extends Actuator {
 
   @Override
   public void applyEffect(List<entity.sensor.Sensor> sensors) {
-    if (!isOn() || sensors == null) return;
+    if (!isOn() || sensors == null) {
+      return;
+    }
     for (entity.sensor.Sensor s : sensors) {
       if ("CO2".equalsIgnoreCase(s.getSensorType())) {
         s.adjustValue(co2Delta);
