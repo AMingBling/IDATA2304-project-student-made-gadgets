@@ -300,6 +300,9 @@ public class Server {
       // Only remove duplicate nodeId if it was *actually registered*
       if (nodeId != null && sensorNodes.get(nodeId) == socket) {
         sensorNodes.remove(nodeId);
+        // Clear any cached last-known JSON for this node so control panels
+        // won't receive stale data after the node disconnects.
+        lastKnownNodeJson.remove(nodeId);
         log("Server", "Node removed: %s", nodeId);
         // Notify control panels that this node disconnected so they can update their cache/UI
         try {
@@ -308,8 +311,7 @@ public class Server {
           outObj.addProperty("nodeID", nodeId);
           String payload = new com.google.gson.Gson().toJson(outObj);
           broadcastToControlPanels(payload, nodeId);
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
       }
     }
 
