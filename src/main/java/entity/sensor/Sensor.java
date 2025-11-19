@@ -97,33 +97,60 @@ public abstract class Sensor {
   }
 
 
+  /**
+   * Get sensor ID
+   * @return sensor ID
+   */
   public String getSensorId() {
     return sensorId;
   }
 
+  /**
+   * Get sensor type
+   * @return sensor type
+   */
   public String getSensorType() {
     return sensorType;
   }
 
-  //-------------------------------------------------
+  /**
+   * Get current sensor value
+   * @return current sensor value
+   */
   public synchronized double getValue() {
     return value;
   }
 
+  /**
+   * Update the sensor value to a new reading.
+   * @param newValue the new sensor value
+   */
   public synchronized void updateValue(double newValue) {
     this.value = newValue;
     this.timestamp = LocalDateTime.now();
   }
 
+  /**
+   * Adjust the sensor value by a delta.
+   * @param delta the amount to adjust the sensor value by
+   */
   public synchronized void adjustValue(double delta) {
     this.value += delta;
     this.timestamp = LocalDateTime.now();
   }
 
+  /**
+   * Check if the sensor value is out of range (below min or above max threshold).
+   * @return true if out of range, false otherwise
+   */
   public boolean isOutOfRange() {
     return this.value < this.minThreshold || this.value > this.maxThreshold;
   }
 
+  /**
+   * Convert the sensor reading to a JSON object.
+   * @return JSON representation of the sensor reading
+   */
   public com.google.gson.JsonObject toReadingJson() {
     com.google.gson.JsonObject jo = new com.google.gson.JsonObject();
     jo.addProperty("sensorId", this.sensorId);
@@ -135,29 +162,44 @@ public abstract class Sensor {
   }
 
 
-  //-------------------------------------------------------
+  /**   * Get unit of measurement
+   * @return unit of measurement
+   */
   public String getUnit() {
     return unit;
   }
 
 
+  /**
+   * Get minimum threshold value
+   * @return minimum threshold value
+   */
   public double getMinThreshold() {
     return minThreshold;
   }
 
+  /**
+   * Get maximum threshold value
+   * @return maximum threshold value
+   */
   public double getMaxThreshold() {
     return maxThreshold;
   }
 
+  /**
+   * Get timestamp of the last sensor value update
+   * @return timestamp of the last update
+   */
   public LocalDateTime getTimestamp() {
     return timestamp;
   }
 
   /**
    * Abstract method to update the sensor value.
+   * 
    */
   public abstract void updateValue();
-  //-------------------------------------------------
+
 
 
   /**
@@ -171,7 +213,7 @@ public abstract class Sensor {
     return gson.fromJson(json, Sensor.class);
   }
 
-  //-----------------------------------------------
+  
 
 
   /**
