@@ -499,33 +499,5 @@ public class Node {
   }
 
 
-  /**
-   * For controlling the temperature DETTE KAN GÅ BORT MULIGENS
-   */
-
-  public void controlTemperature() {
-    TemperatureSensor tempSensor = null;
-    for (Sensor s : sensors) {
-      if ("TEMPERATURE".equalsIgnoreCase(s.getSensorType())) {
-        tempSensor = (TemperatureSensor) s;
-        break;
-      }
-    }
-    if (tempSensor == null) {
-      return;
-    }
-
-    // Oppdater sensorer basert på aktive aktuatorer
-    for (Actuator actuator : actuators) {
-      actuator.applyEffect(sensors);
-    }
-
-    // Sjekk grenser og gi beskjed
-    if (tempSensor.isAboveMax()) {
-      System.out.println("⚠ Temperaturen er over maksverdi! Slå av Heater og slå på AirCondition.");
-    } else if (tempSensor.isBelowMin()) {
-      System.out.println("⚠ Temperaturen er under minverdi! Slå av AirCondition og slå på Heater.");
-    }
-  }
-
+  
 }

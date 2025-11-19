@@ -134,19 +134,19 @@ public class ControlPanelLogic {
     String t = sensorType.toUpperCase();
     switch (t) {
       case "TEMPERATURE":
-        if (min < 10.0 || max > 40.0) return "Temperatur-grenser må ligge innen [10, 40] °C.";
+        if (min < 10.0 || max > 40.0) return "Temperature treshold must be within [10, 40] °C.";
         break;
       case "HUMIDITY":
-        if (min < 0.0 || max > 100.0) return "Fuktighets-grenser må ligge innen [0, 100] %.";
+        if (min < 0.0 || max > 100.0) return "Humidity treshold must be within [0, 100] %.";
         break;
       case "LIGHT":
-        if (min < 600.0 || max > 30000.0) return "Lys-grenser må ligge innen [600, 30000] lux.";
+        if (min < 600.0 || max > 30000.0) return "Light ttreshold must be within [600, 30000] lux.";
         break;
       case "CO2":
-        if (min < 500.0 || max > 2000.0) return "CO2-grenser må ligge innen [500, 2000] ppm.";
+        if (min < 500.0 || max > 2000.0) return "CO2-treshold must be within [500, 2000] ppm.";
         break;
       default:
-        return "Ukjent sensortype.";
+        return "Un known sensor type.";
     }
     return null;
     
