@@ -454,6 +454,30 @@ public class ControlPanelLogic {
     return ns == null ? null : ns.actuators.get(actuatorId);
   }
 
+  /**
+   * Return a map of nodeId -> list of sensors matching the given sensor type.
+   * This is a convenience for UIs to query all sensors of a given type across
+   * all known nodes.
+   *
+   * @param sensorType e.g. "TEMPERATURE", "LIGHT", "HUMIDITY", "CO2"
+   * @return map of nodeId to list of sensors (empty if none found)
+   */
+  public Map<String, List<entity.sensor.Sensor>> getSensorsByType(String sensorType) {
+    Map<String, List<entity.sensor.Sensor>> result = new HashMap<>();
+    if (sensorType == null || sensorType.isBlank()) return result;
+    for (Map.Entry<String, NodeState> e : nodes.entrySet()) {
+      NodeState ns = e.getValue();
+      if (ns == null || ns.sensors == null) continue;
+      List<entity.sensor.Sensor> matches = new ArrayList<>();
+      for (entity.sensor.Sensor s : ns.sensors.values()) {
+        if (s == null || s.getSensorType() == null) continue;
+        if (sensorType.equalsIgnoreCase(s.getSensorType())) matches.add(s);
+      }
+      if (!matches.isEmpty()) result.put(e.getKey(), matches);
+    }
+    return result;
+  }
+
 
   /**
    * Send an actuator command to turn an actuator on or off on a remote node.
