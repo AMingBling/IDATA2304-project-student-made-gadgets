@@ -34,29 +34,7 @@ public class ControlPanelUI {
     this.logic = logic;
   }
 
-  private boolean validateThresholds(String sensorType, double min, double max) {
-    double[] limits = ABSOLUTE_LIMITS.get(sensorType.toUpperCase());
-    if (limits == null) {
-      return true; // fallback if unknown type
-    }
-
-    double absMin = limits[0];
-    double absMax = limits[1];
-
-    if (min < absMin || min > absMax) {
-      System.out.println("❌ Min threshold must be between " + absMin + " and " + absMax);
-      return false;
-    }
-    if (max < absMin || max > absMax) {
-      System.out.println("❌ Max threshold must be between " + absMin + " and " + absMax);
-      return false;
-    }
-    if (min >= max) {
-      System.out.println("❌ Min threshold must be LESS than max threshold.");
-      return false;
-    }
-    return true;
-  }
+  
 
   /**
    * Start the interactive UI loop.
