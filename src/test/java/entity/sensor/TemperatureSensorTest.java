@@ -3,6 +3,7 @@ package entity.sensor;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -69,6 +70,23 @@ public class TemperatureSensorTest {
     double before = ts.getValue();
     ts.adjustValue(2.25);
     assertEquals(before + 2.25, ts.getValue(), 1e-6);
+  }
+
+    /**
+     * Verify updateValue() without parameters updates timestamp but leaves value unchanged.
+     *
+     *<p>Expected outcome: timestamp is advanced and value is not NaN.</p>
+     */
+  @Test
+  public void parameterlessUpdateUpdatesTimestampOrValue() throws InterruptedException {
+    TemperatureSensor ts = new TemperatureSensor("t4", -10, 50.0);
+    LocalDateTime before = ts.getTimestamp();
+
+    Thread.sleep(5);
+
+    ts.updateValue();
+    assertTrue(ts.getTimestamp().isAfter(before));
+    assertFalse(Double.isNaN(ts.getValue()), "Value should remain a number after update");
   }
     
 }
