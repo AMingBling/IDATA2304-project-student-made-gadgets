@@ -182,7 +182,7 @@ public class Server {
                                         nodeOut.println(requestObj.toString());
                                         log("Server", "Requested state of %s from node", targetNode);
                                     } else {
-                                        System.out.println("Requested node not connected: " + targetNode);
+                                        log("Server", "Requested node not connected: %s", targetNode);
                                     }
                                 } else if ("ADD_SENSOR".equals(mt)) {
                                     String targetNode = obj.get("nodeID").getAsString();
@@ -193,7 +193,7 @@ public class Server {
                                         nodeOut.println(inputLine);
                                         log("Server", "Forwarded ADD_SENSOR to node %s", targetNode);
                                     } else {
-                                        System.out.println("Target node not connected: " + targetNode);
+                                        log("Server", "Target node not connected: %s", targetNode);
                                     }
                                 } else if ("REMOVE_SENSOR".equals(mt)) {
                                     String targetNode = obj.get("nodeID").getAsString();
@@ -204,7 +204,7 @@ public class Server {
                                         nodeOut.println(inputLine);
                                         log("Server", "Forwarded REMOVE_SENSOR to node %s", targetNode);
                                     } else {
-                                        System.out.println("Target node not connected: " + targetNode);
+                                        log("Server", "Target node not connected: %s", targetNode);
                                     }
                                 }
                                 else {
@@ -219,7 +219,6 @@ public class Server {
                         }
                     } else {
 
-                        System.out.println("\n Received from node: " + inputLine);
 
                         log("Node", "Received -> %s", inputLine);
 
