@@ -312,39 +312,6 @@ public class Node {
     if (sensors == null || actuators == null) {
       return null;
     }
-
-  
-    // enforce absolute limits first (auto-shutdown), then user thresholds — return alert string or null
-    private String checkLimitsAndThresholds() {
-      final double EPS = 0.01;
-      if (sensors == null || actuators == null) return null;
-  
-      // Absolute safety limits (extract to fields if you want per-node config)
-      //TODO: fjerne feltene de liogger i klassene istedet. 
-      final double TEMP_MIN_LIMIT = 10.0;
-      final double TEMP_MAX_LIMIT = 40.0;
-      final double HUMIDITY_MIN_LIMIT = 0.0;
-      final double HUMIDITY_MAX_LIMIT = 100.0;
-      final double LIGHT_MIN_LIMIT = 600.0;
-      final double LIGHT_MAX_LIMIT = 25000.0;
-      final double CO2_MIN_LIMIT = 500.0;
-      final double CO2_MAX_LIMIT = 2000.0;
-  
-      for (Sensor s : sensors) {
-        String type = s.getSensorType() == null ? "" : s.getSensorType().toUpperCase();
-        double v = s.getValue();
-        double max = s.getMaxThreshold();
-        double min = s.getMinThreshold();
-  
-        // Absolute limits + auto-shutdown
-        if ("TEMPERATURE".equals(type)) {
-          if (v <= TEMP_MIN_LIMIT + EPS) {
-            for (entity.actuator.Actuator a : actuators) {
-              if (a == null) continue;
-              String t = a.getActuatorType() == null ? "" : a.getActuatorType().toUpperCase();
-              if (t.contains("AIRCON") || t.contains("AC")) a.setOn(false);
-
-
     // Absolute safety limits (extract to fields if you want per-node config)
     final double TEMP_MIN_LIMIT = 10.0;
     final double TEMP_MAX_LIMIT = 40.0;

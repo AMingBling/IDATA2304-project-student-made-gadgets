@@ -9,6 +9,8 @@ import entity.Node;
 import entity.actuator.Actuator;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
@@ -487,14 +489,14 @@ public class ControlPanelLogic {
    * @param sensorType e.g. "TEMPERATURE", "LIGHT", "HUMIDITY", "CO2"
    * @return map of nodeId to list of sensors (empty if none found)
    */
-  public Map<String, List<entity.sensor.Sensor>> getSensorsByType(String sensorType) {
-    Map<String, List<entity.sensor.Sensor>> result = new HashMap<>();
+  public Map<String, List<Sensor>> getSensorsByType(String sensorType) {
+    Map<String, List<Sensor>> result = new HashMap<>();
     if (sensorType == null || sensorType.isBlank()) return result;
     for (Map.Entry<String, NodeState> e : nodes.entrySet()) {
       NodeState ns = e.getValue();
       if (ns == null || ns.sensors == null) continue;
-      List<entity.sensor.Sensor> matches = new ArrayList<>();
-      for (entity.sensor.Sensor s : ns.sensors.values()) {
+      List<Sensor> matches = new ArrayList<>();
+      for (Sensor s : ns.sensors.values()) {
         if (s == null || s.getSensorType() == null) continue;
         if (sensorType.equalsIgnoreCase(s.getSensorType())) matches.add(s);
       }
