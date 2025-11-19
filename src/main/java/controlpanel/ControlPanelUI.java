@@ -32,22 +32,40 @@ public class ControlPanelUI {
    * prints a dashboard and a help menu on each iteration and reads commands
    * from standard input.</p>
    */
+  // public void run() {
+  //   boolean first = true;
+  //   while (running) {
+  //     if (first) {
+  //       showDashboard();
+  //       showHelp();
+  //       first = false;
+  //     }
+  //     System.out.print("> ");
+  //     String line = scanner.nextLine();
+  //     if (line == null) break;
+  //     handleCommand(line.trim());
+  //     // Show dashboard/help after handling the command so any immediate responses
+  //     // (for example the response to CheckNode) are printed before the menu.
+  //     showDashboard();
+  //     showHelp();
+  //   }
+  // }
+
   public void run() {
-    boolean first = true;
     while (running) {
-      if (first) {
-        showDashboard();
-        showHelp();
-        first = false;
-      }
+      showDashboard();
+      showHelp();
       System.out.print("> ");
       String line = scanner.nextLine();
       if (line == null) break;
+
+      // NEW: notify user when they press enter without typing anything
+      if (line.trim().isEmpty()) {
+        System.out.println("Please write a command (cannot be empty).");
+        continue;
+      }
+
       handleCommand(line.trim());
-      // Show dashboard/help after handling the command so any immediate responses
-      // (for example the response to CheckNode) are printed before the menu.
-      showDashboard();
-      showHelp();
     }
   }
 
