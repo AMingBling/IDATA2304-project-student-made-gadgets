@@ -211,7 +211,14 @@ public class ControlPanelUI {
           if (!validateArgs(parts, 2, "Usage: CheckNode <nodeId>")) {
             return;
           }
-          logic.requestNode(parts[1]);
+          String nodeId = parts[1];
+          java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
+          if (nodes == null || !nodes.containsKey(nodeId)) {
+            System.out.println("Node '" + nodeId
+                + "' is not connected to the server. Use CheckGreenhouse to see connected nodes.");
+            break;
+          }
+          logic.requestNode(nodeId);
         }
 
         case "checkgreenhouse" -> {
