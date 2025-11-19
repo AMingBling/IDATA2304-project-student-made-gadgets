@@ -47,7 +47,7 @@ import com.google.gson.JsonSerializer;
  * @author Group 1
  * @version 2025-11-18
  */
-public class ControlPanelLogicTest {
+public class ControlPanelLogicLogicTest {
 
   private ControlPanelLogic cp;
   private TestControlPanelCommunication tc;
