@@ -372,12 +372,12 @@ public class Node {
       if (sensors == null || actuators == null) return null;
   
       // Absolute safety limits (extract to fields if you want per-node config)
-      final double TEMP_MIN_LIMIT = 0.0;
+      final double TEMP_MIN_LIMIT = 10.0;
       final double TEMP_MAX_LIMIT = 40.0;
       final double HUMIDITY_MIN_LIMIT = 0.0;
       final double HUMIDITY_MAX_LIMIT = 100.0;
-      final double LIGHT_MIN_LIMIT = 0.0;
-      final double LIGHT_MAX_LIMIT = 30000.0;
+      final double LIGHT_MIN_LIMIT = 600.0;
+      final double LIGHT_MAX_LIMIT = 25000.0;
       final double CO2_MIN_LIMIT = 500.0;
       final double CO2_MAX_LIMIT = 2000.0;
   
