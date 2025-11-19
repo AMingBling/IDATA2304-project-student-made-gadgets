@@ -346,10 +346,14 @@ public class ControlPanelUI {
               System.out.println("Invalid threshold numbers.");
               break;
             }
-            if (!validateThresholds(sensorType, min, max)) {
-              System.out.println("Sensor not added due to invalid thresholds.");
-              break;
-            }
+            
+            
+String validationMessage = logic.validateThresholds(sensorType, min, max);
+if (validationMessage != null) {
+    System.out.println("Sensor not added: " + validationMessage);
+    break;
+}
+
             
 
             String assigned = logic.addSensorAuto(nodeId, sensorType, min, max);
