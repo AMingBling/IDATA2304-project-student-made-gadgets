@@ -41,6 +41,11 @@ public class TemperatureSensorTest {
         assertNotNull(sensor.getTimestamp());
     }
 
+    /**
+   * Verify updateValue(double) sets the value and updates timestamp.
+   *
+   * <p>Expected outcome: value equals provided value and timestamp is updated to a time after the previous timestamp.</p>
+   */
     @Test
   public void updateValueWithParameter_setsValueAndUpdatesTimestamp() throws InterruptedException {
     TemperatureSensor ts = new TemperatureSensor("t2", 0.0, 100.0);
@@ -51,6 +56,19 @@ public class TemperatureSensorTest {
     ts.updateValue(25.5);
     assertEquals(25.5, ts.getValue(), 1e-6);
     assertTrue(ts.getTimestamp().isAfter(before), "Timestamp should be updated after updateValue(double)");
+  }
+
+  /**
+   * Verify adjustValue(delta) changes the value by delta.
+   *
+   * <p>Expected outcome: new value equals old value + delta.</p>
+   */
+  @Test
+  public void adjustValue_changesValueByDelta() {
+    TemperatureSensor ts = new TemperatureSensor("t3", -50.0, 150.0);
+    double before = ts.getValue();
+    ts.adjustValue(2.25);
+    assertEquals(before + 2.25, ts.getValue(), 1e-6);
   }
     
 }
