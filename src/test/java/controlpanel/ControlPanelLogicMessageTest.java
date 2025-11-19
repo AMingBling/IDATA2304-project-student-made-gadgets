@@ -1,22 +1,41 @@
 package controlpanel;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
-import com.google.gson.JsonDeserializer;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
+
 /**
  * Message-focused tests: only verify that ControlPanelLogic produces/sends correct JSON messages.
+ *
+ * <p>The following is tested:</p>
+ *
+ * <b>Positive tests:</b>
+ * <ul>
+ *   <li>addSensor_sendsAddSensorMessage: verifies that addSensor sends an ADD_SENSOR JSON payload with expected fields.</li>
+ *   <li>setActuatorState_sendsActuatorCommand: verifies that setActuatorState sends ACTUATOR_COMMAND JSON with node and actuator identifiers and command.</li>
+ * </ul>
+ *
+ * <b>Negative tests:</b>
+ * <ul>
+ *   <li>addSensor_duplicateType_doesNotSend: verifies that adding a duplicate sensor type does not send JSON.</li>
+ *   <li>removeSensor_missing_doesNotSend: verifies that removing a missing sensor/node does not send JSON.</li>
+ * </ul>
+ *
+ * @author Group 1
+ * @version 2025-11-19
  */
 public class ControlPanelLogicMessageTest {
 
@@ -57,6 +76,16 @@ public class ControlPanelLogicMessageTest {
   }
 
   // ----- Positive (should send) -----
+
+  /**
+   * Test that addSensor sends an ADD_SENSOR JSON message with expected fields.
+   *
+   * <p>Expected outcome:</p>
+   * <ul>
+   *   <li>addSensor(...) returns true.</li>
+   *   <li>ControlPanelCommunication.sendJson is invoked with JSON containing "ADD_SENSOR", the node id, sensor id and sensor type.</li>
+   * </ul>
+   */
   @Test
   public void addSensor_sendsAddSensorMessage() {
     boolean ok = cp.addSensor("node1", "TEMPERATURE", "s1", 5.0, 40.0);
@@ -68,6 +97,15 @@ public class ControlPanelLogicMessageTest {
     assertTrue(tc.lastSent.contains("s1"));
   }
 
+  /**
+   * Test that setActuatorState sends an ACTUATOR_COMMAND JSON with node and actuator identifiers and the correct command.
+   *
+   * <p>Expected outcome:</p>
+   * <ul>
+   *   <li>ControlPanelCommunication.sendJson is invoked with JSON containing "ACTUATOR_COMMAND".</li>
+   *   <li>JSON contains the node id, actuator id and either TURN_ON or TURN_OFF.</li>
+   * </ul>
+   */
   @Test
   public void setActuatorState_sendsActuatorCommand() {
     cp.setActuatorState("nX", "a1", true);
@@ -79,6 +117,16 @@ public class ControlPanelLogicMessageTest {
   }
 
   // ----- Negative (should not send) -----
+
+  /**
+   * Test that attempting to add a sensor of a type that already exists on the node is rejected and no JSON is sent.
+   *
+   * <p>Expected outcome:</p>
+   * <ul>
+   *   <li>addSensor(...) returns false when a sensor of the same type already exists on the node.</li>
+   *   <li>No JSON is sent to ControlPanelCommunication.</li>
+   * </ul>
+   */
   @Test
   public void addSensor_duplicateType_doesNotSend() throws Exception {
     // prepare node with existing temperature sensor to trigger rejection
@@ -91,6 +139,15 @@ public class ControlPanelLogicMessageTest {
     assertNull(tc.lastSent, "No JSON should be sent for rejected duplicate addSensor");
   }
 
+  /**
+   * Test that removing a sensor for a missing node or unknown sensor returns false and does not send JSON.
+   *
+   * <p>Expected outcome:</p>
+   * <ul>
+   *   <li>removeSensor returns false for unknown node/sensor.</li>
+   *   <li>No JSON is sent to ControlPanelCommunication.</li>
+   * </ul>
+   */
   @Test
   public void removeSensor_missing_doesNotSend() {
     boolean ok = cp.removeSensor("noNode", "noSensor");
