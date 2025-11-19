@@ -37,18 +37,6 @@ public class DeHumidifier extends Actuator {
   }
 
 
-
-  /**
-   * Create a DeHumidifier with a specified drying delta per tick.
-   *
-   * @param id unique actuator id
-   * @param dryDelta amount to decrease humidity sensors by when enabled
-   */
-//  public DeHumidifier(String id, double dryDelta) {
-//    super(id, "DEHUMIDIFIER");
-//    this.dryDelta = dryDelta;
-//  }
-
   /**
    * Apply the dehumidifying effect to humidity sensors in the provided list.
    * 
