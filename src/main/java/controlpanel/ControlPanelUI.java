@@ -224,64 +224,92 @@ private void handleCommand(String line) {
           System.out.println("Invalid selection.");
           break;
         }
-        String sensorType = available.get(choice - 1);
 
-        System.out.print("\nSensor ID (e.g. s1): ");
-        String sensorId = scanner.nextLine();
-        if (sensorId == null || sensorId.trim().isEmpty()) {
-          System.out.println("Please write a command (cannot be empty).");
-          break;
-        }
-        sensorId = sensorId.trim();
+        case "addsensor" -> {
+          if (parts.length >= 2) {
+            String nodeId = parts[1];
+            // Determine available sensor types and filter out those already present
+            java.util.List<String> allTypes = java.util.Arrays.asList("TEMPERATURE", "LIGHT", "HUMIDITY", "CO2");
+            java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
 
-        // Check duplicate sensorId on node (use cached state)
-        if (ns != null && ns.sensors != null && ns.sensors.containsKey(sensorId)) {
-          System.out.println("Sensor ID '" + sensorId + "' already exists on node " + nodeId + ". ID must be unique.");
-          break;
-        }
+            // Immediately inform user if the nodeId is not connected/known
+            if (nodes == null || !nodes.containsKey(nodeId)) {
+              System.out.println("\nNode '" + nodeId + "' is not connected to the server. Use CheckGreenhouse to see connected nodes.");
+              break;
+            }
+            java.util.Set<String> existing = new java.util.HashSet<>();
+            if (nodes != null && nodes.containsKey(nodeId)) {
+              ControlPanelLogic.NodeState ns = nodes.get(nodeId);
+              if (ns != null && ns.sensors != null) {
+                for (entity.sensor.Sensor s : ns.sensors.values()) {
+                  existing.add(s.getSensorType().toUpperCase());
+                }
+              }
+            }
 
-        double[] recommended = getRecommendedRange(sensorType);
-        String unit = getUnitForType(sensorType);
-        String recMinStr = recommended != null ? String.valueOf((int) recommended[0]) : "";
-        String recMaxStr = recommended != null ? String.valueOf((int) recommended[1]) : "";
+            java.util.List<String> available = new java.util.ArrayList<>();
+            for (String t : allTypes) if (!existing.contains(t)) available.add(t);
 
-        if (recommended != null) {
-          System.out.print("\nMin threshold (number) (" + recMinStr + " " + unit + " recommended): ");
-        } else {
-          System.out.print("\nMin threshold (number): ");
-        }
-        String minLine = scanner.nextLine();
-        if (minLine == null || (minLine.trim().isEmpty() && recommended == null)) {
-          System.out.println("Please write a command (cannot be empty).");
-          break;
-        }
-        if (minLine.trim().isEmpty() && recommended != null) minLine = recMinStr;
+            if (available.isEmpty()) {
+              System.out.println("Node " + nodeId + " already has all supported sensor types.");
+              break;
+            }
 
-        if (recommended != null) {
-          System.out.print("\nMax threshold (number) (" + recMaxStr + " " + unit + " recommended): ");
-        } else {
-          System.out.print("\nMax threshold (number): ");
-        }
-        String maxLine = scanner.nextLine();
-        if (maxLine == null || (maxLine.trim().isEmpty() && recommended == null)) {
-          System.out.println("Please write a command (cannot be empty).");
-          break;
-        }
-        if (maxLine.trim().isEmpty() && recommended != null) maxLine = recMaxStr;
+            System.out.println("\nAvailable sensor types:");
+            for (int i = 0; i < available.size(); i++) {
+              System.out.printf("  %d) %s%n", i + 1, available.get(i));
+            }
+            System.out.print("\nChoose type (number): ");
+            String choiceLine = scanner.nextLine();
+            int choice = 0;
+            try { choice = Integer.parseInt(choiceLine.trim()); } catch (Exception e) { choice = 0; }
+            if (choice < 1 || choice > available.size()) {
+              System.out.println("Invalid selection.");
+              break;
+            }
+            String sensorType = available.get(choice - 1);
 
-        double min, max;
-        try {
-          min = Double.parseDouble(minLine.trim());
-          max = Double.parseDouble(maxLine.trim());
-        } catch (NumberFormatException nfe) {
-          System.out.println("Invalid threshold numbers.");
-          break;
-        }
+            // Sensor ID assignment is handled by the logic layer; UI does not generate IDs.
 
-        boolean added = logic.addSensor(nodeId, sensorType, sensorId, min, max);
-        if (added) {
-          System.out.println("\nSuccessfully added sensor ID:" + sensorId + " type:" + sensorType + " to Node " + nodeId);
-        }
+            // Get recommended ranges for the chosen sensor type
+            double[] recommended = getRecommendedRange(sensorType);
+            String unit = getUnitForType(sensorType);
+            String recMinStr = recommended != null ? String.valueOf((int)recommended[0]) : "";
+            String recMaxStr = recommended != null ? String.valueOf((int)recommended[1]) : "";
+
+            // Prompt with recommended values and allow empty input to accept recommendation
+            if (recommended != null) {
+              System.out.print("\nMin threshold (number) (" + recMinStr + " " + unit + " recommended): ");
+            } else {
+              System.out.print("\nMin threshold (number): ");
+            }
+            String minLine = scanner.nextLine().trim();
+            if (minLine.isEmpty() && recommended != null) minLine = recMinStr;
+
+            if (recommended != null) {
+              System.out.print("\nMax threshold (number) (" + recMaxStr + " " + unit + " recommended): ");
+            } else {
+              System.out.print("\nMax threshold (number): ");
+            }
+            String maxLine = scanner.nextLine().trim();
+            if (maxLine.isEmpty() && recommended != null) maxLine = recMaxStr;
+
+            double min, max;
+            try {
+              min = Double.parseDouble(minLine);
+              max = Double.parseDouble(maxLine);
+            } catch (NumberFormatException nfe) {
+              System.out.println("Invalid threshold numbers.");
+              break;
+            }
+
+            String assigned = logic.addSensorAuto(nodeId, sensorType, min, max);
+            if (assigned != null) {
+              System.out.println("\nSuccessfully added sensor ID:" + assigned + " type:" + sensorType + " to Node " + nodeId);
+            }
+          } else {
+            System.out.println("Usage: addsensor <nodeId>");
+          }
       }
 
       case "toggleactuator" -> {
