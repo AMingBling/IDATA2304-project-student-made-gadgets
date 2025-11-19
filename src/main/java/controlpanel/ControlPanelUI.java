@@ -121,8 +121,7 @@ public class ControlPanelUI {
     if (line.isEmpty()) return;
     String[] parts = line.split("\\s+");
     String cmd = parts[0].toLowerCase();
-    // Backwards-compatible alias: treat old 'spawnnode' command as 'addnode'
-    if (cmd.equals("spawnnode")) cmd = "addnode";
+    // Backwards-compatible alias removed: spawning nodes from Control Panel is not supported
     try {
       switch (cmd) {
         case "checknode" -> {
@@ -227,23 +226,7 @@ public class ControlPanelUI {
             System.out.println("Usage: addsensor <nodeId>");
           }
         }
-        // case "addnode" -> {
-        //   String nodeId;
-        //   String location;
-        //   if (parts.length >= 3) {
-        //     nodeId = parts[1];
-        //     location = parts[2];
-        //   } else {
-        //     System.out.print("Node ID: ");
-        //     nodeId = scanner.nextLine().trim();
-        //     if (nodeId.isEmpty()) { System.out.println("Node ID cannot be empty."); break; }
-        //     System.out.print("Location: ");
-        //     location = scanner.nextLine().trim();
-        //     if (location.isEmpty()) { System.out.println("Location cannot be empty."); break; }
-        //   }
-        //   boolean ok = logic.spawnNode(nodeId, location);
-        //   if (!ok) System.out.println("Failed to add node. See log for details."); else System.out.println("Successfully added node: " + nodeId);
-        // }
+        // (Adding/spawning nodes from Control Panel has been removed.)
         case "toggleactuator" -> {
           if (parts.length >= 4) {
             String nodeId = parts[1];

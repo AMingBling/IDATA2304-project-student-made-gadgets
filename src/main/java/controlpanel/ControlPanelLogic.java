@@ -15,18 +15,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import network.NodeClient;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
-import com.google.gson.JsonPrimitive;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+
 
 /**
  * Control panel logic and state manager.
@@ -38,7 +27,7 @@ import java.util.List;
  *   <li>Receiving and parsing line-delimited JSON messages from the {@code Server}</li>
  *   <li>Forwarding commands from the UI to the server (ADD_SENSOR, REMOVE_SENSOR,
  *       ACTUATOR_COMMAND, REQUEST_NODE, TARGET_UPDATE)</li>
- *   <li>Spawning local simulated {@code NodeClient} instances for quick testing</li>
+ *   <li>(No local node spawning from Control Panel)</li>
  *   <li>Providing a small programmatic API used by {@code ControlPanelUI}</li>
  * </ul>
  *
@@ -54,9 +43,7 @@ public class ControlPanelLogic {
   private final Gson gson = new Gson();
   private final ControlPanelCommunication comm;
   private final Map<String, NodeState> nodes = new ConcurrentHashMap<>();
-  // spawned simulated nodes created by this control panel logic (nodeId -> NodeClient)
-  private final Map<String, NodeClient> spawnedNodes = new ConcurrentHashMap<>();
-  private final Map<String, Socket> spawnedSockets = new ConcurrentHashMap<>();
+  // control panel does not spawn simulated nodes anymore
   // When true, incoming node updates are printed to the ControlPanel terminal.
   // Default false to avoid periodic output in the control panel UI.
   private volatile boolean showNodeUpdates = false;
@@ -112,69 +99,9 @@ public class ControlPanelLogic {
    */
   public void close() {
     comm.close();
-    // close any spawned simulated nodes
-    for (NodeClient nc : spawnedNodes.values()) {
-      try { nc.close(); } catch (Exception ignored) {}
-    }
-    for (Socket s : spawnedSockets.values()) {
-      try { s.close(); } catch (Exception ignored) {}
-    }
   }
 
-  // /**
-  //  * Spawn a simulated NodeClient that connects to the same server the control panel is connected to.
-  //  * UI should call this method rather than performing networking itself.
-  //  * Returns true if the node was spawned and accepted by server.
-  //  */
-  // public boolean spawnNode(String nodeId, String location) {
-  //   if (nodeId == null || nodeId.isBlank()) return false;
-  //   if (spawnedNodes.containsKey(nodeId)) return false;
-  //   if (!comm.isConnected()) {
-  //     System.out.println("Control panel not connected to server. Call connect() first.");
-  //     return false;
-  //   }
-
-  //   String ip = comm.getConnectedIp();
-  //   int port = comm.getConnectedPort();
-  //   if (ip == null || port <= 0) {
-  //     System.out.println("Control panel has no server info.");
-  //     return false;
-  //   }
-
-  //   try {
-  //     Socket socket = new Socket(ip, port);
-  //     PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-  //     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-  //     // Prepare Gson with LocalDateTime adapters matching node client
-  //     com.google.gson.Gson gson = new GsonBuilder()
-  //         .registerTypeAdapter(LocalDateTime.class, (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context) -> new JsonPrimitive(src.toString()))
-  //         .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, context) -> LocalDateTime.parse(json.getAsString()))
-  //         .create();
-
-  //     out.println("SENSOR_NODE_CONNECTED " + nodeId);
-  //     String serverResponse = in.readLine();
-  //     if (serverResponse == null || !serverResponse.equals("NODE_ID_ACCEPTED")) {
-  //       try { socket.close(); } catch (Exception ignored) {}
-  //       System.out.println("Spawn node rejected by server: " + serverResponse);
-  //       return false;
-  //     }
-
-  //     List<entity.sensor.Sensor> sensors = new ArrayList<>();
-  //     List<entity.actuator.Actuator> actuators = new ArrayList<>();
-  //     entity.Node nodeObj = new entity.Node(nodeId, location, sensors, actuators);
-  //     NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
-  //     nodeClient.start();
-  //     nodeClient.sendCurrentNode();
-  //     spawnedNodes.put(nodeId, nodeClient);
-  //     spawnedSockets.put(nodeId, socket);
-  //     System.out.println("Spawned simulated node: " + nodeId);
-  //     return true;
-  //   } catch (Exception e) {
-  //     System.out.println("Failed to spawn node: " + e.getMessage());
-  //     return false;
-  //   }
-  // }
+  // spawning simulated nodes removed from Control Panel API
 
   /**
    * Disconnect and remove a previously spawned simulated node.
@@ -182,14 +109,7 @@ public class ControlPanelLogic {
    * @param nodeId id of the spawned node to disconnect
    * @return true if a spawned node or socket was found and removed
    */
-  public boolean disconnectSpawnedNode(String nodeId) {
-    NodeClient nc = spawnedNodes.remove(nodeId);
-    Socket s = spawnedSockets.remove(nodeId);
-    if (nc == null && s == null) return false;
-    if (nc != null) try { nc.close(); } catch (Exception ignored) {}
-    if (s != null) try { s.close(); } catch (Exception ignored) {}
-    return true;
-  }
+  // disconnectSpawnedNode removed — control panel no longer spawns nodes
 
   /**
    * Handle a single line of JSON received from the server.
