@@ -192,7 +192,7 @@ public class ControlPanelUI {
           String nodeId = parts[1];
           java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
           if (nodes == null || !nodes.containsKey(nodeId)) {
-            System.out.println("Node '" + nodeId
+            System.out.println("\nNode '" + nodeId
                 + "' is not connected to the server. Use CheckGreenhouse to see connected nodes.");
             break;
           }
