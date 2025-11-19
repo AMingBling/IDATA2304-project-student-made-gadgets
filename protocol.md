@@ -99,7 +99,7 @@ The protocol uses port **5000** for all node-server communication.
 
 ## 9. Message Framing and Format
 
-- **Framing / marshalling:** application messages are sent as single-line JSON payloads (line-delimited JSON). Each message occupies one text line terminated by `\n`. The server treats a received line starting with `{` as JSON; otherwise it interprets some legacy plaintext handshake messages (see registration above).
+- **Framing / marshalling:** application messages are sent as single-line JSON payloads (line-delimited JSON). Each message occupies one text line terminated by `\n`. The server treats a received line starting with `{` as JSON otherwise it interprets some legacy plaintext handshake messages (see registration above).
 
 - **Message envelope (required fields):** most messages are JSON objects containing at least:
   - `messageType` &mdash; string that indicates the semantic type (e.g. `SENSOR_DATA_FROM_NODE`, `ACTUATOR_COMMAND`, `ADD_SENSOR`, `ALERT`, `REQUEST_NODE`).
@@ -137,11 +137,24 @@ The protocol uses port **5000** for all node-server communication.
  ## 11. Realistic Scenario
  A farmer uses a control panel to monitor Node 7. The panel recieves:
  - SENSOR_DATA|Node7|TEMP|26.5
- - SENSOR_DATA|Node7|HUMIDITY||44
+ - SENSOR_DATA|Node7|HUMIDITY||44  
  Then sends:
- - COMMAND|Node7|ACTUATOR|FAN|ON
+ - COMMAND|Node7|ACTUATOR|FAN|ON  
  The fan turns on, and the node replies:
  - ACTUATOR_STATUS|Node7|FAN|ON
+
+ Farmer could also open another control panel or create a new node:
+ - SENSOR_DATA|Node3|CO2_SENSOR|800  
+ Then sends:
+ - COMMAND|Node3|ACTUATOR|CO2_SUPPLY|ON  
+ The fan turns on, and the node replies:
+ - ACTUATOR_STATUS|Node3|CO2_SUPPLY|ON  
+ If the farmer wants to reduce the CO2 he needs to turn off:
+ - COMMAND|Node3|ACTUATOR|CO2_SUPPLY|OFF  
+ And turn on FAN
+ - COMMAND|Node3|ACTUATOR|FAN|ON  
+ (Note: It is impossible for both to be on at once.)  
+
 
  ## 12. Reliability Mechanisms
 
