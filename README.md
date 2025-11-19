@@ -12,6 +12,10 @@ Both the control panels and the nodes connects to the server, and communicates v
 
 When a node is added, the user can use the control panel to add sensors with associated actuators.
 
+The user can also check the status of nodes which checks the status of connected sensors and actuators.
+
+If the measured values are too high or too low in relation to the desired values of the user, the associated actuators can be toggled on/off.
+
 ### Available Control Panel commands
 
 - CheckGreenhouse
