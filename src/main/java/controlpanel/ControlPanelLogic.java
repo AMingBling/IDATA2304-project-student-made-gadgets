@@ -527,6 +527,36 @@ public class ControlPanelLogic {
       comm.sendJson(gson.toJson(obj));
       return true;
   }
+
+  /**
+   * Generate a new unique sensor id for the given node using the pattern sN.
+   * This consults the cached node state to avoid obvious duplicates.
+   *
+   * @param nodeId the node id to generate an id for
+   * @return a sensor id (e.g. "s1").
+   */
+  public String generateUniqueSensorId(String nodeId) {
+    NodeState ns = nodes.get(nodeId);
+    java.util.Set<String> existingIds = new java.util.HashSet<>();
+    if (ns != null && ns.sensors != null) existingIds.addAll(ns.sensors.keySet());
+    int gen = 1;
+    String candidate;
+    do {
+      candidate = "s" + gen++;
+    } while (existingIds.contains(candidate));
+    return candidate;
+  }
+
+  /**
+   * Convenience method that generates a unique sensor id and sends the ADD_SENSOR
+   * request for the node. Returns the assigned sensor id on success, or null on
+   * failure.
+   */
+  public String addSensorAuto(String nodeId, String sensorType, double minThreshold, double maxThreshold) {
+    String sensorId = generateUniqueSensorId(nodeId);
+    boolean ok = addSensor(nodeId, sensorType, sensorId, minThreshold, maxThreshold);
+    return ok ? sensorId : null;
+  }
   
 
   /**

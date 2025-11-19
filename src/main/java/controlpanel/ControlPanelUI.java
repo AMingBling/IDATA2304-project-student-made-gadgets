@@ -175,17 +175,7 @@ public class ControlPanelUI {
             }
             String sensorType = available.get(choice - 1);
 
-            System.out.print("\nSensor ID (e.g. s1): ");
-            String sensorId = scanner.nextLine().trim();
-            if (sensorId.isEmpty()) { System.out.println("Sensor ID cannot be empty."); break; }
-            // Check duplicate sensorId on node (use cached state)
-            if (nodes != null && nodes.containsKey(nodeId)) {
-              ControlPanelLogic.NodeState nsCheck = nodes.get(nodeId);
-              if (nsCheck != null && nsCheck.sensors != null && nsCheck.sensors.containsKey(sensorId)) {
-                System.out.println("Sensor ID '" + sensorId + "' already exists on node " + nodeId + ". ID must be uniqe.");
-                break;
-              }
-            }
+            // Sensor ID assignment is handled by the logic layer; UI does not generate IDs.
 
             // Get recommended ranges for the chosen sensor type
             double[] recommended = getRecommendedRange(sensorType);
@@ -219,9 +209,9 @@ public class ControlPanelUI {
               break;
             }
 
-            boolean added = logic.addSensor(nodeId, sensorType, sensorId, min, max);
-            if (added) {
-              System.out.println("\nSuccessfully added sensor ID:" + sensorId + " type:" + sensorType + " to Node " + nodeId);
+            String assigned = logic.addSensorAuto(nodeId, sensorType, min, max);
+            if (assigned != null) {
+              System.out.println("\nSuccessfully added sensor ID:" + assigned + " type:" + sensorType + " to Node " + nodeId);
             }
           } else {
             System.out.println("Usage: addsensor <nodeId>");
