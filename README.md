@@ -67,11 +67,11 @@ The sensor will automatically get assigned an ID.
 ## How to run the application
 
 1. Run Server.java
-2. Create a node: open a new terminal and type in ***mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="01 greenhouse1"***
-3. Open ControlPanel: open a new terminal and type in ***mvn --% exec:java -Dexec.mainClass=controlpanel.ControlPanelMain -Dexec.args="cp1 127.0.0.1 5000"***
+2. Create a node: open a new terminal and type in ```mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="01 greenhouse1"```
+3. Open ControlPanel: open a new terminal and type in ```mvn --% exec:java -Dexec.mainClass=controlpanel.ControlPanelMain -Dexec.args="cp1 127.0.0.1 5000"```
 
 To add a new node:
-- Open a new terminal and type in ***mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="<nodeId> <location>"***
+- Open a new terminal and type in ```mvn --% exec:java -Dexec.mainClass=network.NodeClient -Dexec.args="<nodeId> <location>"```
 
 To add a new control panel:
-- Open a new terminael and type in ***mvn --% exec:java -Dexec.mainClass=controlpanel.ControlPanelMain -Dexec.args="<controlPanelId> 127.0.0.1 5000"***
+- Open a new terminael and type in ```mvn --% exec:java -Dexec.mainClass=controlpanel.ControlPanelMain -Dexec.args="<controlPanelId> 127.0.0.1 5000"```
