@@ -36,11 +36,12 @@ If the measured values are too high or too low in relation to the desired values
 *Add one of the available provided sensors to a specific node*
 
 1. Choose sensor type (temperature, light, humidity, co2)
-2. Set the sensor ID
-3. Set minimum threshold value
-4. Set maximum threshold value
+2. Set minimum threshold value
+3. Set maximum threshold value
 
-If the sensor measure values out of the threshold bound, an alert message will be sent to the control panel
+If the sensor measure values out of the threshold bound, an alert message will be sent to the control panel.
+
+The sensor will automatically get assigned an ID. 
 
 #### RemoveSensor
 
