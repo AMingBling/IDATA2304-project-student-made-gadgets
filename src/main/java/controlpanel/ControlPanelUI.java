@@ -15,6 +15,13 @@ public class ControlPanelUI {
   private final ControlPanelLogic logic;
   private final Scanner scanner = new Scanner(System.in);
   private boolean running = true;
+  private static final Map<String, double[]> ABSOLUTE_LIMITS = Map.of(
+    "TEMPERATURE", new double[]{0, 40},
+    "HUMIDITY",    new double[]{0, 100},
+    "LIGHT",       new double[]{0, 30000},
+    "CO2",         new double[]{400, 5000}
+);
+
 
   /**
    * Create a new ControlPanelUI bound to the provided logic instance.
@@ -24,6 +31,29 @@ public class ControlPanelUI {
   public ControlPanelUI(ControlPanelLogic logic) {
     this.logic = logic;
   }
+
+  private boolean validateThresholds(String sensorType, double min, double max) {
+    double[] limits = ABSOLUTE_LIMITS.get(sensorType.toUpperCase());
+    if (limits == null) return true; // fallback if unknown type
+
+    double absMin = limits[0];
+    double absMax = limits[1];
+
+    if (min < absMin || min > absMax) {
+        System.out.println("❌ Min threshold must be between " + absMin + " and " + absMax);
+        return false;
+    }
+    if (max < absMin || max > absMax) {
+        System.out.println("❌ Max threshold must be between " + absMin + " and " + absMax);
+        return false;
+    }
+    if (min >= max) {
+        System.out.println("❌ Min threshold must be LESS than max threshold.");
+        return false;
+    }
+    return true;
+}
+
 
   /**
    * Start the interactive UI loop.
@@ -303,6 +333,11 @@ private void handleCommand(String line) {
               System.out.println("Invalid threshold numbers.");
               break;
             }
+            if (!validateThresholds(sensorType, min, max)) {
+              System.out.println("Sensor not added due to invalid thresholds.");
+              break;
+            }
+            
 
             String assigned = logic.addSensorAuto(nodeId, sensorType, min, max);
             if (assigned != null) {
