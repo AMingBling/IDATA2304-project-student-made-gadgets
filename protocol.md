@@ -4,11 +4,11 @@
 This document describes the custom application-layer communication protocol developed for the Smart Farming System project in IDATA2304. The protocol enables communication between sensor/actuator nodes and control-panel nodes using TCP sockets.
 
 ## 2. Terminology
-- **Sensor Node**: A node that collects environmental data and hosts actuators.
-- **Actuator**: A controllable device (e.g., fan, heater, window opener).
-- **Control Panel Node**: A node that visualizes data and sends commands.
+- **Node**: A node that collects environmental data through sensors, and hosts actuators.
+- **Actuator**: A controllable device (e.g., heater, ventilation, humidifier).
+- **Control Panel**: A client that visualizes data and sends commands.
 - **Message**: A structured data packet exchanged between nodes.
-- **Command**: A control instruction sent from a control panel to a sensor node.
+- **Command**: A control instruction sent from a control panel to a node via the server.
 
 ## 3. Transport Protocol
 We use **TCP** for reliable communication between nodes.
