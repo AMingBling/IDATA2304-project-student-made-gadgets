@@ -140,6 +140,19 @@ The protocol uses port **5000** for all node-server communication.
  The fan turns on, and the node replies:
  - ACTUATOR_STATUS|Node7|FAN|ON
 
+Farmer could also open another control panel or create a new node:  
+ - SENSOR_DATA|Node3|CO2_SENSOR|800
+Then sends:
+-COMMAND|Node3|ACTUATOR|CO2_SUPPLY|ON
+The fan turns on, and the node replies:
+-ACTUATOR_STATUS|Node3|CO2_SUPPLY|ON
+If the farmer wants to reduce the CO2 he needs to turn off:
+-COMMAND|Node3|ACTUATOR|CO2_SUPPLY|OFF
+And turn on FAN
+-COMMAND|Node3|ACTUATOR|FAN|ON
+(Note: It is impossible for both to be on at once.)
+
+
  ## 12. Reliability Mechanisms
 
  - Transport guarantees
