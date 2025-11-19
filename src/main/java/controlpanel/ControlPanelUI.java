@@ -363,7 +363,7 @@ public class ControlPanelUI {
 
             String validationMessage = logic.validateThresholds(sensorType, min, max);
             if (validationMessage != null) {
-              System.out.println("Sensor not added: " + validationMessage);
+              System.out.println("\nSensor not added: " + validationMessage);
               break;
             }
 
@@ -484,8 +484,8 @@ public class ControlPanelUI {
         }
 
         default -> {
-          System.out.println("Unknown command: " + cmd);
-          System.out.println("Valid commands:");
+          System.out.println("\nUnknown command: " + cmd);
+          System.out.println("\nValid commands:");
           System.out.println(" - CheckGreenhouse");
           System.out.println(" - AddSensor <nodeId>");
           System.out.println(" - RemoveSensor <nodeId> <sensorId>");
