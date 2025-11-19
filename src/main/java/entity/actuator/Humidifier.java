@@ -34,16 +34,7 @@ public class Humidifier extends Actuator {
   }
 
 
- /**
-   * Create a Humidifier with a custom humidity increase per tick.
-   *
-   * @param id unique actuator id
-   * @param humidDelta positive amount to add to humidity sensor value each tick when on
-   */
-  public Humidifier(String id, double humidDelta) {
-    super(id, "HUMIDIFIER");
-    this.humidDelta = humidDelta;
-  }
+
 
   /**
    * Apply the humidifier effect to the provided sensors.

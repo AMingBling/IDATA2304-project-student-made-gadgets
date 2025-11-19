@@ -33,16 +33,7 @@ public class Ventilation extends Actuator {
     this.co2Delta = 8.0; // standard reduksjon per tick (tune etter behov)
   }
 
-  /**
-   * Create a Ventilation actuator with a custom CO2 reduction per tick.
-   *
-   * @param id unique actuator id
-   * @param co2Delta amount (positive) to subtract from CO2 sensor value each tick when on
-   */
-  public Ventilation(String id, double co2Delta) {
-    super(id, "VENTILATION");
-    this.co2Delta = co2Delta;
-  }
+
 
   /**
    * Apply the ventilation effect to the provided sensors.

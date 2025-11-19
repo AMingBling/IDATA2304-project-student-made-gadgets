@@ -35,16 +35,7 @@ public class Heater extends Actuator {
     this.heatDelta = 1.0; // standard økning per tick (tune etter behov)
   }
 
-  /**
-   * Create a heater with a custom heating delta per tick.
-   *
-   * @param id unique actuator identifier
-   * @param heatDelta amount to add to temperature sensor value each tick when the heater is on
-   */
-  public Heater(String id, double heatDelta) {
-    super(id, "HEATER");
-    this.heatDelta = heatDelta;
-  }
+
 
   /**
    * Apply the heating effect to the provided sensors.

@@ -57,20 +57,7 @@ public class LightSensor extends Sensor {
     // Do nothing by default — humidity only changes when actuators run.
   }
 
-  /**
-   * Check if the current light value is above the maximum threshold.
-   * @return true if above max threshold, false otherwise
-   */
-  public boolean isAboveMax() {
-    return getValue() > getMaxThreshold();
-  }
 
-  /**
-   * Check if the current light value is below the minimum threshold.
-   * @return true if below min threshold, false otherwise
-   */
-  public boolean isBelowMin() {
-    return getValue() < getMinThreshold();
-  }
+
 
 }
