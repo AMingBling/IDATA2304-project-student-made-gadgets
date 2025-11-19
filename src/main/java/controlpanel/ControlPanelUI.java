@@ -203,55 +203,6 @@ public class ControlPanelUI {
           checkGreenhouse();
         }
 
-        // case "addsensor" -> {
-        // if (!validateArgs(parts, 2, "Usage: AddSensor <nodeId>")) return;
-        // String nodeId = parts[1];
-
-        // java.util.List<String> allTypes = java.util.Arrays.asList("TEMPERATURE",
-        // "LIGHT", "HUMIDITY", "CO2");
-        // java.util.Map<String, ControlPanelLogic.NodeState> nodes = logic.getNodes();
-
-        // if (nodes == null || !nodes.containsKey(nodeId)) {
-        // System.out.println("\nNode '" + nodeId + "' is not connected to the server.
-        // Use CheckGreenhouse to see connected nodes.");
-        // break;
-        // }
-
-        // java.util.Set<String> existing = new java.util.HashSet<>();
-        // ControlPanelLogic.NodeState ns = nodes.get(nodeId);
-        // if (ns != null && ns.sensors != null) {
-        // for (entity.sensor.Sensor s : ns.sensors.values()) if (s != null &&
-        // s.getSensorType() != null) existing.add(s.getSensorType().toUpperCase());
-        // }
-
-        // java.util.List<String> available = new java.util.ArrayList<>();
-        // for (String t : allTypes) if (!existing.contains(t)) available.add(t);
-
-        // if (available.isEmpty()) {
-        // System.out.println("Node " + nodeId + " already has all supported sensor
-        // types.");
-        // break;
-        // }
-
-        // System.out.println("\nAvailable sensor types:");
-        // for (int i = 0; i < available.size(); i++) System.out.printf(" %d) %s%n", i +
-        // 1, available.get(i));
-
-        // System.out.print("\nChoose type (number): ");
-        // String choiceLine = scanner.nextLine();
-        // if (choiceLine == null || choiceLine.trim().isEmpty()) {
-        // System.out.println("Please write a command (cannot be empty).");
-        // break;
-        // }
-        // int choice;
-        // try { choice = Integer.parseInt(choiceLine.trim()); } catch (Exception e) {
-        // choice = 0; }
-        // if (choice < 1 || choice > available.size()) {
-        // System.out.println("Invalid selection.");
-        // break;
-        // }
-        // }
-
         case "addsensor" -> {
           if (parts.length >= 2) {
             String nodeId = parts[1];

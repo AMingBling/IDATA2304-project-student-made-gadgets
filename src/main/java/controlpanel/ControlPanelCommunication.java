@@ -80,7 +80,13 @@ public class ControlPanelCommunication {
     startListenThread();
   }
 
-
+  /**
+   * Start the background thread that listens for incoming JSON messages.
+   * The thread is a daemon thread named "cp-comm-reader".
+   * It reads lines from the input stream and forwards them to the onJson callback.
+   * If the connection is lost, it prints a message to standard output.
+   *
+   */
   private void startListenThread() {
     readerThread = new Thread(() -> {
       try {
@@ -149,15 +155,9 @@ public class ControlPanelCommunication {
     }
   }
 
-  public String getConnectedIp() {
-    return connectedIp;
-  }
 
-  public int getConnectedPort() {
-    return connectedPort;
-  }
 
-  public boolean isConnected() {
-    return socket != null && socket.isConnected() && !socket.isClosed();
-  }
+
+
+
 }

@@ -108,7 +108,7 @@ public class ControlPanelLogic {
    *
    * <p>This closes the underlying {@link ControlPanelCommunication} and
    * shuts down any simulated {@link NodeClient} instances created via
-   * {@link #spawnNode(String, String)}. The method is safe to call multiple times.
+   *  #spawnNode(String, String). The method is safe to call multiple times.
    */
   public void close() {
     comm.close();
@@ -127,6 +127,13 @@ public class ControlPanelLogic {
     }
   }
 
+  /**
+   * Validate sensor thresholds for a given sensor type.
+   * @param sensorType
+   * @param min
+   * @param max
+   * @return null if valid, otherwise an error message
+   */
   public String validateThresholds(String sensorType, double min, double max) {
     if (sensorType == null || sensorType.isBlank()) return "Ugyldig sensortype.";
     if (min > max) return "Min kan ikke være større enn Max.";
@@ -156,6 +163,7 @@ public class ControlPanelLogic {
   //  * Spawn a simulated NodeClient that connects to the same server the control panel is connected to.
   //  * UI should call this method rather than performing networking itself.
   //  * Returns true if the node was spawned and accepted by server.
+  //  * This is for future improvements.
   //  */
   // public boolean spawnNode(String nodeId, String location) {
   //   if (nodeId == null || nodeId.isBlank()) return false;
@@ -209,7 +217,7 @@ public class ControlPanelLogic {
 
 //  /**
 //   * Disconnect and remove a previously spawned simulated node.
-//   *
+//   *This is for future improvements.
 //   * @param nodeId id of the spawned node to disconnect
 //   * @return true if a spawned node or socket was found and removed
 //   */
@@ -458,7 +466,7 @@ public class ControlPanelLogic {
     }
   }
 
-  // UI API
+
 
   /**
    * Return an unmodifiable view of the cached nodes state map.
@@ -469,17 +477,6 @@ public class ControlPanelLogic {
     return nodes;
   }
 
-  /**
-   * Lookup an actuator in the cached node state.
-   *
-   * @param nodeId     node id
-   * @param actuatorId actuator id
-   * @return actuator object or {@code null} if not found
-   */
-  public Actuator getActuator(String nodeId, String actuatorId) {
-    NodeState ns = nodes.get(nodeId);
-    return ns == null ? null : ns.actuators.get(actuatorId);
-  }
 
   /**
    * Return a map of nodeId -> list of sensors matching the given sensor type.
@@ -523,23 +520,7 @@ public class ControlPanelLogic {
     comm.sendJson(gson.toJson(obj));
   }
 
-//  /**
-//   * Update the target min/max range for a sensor type on a node.
-//   *
-//   * @param nodeId target node id
-//   * @param sensorType sensor type name (e.g. TEMPERATURE, HUMIDITY)
-//   * @param min target minimum
-//   * @param max target maximum
-//   */
-//  public void updateTargetRange(String nodeId, String sensorType, double min, double max) {
-//    JsonObject obj = new JsonObject();
-//    obj.addProperty("messageType", "TARGET_UPDATE");
-//    obj.addProperty("nodeID", nodeId);
-//    obj.addProperty("sensorType", sensorType);
-//    obj.addProperty("targetMin", min);
-//    obj.addProperty("targetMax", max);
-//    comm.sendJson(gson.toJson(obj));
-//  }
+
 
   // ---------- ControlPanel actions ----------
   // Subscriptions removed: control panels no longer subscribe/unsubscribe to nodes.
