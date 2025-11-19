@@ -32,8 +32,8 @@ import entity.actuator.Heater;
  * <ul>
  *   <li>sendNodeWritesSensorDataMessage: verifies that the node client writes a SENSOR_DATA_FROM_NODE message and includes a node id field.</li>
  *   <li>actuatorCommandTurnsOnAndResolvesConflict: verifies that an ACTUATOR_COMMAND turns on the specified heater and that conflicting actuators (AC) are turned off to resolve the conflict.</li>
+ *   <li>addAndRemoveSensorCommandsModifyNode: verifies that ADD_SENSOR adds a sensor to the node and that REMOVE_SENSOR removes it afterwards.</li>
  * </ul>
- *
  * @author Group 1
  * @version 2025-11-18
  */
