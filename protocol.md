@@ -127,7 +127,10 @@ The protocol uses port **5000** for all node-server communication.
 
  ## 10. Error Handling
 
- Det her må også gås over, har ingen anelse.
+- Principles: validate early, return structured errors.
+- Categories: parsing errors, validation errors, routing errors.
+- Server behavior: validate incoming messages.
+- Client behavior: validate before sending.
 
  --------------------------------------------------------------------
 
