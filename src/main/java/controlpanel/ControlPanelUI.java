@@ -439,16 +439,17 @@ public class ControlPanelUI {
                 "Node '" + nodeId + "' is not known. Use CheckGreenhouse to list nodes.");
             break;
           }
-          ControlPanelLogic.NodeState ns2 = nodes.get(nodeId);
-          if (ns2 == null || ns2.actuators == null || !ns2.actuators.containsKey(actuatorId)) {
-            System.out.println("Warning: actuator '" + actuatorId + "' not found on node " + nodeId
-                + ". Sending command anyway.");
-          }
-          logic.setActuatorState(nodeId, actuatorId, on);
-          System.out.println(
-              on ? ("\nSuccessfully turned on actuator ID:" + actuatorId + " to Node " + nodeId)
-                  : ("\nSuccessfully turned off actuator ID:" + actuatorId + " from Node "
-                      + nodeId));
+            ControlPanelLogic.NodeState ns2 = nodes.get(nodeId);
+            if (ns2 == null || ns2.actuators == null || !ns2.actuators.containsKey(actuatorId)) {
+            System.out.println("Actuator '" + actuatorId + "' not found on node " + nodeId
+              + ". Command not sent.");
+            break;
+            }
+            logic.setActuatorState(nodeId, actuatorId, on);
+            System.out.println(
+              on ? ("\nSuccessfully turned on actuator ID:" + actuatorId + " on Node " + nodeId)
+                : ("\nSuccessfully turned off actuator ID:" + actuatorId + " on Node "
+                  + nodeId));
         }
 
         case "removesensor" -> {
