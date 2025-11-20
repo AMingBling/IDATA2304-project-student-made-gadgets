@@ -1,13 +1,13 @@
 # Protocol Description - Smart Farming System
 
 ## 1. Introduction
-This document describes the custom application-layer communication protocol developed for the Smart Farming System project in IDATA2304. The protocol enables communication between sensor/actuator nodes and control-panel nodes using TCP sockets.
+This document describes the custom application-layer communication protocol developed for the Smart Greenhouse System project in IDATA2304. The protocol enables communication between sensor/actuator nodes and control-panels using TCP sockets.
 
 ## 2. Terminology
 - **Node**: A node that collects environmental data through sensors, and hosts actuators.
 - **Actuator**: A controllable device (e.g., heater, ventilation, humidifier).
 - **Control Panel**: A client that visualizes data and sends commands.
-- **Message**: A structured data packet exchanged between nodes.
+- **Message**: A structured data packet exchanged between clients.
 - **Command**: A control instruction sent from a control panel to a node via the server.
 - **Tick**: A "tick" is a short periodic message sent by a node to indicate it is alive and report status — essentially the same as a "heartbeat".
 
@@ -20,24 +20,24 @@ The protocol uses port **5000** for all node-server communication.
 ## 5. Architecture
 - **NodeClient (client)**
     - Implements entity.Node
-    - Connects to the central server over TCP and sends sensor snapshots
+    - Connects to the server over TCP and sends sensor snapshots
     - Listens for commands (e.g. ADD_SENSOR, CheckGreenHouse, CheckNode) and applies changes locally, then sends updated state.
 - **ControlPanelMain (client)**
     - Implements controlpanel.ControlPanelLogic + ControlPanelUI + ControlPanelCommunication
-    - Connects to the same central server over TCP and issues commands.
+    - Connects to the same server over TCP and issues commands.
     - Recieves node state updates from the server and displays them in the UI.
-- **Central Server (server)**
+- **Server**
     - Single coordinator listening on TCP port 5000.
-    - Accepts connections from nodeclients and control panels, validates node IDs, keeps registry of connected cleints, and forwards messages between nodes and control panels according to messageType.
-    - Responsible for routing: e.g. forward ToggleActuator from a control panel to the target sensor code.
+    - Accepts connections from nodes and control panels, validates node IDs, keeps registry of connected clients, and forwards messages between nodes and control panels according to messageType.
+    - Responsible for routing: e.g. forward ToggleActuator from a control panel to the target node with the right actuatuor.
 
 ## 6. Information Flow
 
-- **Transport:** TCP over port `5000`. The server acts as the single router and long-lived connection manager for both sensor nodes and control panels.
+- **Transport:** TCP over port `5000`. The server acts as the single router and long-lived connection manager for both nodes and control panels.
 
 - **Registration / handshake**
-  - Sensor nodes use a small legacy plaintext handshake when they first connect: `SENSOR_NODE_CONNECTED <nodeId>` (single line). The server replies with `NODE_ID_ACCEPTED` or `NODE_ID_REJECTED` and stores the node's socket in an internal map if accepted.
-  - Control panels may use the legacy `CONTROL_PANEL_CONNECTED` plain-text registration or a JSON registration payload (e.g. `{ "messageType": "REGISTER_CONTROL_PANEL", "controlPanelId": "cp-1" }`). The server keeps a list of control panel sockets for broadcasting.
+  - Nodes use a small plaintext handshake when they first connect: `SENSOR_NODE_CONNECTED <nodeId>` (single line). The server replies with `NODE_ID_ACCEPTED` or `NODE_ID_REJECTED` and stores the node's socket in an internal map if accepted.
+  - Control panels may use the `CONTROL_PANEL_CONNECTED` plain-text registration or a JSON registration payload (e.g. `{ "messageType": "REGISTER_CONTROL_PANEL", "controlPanelId": "cp-1" }`). The server keeps a list of control panel sockets for broadcasting.
 
 - **Node -> Server (state & alerts)**
   - Nodes periodically send their state as a single line JSON object. These messages include `messageType` (commonly `SENSOR_DATA_FROM_NODE`), `nodeID`, an array of `sensors`, and an array of `actuators`. The server caches the last-known JSON per `nodeID` (used to quickly serve `REQUEST_NODE`).
