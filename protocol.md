@@ -61,7 +61,14 @@ The protocol uses port **5000** for all node-server communication.
   - The current implementation broadcasts node updates to the control panel that sent the command. There is no per-control-panel subscription model in the code; control panels are expected to filter messages they care about locally.
 
 - **Failure modes and logging**
-  - If a control panel sends a command for a node that is not connected the server will log the event (`Target node not connected`) and will not forward the command. There is no built-in error reply back to the control panel in the current server implementation for this case (only server-side logging).
+  - Network disconnections:
+    - If a node or control panel disconnects from the server, the detection is logged and the socket is removed from the server's internal maps/lists.
+    - If a node disconnects, the detection is logged in control panels.
+  - Invalid messages:
+    - The server validates incoming JSON messages for required fields (e.g. `messageType`, `nodeID`). Invalid messages are logged and ignored.
+    - Control panels validate commands before sending to avoid malformed requests.
+  - Log format and visibility
+    - Server and NodeClient use timestamped log helpers for important events.
 
 ## 7. Protocol Type
 
@@ -114,7 +121,7 @@ The protocol relies on this state to route messages correctly and provide up-to-
 
 ## 9. Message Framing and Format
 
-- **Framing / marshalling:** application messages are sent as single-line JSON payloads (line-delimited JSON). Each message occupies one text line terminated by `\n`. The server treats a received line starting with `{` as JSON otherwise it interprets some legacy plaintext handshake messages (see registration above).
+- **Framing / marshalling:** application messages are sent as single-line JSON payloads (line-delimited JSON). Each message occupies one text line terminated by `\n`. The server treats a received line starting with `{` as JSON otherwise it interprets some plaintext handshake messages (see registration above).
 
 - **Message envelope (required fields):** most messages are JSON objects containing at least:
   - `messageType` &mdash; string that indicates the semantic type (e.g. `SENSOR_DATA_FROM_NODE`, `ACTUATOR_COMMAND`, `ADD_SENSOR`, `ALERT`, `REQUEST_NODE`).
@@ -127,15 +134,15 @@ The protocol relies on this state to route messages correctly and provide up-to-
   - `REQUEST_NODE` &mdash; control panel -> server -> (possibly forwarded to node). Server may answer directly using cached JSON. Contains `controlPaneId` and `nodeId`
   - `ALERT` &mdash; node -> server -> control panels. Contains `nodeID` and `alert` text.
 
-- **Legacy plain-text tokens**
+- **Plain-text tokens**
   - `SENSOR_NODE_CONNECTED <nodeId>` &mdash; node -> server (plain text). Server responds with `NODE_ID_ACCEPTED` or `NODE_ID_REJECTED` (plain text).
-  - `CONTROL_PANEL_CONNECTED` &mdash; legacy control-panel registration.
+  - `CONTROL_PANEL_CONNECTED` &mdash; control-panel registration.
 
 - **Routing / server behavior**
   - The server keeps a map `sensorNodes: Map<nodeId, Socket>` and a list of control panel sockets. On receiving a control-panel JSON command with `nodeID`, the server looks up the node socket and forwards the original JSON line if connected. Node-originated JSON lines are cached under `lastKnownNodeJson[nodeID]` and broadcast to all control panels.
 
 - **Security / reliability notes (current limitations)**
-  - There are no cryptographic protections on the wire (no TLS) and no message authentication: the protocol assumes a trusted environment.
+  - There are no cryptographic protections and no message authentication: the protocol assumes a trusted environment.
   - There is no built-in acknowledgement (ACK) from the target node back to the control panel for forwarded commands; the server forwards raw JSON and logs non-delivery. If higher assurance is required, we should add explicit ACK/response messages and timeouts.
  
  --------------------------------------------------------------------
@@ -150,60 +157,54 @@ The protocol relies on this state to route messages correctly and provide up-to-
  --------------------------------------------------------------------
 
  ## 11. Realistic Scenario
+
  A farmer uses a control panel to monitor Node 7. The panel recieves:
- - SENSOR_DATA|Node7|TEMP|26.5
- - SENSOR_DATA|Node7|HUMIDITY||44  
+ - SENSOR_DATA | Node7 | TEMP | 26.5
+ - SENSOR_DATA | Node7 | HUMIDITY | 44  
+
  Then sends:
- - COMMAND|Node7|ACTUATOR|FAN|ON  
- The fan turns on, and the node replies:
- - ACTUATOR_STATUS|Node7|FAN|ON
+ - COMMAND | Node7 | ACTUATOR | HUMIDIFIER | ON  
+
+ The humidifier turns on, and the node replies:
+ - ACTUATOR_STATUS | Node7 | FAN | ON
 
  Farmer could also open another control panel or create a new node:
- - SENSOR_DATA|Node3|CO2_SENSOR|800  
+ - SENSOR_DATA | Node3 | CO2_SENSOR | 800
+
  Then sends:
- - COMMAND|Node3|ACTUATOR|CO2_SUPPLY|ON  
- The fan turns on, and the node replies:
- - ACTUATOR_STATUS|Node3|CO2_SUPPLY|ON  
+ - COMMAND | Node3 | ACTUATOR | CO2_SUPPLY | ON  
+
+ The CO2-supply turns on, and the node replies:
+ - ACTUATOR_STATUS | Node3 | CO2_SUPPLY | ON  
+
  If the farmer wants to reduce the CO2 he needs to turn off:
- - COMMAND|Node3|ACTUATOR|CO2_SUPPLY|OFF  
- And turn on FAN
- - COMMAND|Node3|ACTUATOR|FAN|ON  
- (Note: It is impossible for both to be on at once.)  
+ - COMMAND | Node3 | ACTUATOR | CO2_SUPPLY | OFF  
+
+ And turn on ventilation:
+ - COMMAND | Node3 | ACTUATOR | VENTILATION | ON  
+ (Note: It is impossible for two conflicting actuators to be on at once.) 
 
 
  ## 12. Reliability Mechanisms
- What the protocol  provides (current mechanisms for error handeling):
 
-**Thread-safe sending** — ControlPanelCommunication.sendJson(String) synchronizes on out and checks that out != null before sending. This prevents corrupted output from multiple threads and handles cases where the connection is not established.
-(location: ControlPanelCommunication.sendJson)
+ What the protocol  provides (current mechanisms for error handling):
 
-**Background reader with robust error handling** — A dedicated daemon thread (cp-comm-reader) reads line-delimited JSON messages. The reader catches IOException and logs a message when the connection is lost instead of crashing. It also protects against empty lines and exceptions thrown by the callback (onJson).
-(location: ControlPanelCommunication.startListenThread)
+- **Server-side caching**: server caches last-known JSON per nodeID to quickly reply to REQUEST_NODE without waiting for the node to respond.
+- **Node registration validation**: server validates nodeID on SENSOR_NODE_CONNECTED and replies with NODE_ID_ACCEPTED or NODE_ID_REJECTED.
+- **Node disconnect notification**: server broadcasts SENSOR_NODE_DISCONNECTED to control panels when a node disconnects.
+- **Control panel registration**: control panels sends REGISTER_CONTROL_PANEL on connect and the server keeps list of control panel sockets for broadcasting.
+- **Control panel command validation**: ControlPanelLogic validates commands before sending to avoid malformed requests.
+- **Control panel disconnect handling**: server detects control panel disconnects and removes sockets from list.
+- **Short request-window**: ControlPanelLogic.requestNode uses CountDownLatch to wait for one response within ~1200 ms, reducing chance of blocking indefinitely.
+- **Defensive coding**: try-catch blocks around I/O and JSON parsing to prevent crashes on malformed input or network errors.
 
-**Graceful close / resource cleanup** — ControlPanelCommunication.close() and ControlPanelLogic.close() attempt to interrupt the reader thread and close in, out, and the socket. The method can be called multiple times without throwing errors (exceptions are ignored). This minimizes leaks on network failures or shutdown.
-(location: ControlPanelCommunication.close, ControlPanelLogic.close)
+What is missing / limitations:
 
-**Input validation** / tolerance for malformed JSON — ControlPanelLogic.handleIncomingJson catches JsonSyntaxException, ignores non-JSON lines, and provides a fallback for messages lacking messageType but containing nodeID. This prevents malformed or partially formatted traffic from breaking state.
-(location: ControlPanelLogic.handleIncomingJson)
-
-**Idempotence / duplicate control at logic level** — Before sending addSensor, both the sensor type and sensor ID are checked so duplicates are not added to the cache; removeSensor also verifies that a sensor exists before sending the request. This reduces unnecessary or conflicting messages to the server.
-(location: ControlPanelLogic.addSensor, ControlPanelLogic.removeSensor)
-
-**Local alarm deduplication** — shownAlerts (a concurrent set) ensures that the same sensor alert is shown only once per control panel, preventing flapping from spamming the UI/terminal. Regex extraction of the sensor makes identification robust against small variations.
-(location: ControlPanelLogic.handleAlert and the shownAlerts field)
-
-**Short waiting window for requests** — When requestNode runs, a REQUEST_NODE is sent and a CountDownLatch waits until one response is received (max wait ~1200 ms). The class also uses requestLatches and requestPrinted to show only the first response within this window so that periodic updates from other nodes do not drown out the requested output. This creates limited synchronization between sender and receiver.
-(location: ControlPanelLogic.requestNode, requestLatches, requestPrinted, printNodeState)
-
-**Thread-safe internal state** — Use of ConcurrentHashMap for main maps (nodes, spawnedNodes, spawnedSockets) and concurrent sets for some structures gives basic thread safety for updates from both the reader thread and UI threads.
-(location: fields in ControlPanelLogic)
-
-summary:
-The code provides error handeling by messages if the user writes something that is not valid, and solid basic reliability mechanisms—thread-safe I/O, defensive parsing, alarm deduplication, and limited request-response synchronization
-Note: there is currently no application-level ACK/messageId or heartbeat implemented; the server logs when a target node is offline and does not send an explicit error back to the control panel — adding messageId/ACK and retry would be required for stronger delivery guarantees."
- 
+- **No application-level ACK/messageId**: there is no explicit ACK from the target node back to the control panel for forwarded commands. The server logs non-delivery but does not inform the control panel. This limits delivery guarantees.
+- **No persistent durable storage**: server does not persist state across restarts. All state is in-memory.
+- **No reconnection logic**: nodes and control panels must manually reconnect if disconnected, and previous state is lost.
+- No explicit time-to-live or expiry for cached node state beyond manual removal on disconnect.
+- No security/authentication/encryption described.
 
 ## Justifications
 Each design choice above is made to balance simplicity, scalability, and clarity for a distributed smart farming system. TCP was chosen for reliability. Message formats are kept simple for easy parsing. The protocol supports multiple nodes and extensible sensor/actuator types.
-
-Her kan man bullshitte mer
