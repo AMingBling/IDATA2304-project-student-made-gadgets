@@ -57,7 +57,14 @@ The protocol uses port **5000** for all node-server communication.
   - The current implementation broadcasts node updates to the control panel that sent the command. There is no per-control-panel subscription model in the code; control panels are expected to filter messages they care about locally.
 
 - **Failure modes and logging**
-  - If a control panel sends a command for a node that is not connected the server will log the event (`Target node not connected`) and will not forward the command. There is no built-in error reply back to the control panel in the current server implementation for this case (only server-side logging).
+  - Network disconnections:
+    - If a node or control panel disconnects from the server, the detection is logged and the socket is removed from the server's internal maps/lists.
+    - If a node disconnects, the detection is logged in control panels.
+  - Invalid messages:
+    - The server validates incoming JSON messages for required fields (e.g. `messageType`, `nodeID`). Invalid messages are logged and ignored.
+    - Control panels validate commands before sending to avoid malformed requests.
+  - Log format and visibility
+    - Server and NodeClient use timestamped log helpers for important events.
 
 ## 7. Protocol Type
 
@@ -110,7 +117,7 @@ The protocol relies on this state to route messages correctly and provide up-to-
 
 ## 9. Message Framing and Format
 
-- **Framing / marshalling:** application messages are sent as single-line JSON payloads (line-delimited JSON). Each message occupies one text line terminated by `\n`. The server treats a received line starting with `{` as JSON otherwise it interprets some legacy plaintext handshake messages (see registration above).
+- **Framing / marshalling:** application messages are sent as single-line JSON payloads (line-delimited JSON). Each message occupies one text line terminated by `\n`. The server treats a received line starting with `{` as JSON otherwise it interprets some plaintext handshake messages (see registration above).
 
 - **Message envelope (required fields):** most messages are JSON objects containing at least:
   - `messageType` &mdash; string that indicates the semantic type (e.g. `SENSOR_DATA_FROM_NODE`, `ACTUATOR_COMMAND`, `ADD_SENSOR`, `ALERT`, `REQUEST_NODE`).
@@ -123,15 +130,15 @@ The protocol relies on this state to route messages correctly and provide up-to-
   - `REQUEST_NODE` &mdash; control panel -> server -> (possibly forwarded to node). Server may answer directly using cached JSON. Contains `controlPaneId` and `nodeId`
   - `ALERT` &mdash; node -> server -> control panels. Contains `nodeID` and `alert` text.
 
-- **Legacy plain-text tokens**
+- **Plain-text tokens**
   - `SENSOR_NODE_CONNECTED <nodeId>` &mdash; node -> server (plain text). Server responds with `NODE_ID_ACCEPTED` or `NODE_ID_REJECTED` (plain text).
-  - `CONTROL_PANEL_CONNECTED` &mdash; legacy control-panel registration.
+  - `CONTROL_PANEL_CONNECTED` &mdash; control-panel registration.
 
 - **Routing / server behavior**
   - The server keeps a map `sensorNodes: Map<nodeId, Socket>` and a list of control panel sockets. On receiving a control-panel JSON command with `nodeID`, the server looks up the node socket and forwards the original JSON line if connected. Node-originated JSON lines are cached under `lastKnownNodeJson[nodeID]` and broadcast to all control panels.
 
 - **Security / reliability notes (current limitations)**
-  - There are no cryptographic protections on the wire (no TLS) and no message authentication: the protocol assumes a trusted environment.
+  - There are no cryptographic protections and no message authentication: the protocol assumes a trusted environment.
   - There is no built-in acknowledgement (ACK) from the target node back to the control panel for forwarded commands; the server forwards raw JSON and logs non-delivery. If higher assurance is required, we should add explicit ACK/response messages and timeouts.
  
  --------------------------------------------------------------------
@@ -146,25 +153,32 @@ The protocol relies on this state to route messages correctly and provide up-to-
  --------------------------------------------------------------------
 
  ## 11. Realistic Scenario
+
  A farmer uses a control panel to monitor Node 7. The panel recieves:
- - SENSOR_DATA|Node7|TEMP|26.5
- - SENSOR_DATA|Node7|HUMIDITY||44  
+ - SENSOR_DATA | Node7 | TEMP | 26.5
+ - SENSOR_DATA | Node7 | HUMIDITY | 44  
+
  Then sends:
- - COMMAND|Node7|ACTUATOR|FAN|ON  
- The fan turns on, and the node replies:
- - ACTUATOR_STATUS|Node7|FAN|ON
+ - COMMAND | Node7 | ACTUATOR | HUMIDIFIER | ON  
+
+ The humidifier turns on, and the node replies:
+ - ACTUATOR_STATUS | Node7 | FAN | ON
 
  Farmer could also open another control panel or create a new node:
- - SENSOR_DATA|Node3|CO2_SENSOR|800  
+ - SENSOR_DATA | Node3 | CO2_SENSOR | 800
+
  Then sends:
- - COMMAND|Node3|ACTUATOR|CO2_SUPPLY|ON  
- The fan turns on, and the node replies:
- - ACTUATOR_STATUS|Node3|CO2_SUPPLY|ON  
+ - COMMAND | Node3 | ACTUATOR | CO2_SUPPLY | ON  
+
+ The CO2-supply turns on, and the node replies:
+ - ACTUATOR_STATUS | Node3 | CO2_SUPPLY | ON  
+
  If the farmer wants to reduce the CO2 he needs to turn off:
- - COMMAND|Node3|ACTUATOR|CO2_SUPPLY|OFF  
- And turn on FAN
- - COMMAND|Node3|ACTUATOR|FAN|ON  
- (Note: It is impossible for both to be on at once.)  
+ - COMMAND | Node3 | ACTUATOR | CO2_SUPPLY | OFF  
+
+ And turn on ventilation:
+ - COMMAND | Node3 | ACTUATOR | VENTILATION | ON  
+ (Note: It is impossible for two conflicting actuators to be on at once.) 
 
 
  ## 12. Reliability Mechanisms
