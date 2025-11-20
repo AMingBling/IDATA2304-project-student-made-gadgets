@@ -155,6 +155,15 @@ The protocol relies on this state to route messages correctly and provide up-to-
 - Client behavior: validate before sending.
 - The control panel includes additional validation at the user interface level. If the user provides invalid inputs, the application detects and handles these errors locally before attempting to send the message.
 
+The system uses defensive coding and simple runtime checks. Most error handling is local: malformed input is logged/ignored, I/O exceptions are caught, and control-panel UI validates user input before sending. There is no end-to-end application ACK, no persistent error queue, and no authentication.
+
+- **Parsing / malformed JSON**: lines not starting with { are ignored. Malformed JSON is logged and dropped (no structured ERROR sent).
+- **Missing / unknown messageType**: payloads with nodeID but no messageType are treated as SENSOR_DATA_FROM_NODE. Unknown types are logged and ignored.
+- **Registration**: nodes use plain-text SENSOR_NODE_CONNECTED <id> and receive NODE_ID_ACCEPTED/NODE_ID_REJECTED. Malformed registration is logged and connection may be closed.
+- **Forwarding/routing**: server logs when target node is not connected. Control panels are not notified for forward failures.
+- **Timeouts**: REQUEST_NODE uses a short local wait window (~1200 ms). If no response arrives nothing explicit is returned to the control panel.
+- **Validation**: control panel validates thresholds and prevents duplicates. Nodes perform minimal payload checks for sensor/actuator fields.
+- **Runtime errors**: IO/JSON exceptions are caught and logged. Disconnects remove cached state and broadcast SENSOR_NODE_DISCONNECTED.
 
  ## 11. Realistic Scenario
 
