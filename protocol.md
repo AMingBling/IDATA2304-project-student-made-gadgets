@@ -146,8 +146,8 @@ The protocol relies on this state to route messages correctly and provide up-to-
 - Categories: parsing errors, validation errors, routing errors.
 - Server behavior: validate incoming messages.
 - Client behavior: validate before sending.
+- The control panel includes additional validation at the user interface level. If the user provides invalid inputs, the application detects and handles these errors locally before attempting to send the message.
 
- --------------------------------------------------------------------
 
  ## 11. Realistic Scenario
  A farmer uses a control panel to monitor Node 7. The panel recieves:
