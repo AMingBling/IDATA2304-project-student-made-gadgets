@@ -61,8 +61,17 @@ The protocol uses port **5000** for all node-server communication.
 
 ## 7. Protocol Type
 
-- **
+### Connection model: Connection-oriented (TCP)
 
+- The application-layer protocol runs over TCP, which provides reliable, ordered delivery of messages. Each node and control panel maintains a persistent TCP connection to the server, and keeps a long‑lived socket and a reader thread. The messages are line-delimited JSON sent over the established connection.
+
+### State model: Stateful at application layer
+
+- The server maintains state about connected nodes (mapping of `nodeID` to socket) and control panels (list of sockets). It also caches the last-known JSON snapshot per node for quick replies to `REQUEST_NODE`.
+- Nodes maintain local state about their sensors and actuators, and periodically send snapshots to the server.
+- Control panels maintain local state about known nodes and their last-received snapshots.
+
+The protocol relies on this state to route messages correctly and provide up-to-date information.
 
 
 ## 8. Constants and Types
