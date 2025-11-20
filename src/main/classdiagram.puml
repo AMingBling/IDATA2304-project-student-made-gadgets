@@ -1,0 +1,137 @@
+@startuml
+' Top-level packages
+package controlpanel {
+  class ControlPanelMain {
+    +main(String[] args)
+  }
+
+  class ControlPanelUI {
+    - logic: ControlPanelLogic
+    - scanner: Scanner
+    + run()
+    + handleCommand(line: String)
+  }
+
+  class ControlPanelLogic {
+    - controlPanelId: String
+    - comm: ControlPanelCommunication
+    - nodes: Map<String, entity.Node>
+    - gson: Gson
+    + handleIncomingJson(String)
+    + addSensor(nodeId, type, sensorId, min, max): boolean
+    + removeSensor(nodeId, sensorId): boolean
+    + setActuatorState(nodeId, actuatorId, on): void
+    + requestNode(nodeId): void
+  }
+
+  class ControlPanelCommunication {
+    - in: BufferedReader
+    - out: PrintWriter
+    - readerThread: Thread
+    - callback: Consumer<String>
+    + sendJson(String): void
+    + startListenThread(): void
+    + close(): void
+  }
+}
+
+package entity {
+  class Node {
+    - nodeId: String
+    - location: String
+    - sensors: List<entity.sensor.Sensor>
+    - actuators: List<entity.actuator.Actuator>
+    + addSensor(Sensor)
+    + addActuator(Actuator)
+    + applyActuatorEffects(): String
+    + toJson(): String
+  }
+}
+
+package "entity.sensor" as sensors {
+  abstract class Sensor {
+    # sensorId: String
+    # sensorType: String
+    # value: double
+    # unit: String
+    # minThreshold: double
+    # maxThreshold: double
+    # timestamp: LocalDateTime
+    + updateValue(double)
+    + updateValue()
+    + adjustValue(double)
+    + toReadingJson(): JsonObject
+    + isAboveMax(): boolean
+    + isBelowMin(): boolean
+  }
+
+  class TemperatureSensor
+  class LightSensor
+  class CO2Sensor
+
+  Sensor <|-- TemperatureSensor
+  Sensor <|-- LightSensor
+  Sensor <|-- CO2Sensor
+}
+
+package "entity.actuator" as actuators {
+  abstract class Actuator {
+    - actuatorId: String
+    - actuatorType: String
+    - on: boolean
+    + setOn(boolean)
+    + isOn(): boolean
+    + applyEffect(List<Sensor>)
+  }
+
+  class Heater
+  class AirCondition
+  class LampDimming
+  class LampBrightning
+  class Ventilation
+
+  Actuator <|-- Heater
+  Actuator <|-- AirCondition
+  Actuator <|-- LampDimming
+  Actuator <|-- LampBrightning
+  Actuator <|-- Ventilation
+}
+
+package network {
+  class NodeClient {
+    - node: entity.Node
+    - serverHost: String
+    - serverPort: int
+    + start(): void
+    + sendSensorData(): void
+    + handleIncoming(String): void
+  }
+
+  class Server
+}
+
+' Associations / dependencies
+ControlPanelUI --> ControlPanelLogic : uses
+ControlPanelLogic *-- ControlPanelCommunication : owns
+ControlPanelLogic ..> sensors.Sensor : creates/parses
+ControlPanelLogic ..> actuators.Actuator : commands
+
+ControlPanelCommunication --> ControlPanelLogic : callback -> handleIncomingJson
+ControlPanelCommunication --> network.NodeClient : communicates with (over socket)
+
+Node "1" *-- "*" sensors.Sensor : contains
+Node "1" *-- "*" actuators.Actuator : contains
+NodeClient ..> Node : manages
+NodeClient ..> ControlPanelCommunication : sends/receives (network)
+
+' Notes
+note left of ControlPanelLogic
+  - uses Gson for JSON
+  - holds in-memory node cache
+end note
+
+note right of Node
+  - applyActuatorEffects enforces absolute/user thresholds
+end note
+
+@enduml
