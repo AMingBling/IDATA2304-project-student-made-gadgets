@@ -13,6 +13,10 @@ This document describes the custom application-layer communication protocol deve
 
 ## 3. Transport Protocol
 We use **TCP** for reliable communication between nodes.
+TCP was choosen over UDP for this project because of better reliability, connection- oriented communication and order og guaranteed delivery.
+- **Connection-Oriented Communication**: TCP establishes a persistent connection between nodes, control panels, and the server. This connection-oriented model simplifies the communication logic, as the server can maintain state about connected clients and route messages accordingly.
+- **Reliability**: TCP ensures reliable data transmission by providing mechanisms like error checking, retransmission of lost packets, and in-order delivery. This is critical for our application, as sensor data, commands, and state updates must be delivered accurately and in the correct sequence to maintain system integrity.
+- **Order of guarantee**:In our system, the order of messages is important (e.g., actuator commands must be applied in the correct sequence). TCP guarantees that messages are delivered in the order they were sent, which UDP does not provide.
 
 ## 4. Port Number
 The protocol uses port **5000** for all node-server communication.
