@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Server class to handle connections from sensor nodes and control panels.
+ * Server class to handle connections from sensor nodes and control panels. 
  */
 public class Server {
 

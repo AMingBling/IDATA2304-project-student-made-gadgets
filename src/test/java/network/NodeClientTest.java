@@ -62,7 +62,7 @@ public class NodeClientTest {
     List<entity.actuator.Actuator> actuators = new ArrayList<>();
     Node node = new Node("n1", "loc", sensors, actuators);
 
-    NodeClient nc = new NodeClient(node, out, in, gson);
+    NodeClient nc = new NodeClient(node, null, out, in, gson);
     nc.sendCurrentNode();
 
     String written = sw.toString();
@@ -99,7 +99,7 @@ public class NodeClientTest {
 
     Node node = new Node("nodeX", "loc", sensors, actuators);
 
-    NodeClient nc = new NodeClient(node, out, in, gson);
+    NodeClient nc = new NodeClient(node, null, out, in, gson);
     nc.start();
     Thread.sleep(200);
 
@@ -145,7 +145,7 @@ public class NodeClientTest {
     List<entity.actuator.Actuator> actuators = new ArrayList<>();
     Node node = new Node("nA", "loc", sensors, actuators);
 
-    NodeClient nc = new NodeClient(node, out, in, gson);
+    NodeClient nc = new NodeClient(node, null, out, in, gson);
     nc.start();
 
     // wait until sensor is added (timeout 5000 ms)

@@ -33,8 +33,10 @@ public class NodeClient {
   private Node node;
   private final PrintWriter out;
   private final BufferedReader in;
+  private final Socket socket;
   private final Gson gson;
   private Thread listener;
+  private volatile boolean running = true;
 
   /**
    * DateTimeFormatter for logging timestamps.
@@ -64,12 +66,13 @@ public class NodeClient {
    * @param in   the {@link BufferedReader} used to receive messages from the server
    * @param gson the {@link Gson} instance used for JSON serialization/deserialization
    */
-  public NodeClient(Node node, PrintWriter out, BufferedReader in, Gson gson) {
+  public NodeClient(Node node, Socket socket, PrintWriter out, BufferedReader in, Gson gson) {
     this.node = node;
+    this.socket = socket;
     this.out = out;
     this.in = in;
     this.gson = gson;
-
+    this.running = true;
   }
 
   /**
@@ -79,7 +82,7 @@ public class NodeClient {
    * from the server and reacts to them. The method returns immediately.
    */
   public void start() {
-    listener = new Thread(this::listenForCommands);
+    listener = new Thread(this::listenForCommands, "NodeClient-Listener");
     listener.setDaemon(true);
     listener.start();
   }
@@ -92,7 +95,7 @@ public class NodeClient {
   public void startControlLoop(long tickMillis) {
     Thread t = new Thread(() -> {
       try {
-        while (true) {
+        while (running) {
           try {
             node.updateAllSensors();
             String alert = node.applyActuatorEffects(); // må finnes i Node
@@ -158,7 +161,7 @@ public class NodeClient {
   private void listenForCommands() {
     try {
       String incoming;
-      while ((incoming = in.readLine()) != null) {
+      while (running && (incoming = in.readLine()) != null) {
         System.out.println("Command received: " + incoming);
         String trimmed = incoming.trim();
         if (trimmed.startsWith("{")) {
@@ -185,6 +188,10 @@ public class NodeClient {
       }
     } catch (IOException e) {
       System.out.println("Error reading from server: " + e.getMessage());
+    } finally {
+      // Server likely disconnected or we hit an IO error. Ensure we stop the client.
+      running = false;
+      close();
     }
   }
 
@@ -360,6 +367,12 @@ public class NodeClient {
     if (out != null) {
       out.close();
     }
+    try {
+      if (socket != null && !socket.isClosed()) {
+        socket.close();
+      }
+    } catch (IOException ignored) {
+    }
     if (listener != null && listener.isAlive()) {
       listener.interrupt();
     }
@@ -411,13 +424,13 @@ public class NodeClient {
       List<Actuator> actuators = new ArrayList<>();
       Node nodeObj = new Node(nodeId, location, sensors, actuators);
 
-      NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
+      NodeClient nodeClient = new NodeClient(nodeObj, socket, out, in, gson);
       nodeClient.start();
       nodeClient.startControlLoop(3000); // 3s tick
       nodeClient.sendCurrentNode();
 
-      // Keep node alive forever
-      while (true) {
+      // Keep node alive until the client detects a disconnect
+      while (nodeClient.running) {
         Thread.sleep(1000);
       }
 
