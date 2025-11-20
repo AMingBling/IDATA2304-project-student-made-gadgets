@@ -9,6 +9,7 @@ This document describes the custom application-layer communication protocol deve
 - **Control Panel**: A client that visualizes data and sends commands.
 - **Message**: A structured data packet exchanged between nodes.
 - **Command**: A control instruction sent from a control panel to a node via the server.
+- **Tick**: A "tick" is a short periodic message sent by a node to indicate it is alive and report status — essentially the same as a "heartbeat".
 
 ## 3. Transport Protocol
 We use **TCP** for reliable communication between nodes.
