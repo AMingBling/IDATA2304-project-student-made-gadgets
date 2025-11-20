@@ -68,13 +68,13 @@ The sensor will automatically get assigned an ID.
 *Check the status of all sensors of a specific type*
 
 #### Extra work done beyond the basic requirements:
-*The user can set maximum and minimum tresholds for the actuators, in addition maximum and minimum limits are also set so if the user tries to set a treshold outside the limit, the system will reject it and notify the user.* over this they wil get a message
+*The user can set maximum and minimum tresholds for the actuators, in addition maximum and minimum limits are also set so if the user tries to set a treshold outside the limit, the system will reject it and notify the user. over this they wil get a message*
 
-*Automatic Sensor IDs and Data Retrieval: We have added functionality to automatically generate unique IDs for sensors, simplifying the process of adding new sensors. Additionally, we have implemented a method to retrieve information for all sensors of a specific type, making it easier to manage and analyze sensor data.
+*Automatic Sensor IDs and Data Retrieval: We have added functionality to automatically generate unique IDs for sensors, simplifying the process of adding new sensors. Additionally, we have implemented a method to retrieve information for all sensors of a specific type, making it easier to manage and analyze sensor data.*
 
-*We have implemented comprehensive error-handling mechanisms to ensure the safety and reliability of the system. For example, users cannot set thresholds for sensors below or above predefined safe limits, ensuring that the plants are not harmed. Additionally, the application gracefully handles invalid or unsupported user inputs by providing clear feedback and preventing unexpected behavior.
+*We have implemented comprehensive error-handling mechanisms to ensure the safety and reliability of the system. For example, users cannot set thresholds for sensors below or above predefined safe limits, ensuring that the plants are not harmed. Additionally, the application gracefully handles invalid or unsupported user inputs by providing clear feedback and preventing unexpected behavior.*
 
-*Test classes were made verify the functionality of critical components, including communication between nodes and the server. These tests help ensure that the application behaves as expected under various scenarios and maintains a high level of reliability.
+*Test classes were made verify the functionality of critical components, including communication between nodes and the server. These tests help ensure that the application behaves as expected under various scenarios and maintains a high level of reliability.*
 
 #### Exit
 
