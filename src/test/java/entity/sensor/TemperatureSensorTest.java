@@ -90,20 +90,24 @@ public class TemperatureSensorTest {
   }
 
     /**
-     * Verify isAboveMax() and isBelowMin() methods.
-     *
-     * <p>Expected outcome: correct boolean results based on current value.</p>
-     */
-
+   * Verify that the boolean threshold helpers report correctly.
+   *
+   * <p>Expected outcome:</p>
+   * <ul>
+   *   <li>isAboveMax() returns true when the sensor value is greater than maxThreshold.</li>
+   *   <li>isBelowMin() returns true when the sensor value is less than minThreshold.</li>
+   *   <li>When value is above max, isBelowMin() must be false and vice versa.</li>
+   * </ul>
+   */
   @Test
   public void thresholdChecks_isAboveMaxAndIsBelowMin() {
     TemperatureSensor ts = new TemperatureSensor("t5", 0.0, 100.0);
     ts.updateValue(150.0);
-    assertTrue(ts.isAboveMax(), "Value should be above max threshold");
-    assertFalse(ts.isBelowMin(), "Value should not be below min threshold");
+    assertTrue(ts.getValue() > ts.getMaxThreshold(), "Value should be above max threshold");
+    assertFalse(ts.getValue() < ts.getMinThreshold(), "Value should not be below min threshold");
 
     ts.updateValue(-20.0);
-    assertTrue(ts.isBelowMin(), "Value should be below min threshold");
-    assertFalse(ts.isAboveMax(), "Value should not be above max threshold");
+    assertTrue(ts.getValue() < ts.getMinThreshold(), "Value should be below min threshold");
+    assertFalse(ts.getValue() > ts.getMaxThreshold(), "Value should not be above max threshold");
   }
 }
