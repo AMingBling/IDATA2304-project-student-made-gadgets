@@ -174,28 +174,28 @@ The protocol relies on this state to route messages correctly and provide up-to-
  ## 12. Reliability Mechanisms
  What the protocol  provides (current mechanisms for error handeling):
 
-Thread-safe sending — ControlPanelCommunication.sendJson(String) synchronizes on out and checks that out != null before sending. This prevents corrupted output from multiple threads and handles cases where the connection is not established.
+**Thread-safe sending** — ControlPanelCommunication.sendJson(String) synchronizes on out and checks that out != null before sending. This prevents corrupted output from multiple threads and handles cases where the connection is not established.
 (location: ControlPanelCommunication.sendJson)
 
-Background reader with robust error handling — A dedicated daemon thread (cp-comm-reader) reads line-delimited JSON messages. The reader catches IOException and logs a message when the connection is lost instead of crashing. It also protects against empty lines and exceptions thrown by the callback (onJson).
+**Background reader with robust error handling** — A dedicated daemon thread (cp-comm-reader) reads line-delimited JSON messages. The reader catches IOException and logs a message when the connection is lost instead of crashing. It also protects against empty lines and exceptions thrown by the callback (onJson).
 (location: ControlPanelCommunication.startListenThread)
 
-Graceful close / resource cleanup — ControlPanelCommunication.close() and ControlPanelLogic.close() attempt to interrupt the reader thread and close in, out, and the socket. The method can be called multiple times without throwing errors (exceptions are ignored). This minimizes leaks on network failures or shutdown.
+**Graceful close / resource cleanup** — ControlPanelCommunication.close() and ControlPanelLogic.close() attempt to interrupt the reader thread and close in, out, and the socket. The method can be called multiple times without throwing errors (exceptions are ignored). This minimizes leaks on network failures or shutdown.
 (location: ControlPanelCommunication.close, ControlPanelLogic.close)
 
-Input validation / tolerance for malformed JSON — ControlPanelLogic.handleIncomingJson catches JsonSyntaxException, ignores non-JSON lines, and provides a fallback for messages lacking messageType but containing nodeID. This prevents malformed or partially formatted traffic from breaking state.
+**Input validation** / tolerance for malformed JSON — ControlPanelLogic.handleIncomingJson catches JsonSyntaxException, ignores non-JSON lines, and provides a fallback for messages lacking messageType but containing nodeID. This prevents malformed or partially formatted traffic from breaking state.
 (location: ControlPanelLogic.handleIncomingJson)
 
-Idempotence / duplicate control at logic level — Before sending addSensor, both the sensor type and sensor ID are checked so duplicates are not added to the cache; removeSensor also verifies that a sensor exists before sending the request. This reduces unnecessary or conflicting messages to the server.
+**Idempotence / duplicate control at logic level** — Before sending addSensor, both the sensor type and sensor ID are checked so duplicates are not added to the cache; removeSensor also verifies that a sensor exists before sending the request. This reduces unnecessary or conflicting messages to the server.
 (location: ControlPanelLogic.addSensor, ControlPanelLogic.removeSensor)
 
-Local alarm deduplication — shownAlerts (a concurrent set) ensures that the same sensor alert is shown only once per control panel, preventing flapping from spamming the UI/terminal. Regex extraction of the sensor makes identification robust against small variations.
+**Local alarm deduplication** — shownAlerts (a concurrent set) ensures that the same sensor alert is shown only once per control panel, preventing flapping from spamming the UI/terminal. Regex extraction of the sensor makes identification robust against small variations.
 (location: ControlPanelLogic.handleAlert and the shownAlerts field)
 
-Short waiting window for requests — When requestNode runs, a REQUEST_NODE is sent and a CountDownLatch waits until one response is received (max wait ~1200 ms). The class also uses requestLatches and requestPrinted to show only the first response within this window so that periodic updates from other nodes do not drown out the requested output. This creates limited synchronization between sender and receiver.
+**Short waiting window for requests** — When requestNode runs, a REQUEST_NODE is sent and a CountDownLatch waits until one response is received (max wait ~1200 ms). The class also uses requestLatches and requestPrinted to show only the first response within this window so that periodic updates from other nodes do not drown out the requested output. This creates limited synchronization between sender and receiver.
 (location: ControlPanelLogic.requestNode, requestLatches, requestPrinted, printNodeState)
 
-Thread-safe internal state — Use of ConcurrentHashMap for main maps (nodes, spawnedNodes, spawnedSockets) and concurrent sets for some structures gives basic thread safety for updates from both the reader thread and UI threads.
+**Thread-safe internal state** — Use of ConcurrentHashMap for main maps (nodes, spawnedNodes, spawnedSockets) and concurrent sets for some structures gives basic thread safety for updates from both the reader thread and UI threads.
 (location: fields in ControlPanelLogic)
 
 summary:
