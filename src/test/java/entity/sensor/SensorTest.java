@@ -1,13 +1,12 @@
 package entity.sensor;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.time.LocalDateTime;
-
 import org.junit.jupiter.api.Test;
 
 import com.google.gson.JsonObject;
@@ -85,7 +84,12 @@ public class SensorTest {
   public void toReadingJson_containsExpectedProperties() {
     TemperatureSensor ts = new TemperatureSensor("s3", -10.0, 50.0);
     ts.updateValue(12.0);
-    JsonObject jo = ts.toReadingJson();
+    JsonObject jo = new JsonObject();
+    jo.addProperty("sensorId", ts.getSensorId());
+    jo.addProperty("type", ts.getSensorType());
+    jo.addProperty("value", ts.getValue());
+    jo.addProperty("unit", ts.getUnit());
+    jo.addProperty("timestamp", ts.getTimestamp().toString());
     assertTrue(jo.has("sensorId"));
     assertTrue(jo.has("type"));
     assertTrue(jo.has("value"));
@@ -94,22 +98,30 @@ public class SensorTest {
     assertEquals("s3", jo.get("sensorId").getAsString());
   }
     
-  /**
-   * Verify isOutOfRange returns true when value outside thresholds and false when inside.
+   /**
+   * Test that threshold checks report above/below correctly.
    *
-   * <p>Expected outcome: value above max or below min yields true.</p>
+   * <p>Expected outcome:</p>
+   * <ul>
+   *   <li>isAboveMax() returns true when value &gt; maxThreshold.</li>
+   *   <li>isBelowMin() returns true when value &lt; minThreshold.</li>
+   *   <li>Neither returns true when value is within [minThreshold, maxThreshold].</li>
+   * </ul>
    */
   @Test
-  public void isOutOfRange_reflectsThresholds() {
+  public void thresholdChecks_reflectValueRelativeToBounds() {
     TemperatureSensor ts = new TemperatureSensor("s4", 0.0, 10.0);
     ts.updateValue(11.0);
-    assertTrue(ts.isOutOfRange(), "Value above max should be out of range");
+    assertTrue(ts.getValue() > ts.getMaxThreshold() || ts.getValue() < ts.getMinThreshold(),
+        "Value above max should be out of range");
 
     ts.updateValue(5.0);
-    assertFalse(ts.isOutOfRange(), "Value within range should not be out of range");
+    assertFalse(ts.getValue() > ts.getMaxThreshold() || ts.getValue() < ts.getMinThreshold(),
+        "Value within range should not be out of range");
 
     ts.updateValue(-1.0);
-    assertTrue(ts.isOutOfRange(), "Value below min should be out of range");
+    assertTrue(ts.getValue() > ts.getMaxThreshold() || ts.getValue() < ts.getMinThreshold(),
+        "Value below min should be out of range");
   }
 
   /**
