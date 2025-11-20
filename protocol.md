@@ -66,34 +66,35 @@ The protocol uses port **5000** for all node-server communication.
 
 ## 8. Constants and Types
 
-- Message types (application layer)
-  - `SENSOR_DATA` — node → server (periodic snapshot)
+### General conventions
+
+  - Identifiers and enum-like names: String (e.g. `nodeID`, `controlPanelId`, `sensorId`, `actuatorId`, `sensorType`, `actuatorType`, `messageType`, `command`, `alert`).
+  - Numeric sensor values and thresholds: number (double precision).
+  - Actuator snapshot state: boolean `on`.
+  - Wire format: one JSON object per line (string).
+
+### Message types (application layer)
+
+  - `SENSOR_DATA_FROM_NODE` — node → server (periodic snapshot)
   - `ACTUATOR_STATUS` — node → server (actuator state report)
-  - `COMMAND` — control panel → server → node (actuator control)
-  - `REQUEST` — control panel → server → node (on-demand state request)
+  - `ACTUATOR_COMMAND` — control panel → server → node (actuator control)
+  - `REQUEST_NODE` / `REQUEST_STATE` — control panel → server → node (on-demand state request)
   - `ADD_SENSOR` — control panel → server → node (runtime sensor add)
-  - `ERROR` — any → server/control panel (error reporting)
-
-- Sensor types
-  - `TEMPERATURE`
-  - `HUMIDITY`
-  - `LIGHT`
-  - `CO2`
+  - `REMOVE_SENSOR` — control panel → server → node (runtime sensor remove)
+  - `ALERT` — node → server → control panel (threshold breach alert)
+  - `REGISTER_CONTROL_PANEL` — control panel → server (registration)
+  -  `CONTROL_PANEL_CONNECTED` — control panel → server (registration)
+  - `SENSOR_NODE_CONNECTED` — node → server (registration)
+  - `NODE_ID_ACCEPTED` / `NODE_ID_REJECTED` — server → node (registration response)
  
-- Actuator types
-  - `FAN`
-  - `HEATER`
-  - `AIRCON`
-  - `VENTILATION`
-  - `CO2Supply`
-  - `HUMIDIFIER`
-  - `DEHUMIDIFIER`
-  - `LAMPBRIGHTNING`
-  - `LIGHTDIMMING`
 
-- Status / state values
-  - Binary / boolean: `ON` / `OFF` (or true/false)
-  - Numeric readings: use numeric values (e.g., temperature = 21.5)
+### Why these types were chosen
+
+- Strings for ids/types: readable, interoperable, match Java getters (`getNodeID()`, `getSensorId()`, `getActuatorType()`).
+- Doubles for sensor values/thresholds: required for numeric values and validation.
+- Boolean `on` in snapshots: unambiguous state and directly maps to `Actuator.isOn()` / `Actuator.setOn()`.
+- String `command`: flexible to encode verbs and parameters and matches current implementation.
+
 
 ------------------------------------------------------------------
 

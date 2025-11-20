@@ -401,13 +401,6 @@ public class ControlPanelLogic {
       NodeState state = nodes.computeIfAbsent(node.getNodeID(), NodeState::new);
 
       for (Actuator actuator : node.getActuators()) {
-//        try {
-//          Actuator a = new Actuator(sm.getSensorId(), util.SensorType.valueOf(sm.getType()), 0, 0);
-//          a.setOn(sm.getValue() == 1);
-//          state.actuators.put(a.getActuatorId(), a);
-//        } catch (IllegalArgumentException ex) {
-//          System.out.println("[CP-Logic] Unknown sensor type: " + sm.getType());
-//        }
         state.actuators.put(actuator.getActuatorId(), actuator);
       }
     } catch (Exception e) {

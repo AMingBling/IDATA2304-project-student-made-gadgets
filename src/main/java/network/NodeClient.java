@@ -413,7 +413,7 @@ public class NodeClient {
 
       NodeClient nodeClient = new NodeClient(nodeObj, out, in, gson);
       nodeClient.start();
-      nodeClient.startControlLoop(3000); // 5s tick
+      nodeClient.startControlLoop(3000); // 3s tick
       nodeClient.sendCurrentNode();
 
       // Keep node alive forever
