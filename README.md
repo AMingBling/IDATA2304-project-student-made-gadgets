@@ -16,6 +16,13 @@ The user can also check the status of nodes which checks the status of connected
 
 If the measured values are too high or too low in relation to the desired values of the user, the associated actuators can be toggled on/off.
 
+### Tresholds for Actuators
+* The thresholds for the actuators work by allowing the user to define a minimum and maximum value for a sensor. These thresholds determine the range within which the sensor operates. If the sensor's measured value goes outside this range, the associated actuator (e.g., a heater or cooler) is triggered to bring the value back within the defined range
+* Set Thresholds: When adding a sensor (e.g., a temperature sensor), the user is prompted to set a minimum threshold and a maximum threshold. For example:  
+  Minimum threshold: 18°C
+  Maximum threshold: 25°C
+* If the user puts on the heater for example, the temperature wil increase to 25 and when it crosses 25 the user gets a message that they should put on aircondition.
+* If the temperature goes up to the absolute treshold (40) the heater wil be shut off.
 ### Available Control Panel commands
 
 - CheckGreenhouse
