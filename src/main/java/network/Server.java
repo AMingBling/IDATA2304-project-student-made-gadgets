@@ -87,7 +87,6 @@ public class Server {
         out = new PrintWriter(socket.getOutputStream(), true);
 
         String initialMessage = in.readLine();
-        boolean handledInitial = false;
         if (initialMessage != null) {
           String trimmed = initialMessage.trim();
           // Old plain-text protocol
@@ -97,7 +96,6 @@ public class Server {
             // No id provided in legacy protocol; record address for later
             controlPanelIds.put(socket, socket.getInetAddress().toString());
             log("Server", "Control panel connected: %s", socket.getInetAddress());
-            handledInitial = true;
           } else if (trimmed.startsWith("SENSOR_NODE_CONNECTED")) {
             // Expect format: SENSOR_NODE_CONNECTED <nodeId>
             String[] parts = trimmed.split(" ", 2);
@@ -133,16 +131,10 @@ public class Server {
                 controlPanelIds.put(socket, cpId);
                 log("Server", "Control panel registered: %s (id=%s)", socket.getInetAddress(),
                     cpId);
-                handledInitial = true;
               }
             } catch (JsonSyntaxException ignored) {
               // Not JSON or malformed - fall through to generic fallback
             }
-          }
-
-          if (!handledInitial) {
-            // Fallback: treat as a sensor without explicit id (rare)
-            log("Server", "Node connected (no id): %s", socket.getInetAddress());
           }
         }
 
